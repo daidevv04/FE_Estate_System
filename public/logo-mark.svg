@@ -1,0 +1,14 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Đất Xanh Miền Trung">
+  <defs>
+    <linearGradient id="dxmt-logo-g" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#16A34A"/>
+      <stop offset="0.6" stop-color="#15803D"/>
+      <stop offset="1" stop-color="#0D9488"/>
+    </linearGradient>
+  </defs>
+  <rect x="3.3" y="3.3" width="33.4" height="33.4" rx="7.7" fill="url(#dxmt-logo-g)"/>
+  <path d="M20 9 L29 16 L26.7 17.7 L20 12.5 L13.3 17.7 L11 16 Z" fill="#fff"/>
+  <path d="M20 15 L29 22 L26.7 23.7 L20 18.5 L13.3 23.7 L11 22 Z" fill="#fff" fill-opacity="0.95"/>
+  <path d="M20 21 L29 28 L20 30.3 L11 28 Z" fill="#fff" fill-opacity="0.95"/>
+  <polygon points="20,23 22,25 20,27 18,25" fill="url(#dxmt-logo-g)"/>
+</svg>

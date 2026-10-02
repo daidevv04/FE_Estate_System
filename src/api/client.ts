@@ -54,10 +54,11 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean; _retryCo
 
 /** 502/503/504 = upstream Render đang cold start hoặc chưa lên; 9.33 yêu cầu tự thử lại. */
 const RETRYABLE = [502, 503, 504]
-// Render free ngủ sau 15 phút không inbound; cold start dây chuyền (gateway → service) ~40s
-// nên 2 lần × 5s không đủ. 4 lần × 8s = tối đa ~32s chờ trước khi báo lỗi.
-const MAX_RETRY = 4
-const RETRY_DELAY_MS = 8_000
+// Render free ngủ sau 15 phút không inbound; cold start dây chuyền (gateway → user/customer/crm)
+// thực tế 40–60s. 4 lần × 8s = 32s vẫn hụt nên trang báo lỗi dù backend 10s sau đã lên.
+// 6 lần × 10s = tối đa ~60s; lúc cold start Render trả 502/503 rất nhanh nên phần lớn thời gian là chờ.
+const MAX_RETRY = 6
+const RETRY_DELAY_MS = 10_000
 
 api.interceptors.response.use(
   (res) => res,

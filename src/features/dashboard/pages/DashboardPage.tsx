@@ -296,7 +296,7 @@ export function DashboardPage() {
           showIcon
           style={{ marginBottom: 16, borderRadius: t.radiusMd }}
           message="Không tải được số liệu tổng quan"
-          description="Backend chưa phản hồi. Bấm Tải lại."
+          description="Máy chủ Render (free plan) đang khởi động lại sau ~15 phút không dùng, mất 40–60 giây. Hệ thống đã tự thử lại — bấm Tải lại nếu vẫn trống."
         />
       )}
 

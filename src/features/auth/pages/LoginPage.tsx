@@ -14,7 +14,7 @@ import {
 import { Button, Checkbox, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { api } from '@/api/client'
+import { api, API_BASE_URL } from '@/api/client'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { paths } from '@/routes/paths'
 import { useAuthStore, type TokenResponse } from '@/store/authStore'
@@ -129,7 +129,11 @@ export function LoginPage() {
             ? 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ít phút.'
             : status === 502 || status === 503
               ? 'Máy chủ đang khởi động lại (Render). Vui lòng chờ 1–2 phút rồi thử lại.'
-              : (response?.data?.message ?? 'Tên đăng nhập hoặc mật khẩu không đúng'),
+              : // Không có `response` = CORS chặn / sai địa chỉ API / mất mạng — KHÔNG phải sai mật khẩu.
+                // In ra địa chỉ API để biết bundle đang gọi backend nào (localhost hay Render).
+                status === undefined
+                ? `Không kết nối được API ${API_BASE_URL}. Kiểm tra máy chủ đã lên chưa và CORS đã mở cho ${window.location.origin}.`
+                : (response?.data?.message ?? 'Tên đăng nhập hoặc mật khẩu không đúng'),
       })
     } finally {
       setLoading(false)

@@ -276,10 +276,6 @@ export function DashboardPage() {
               </h2>
               <Pill tone="green">Dữ liệu toàn công ty</Pill>
             </Space>
-            <p style={{ margin: '6px 0 0', fontSize: 14, color: t.colorTextMuted, maxWidth: 760 }}>
-              Theo dõi tình hình kinh doanh, doanh số và vận hành hệ thống theo thời gian thực —
-              số liệu lấy trực tiếp từ dữ liệu backend, không dùng số mẫu.
-            </p>
           </div>
           <Space wrap size={10}>
             <Segmented options={RANGE_OPTIONS} value={range} onChange={(v) => setRange(v as RangeKey)} />

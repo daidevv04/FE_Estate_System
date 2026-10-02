@@ -19,7 +19,7 @@ export function PageHeader({ title, breadcrumb, status, meta, actions }: PageHea
           <Typography.Title level={4} style={{ margin: 0 }}>{title}</Typography.Title>
           {status}
         </Space>
-        {actions && <Space>{actions}</Space>}
+        {actions && <Space wrap>{actions}</Space>}
       </Space>
       {meta && (
         <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: 13 }}>

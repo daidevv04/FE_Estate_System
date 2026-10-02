@@ -75,20 +75,23 @@ export function Header() {
         zIndex: 10,
       }}
     >
-      <Button
-        type="text"
-        aria-label={sidebarCollapsed ? 'Mở menu' : 'Thu gọn menu'}
-        icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        onClick={toggleSidebar}
-      />
-      <div style={{ flex: 1 }} />
+      {/* 2 vùng flex-basis 0 ở hai đầu, rộng bằng nhau -> ô tìm kiếm luôn nằm chính giữa header.
+          (Không dùng spacer co giãn 1 phía hay margin:auto: cụm bên phải rộng hơn nút menu nên sẽ lệch.) */}
+      <div style={{ flex: '1 1 0', display: 'flex', alignItems: 'center' }}>
+        <Button
+          type="text"
+          aria-label={sidebarCollapsed ? 'Mở menu' : 'Thu gọn menu'}
+          icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={toggleSidebar}
+        />
+      </div>
 
       <AutoComplete
+        className="app-header-search"
         options={options}
         value={keyword}
         onChange={setKeyword}
         onSelect={goTo}
-        style={{ flex: '1 1 150px', minWidth: 0, maxWidth: 300 }}
       >
         <Input
           ref={searchRef}
@@ -99,54 +102,59 @@ export function Header() {
         />
       </AutoComplete>
 
-      <Tooltip title="Thông báo">
-        <Badge dot>
-          <Button
-            type="text"
-            aria-label="Thông báo"
-            icon={<BellOutlined />}
-            onClick={() => message.info('Chưa có API thông báo — nối khi backend bổ sung /api/notifications')}
-          />
-        </Badge>
-      </Tooltip>
-
-      <Dropdown
-        trigger={['click']}
-        menu={{
-          items: [
-            { key: 'profile', label: 'Hồ sơ cá nhân', onClick: () => navigate(paths.profile) },
-            { key: 'security', label: 'Bảo mật 2FA', onClick: () => navigate(paths.security) },
-            { type: 'divider' },
-            { key: 'logout', label: 'Đăng xuất', danger: true, icon: <LogoutOutlined />, onClick: logout },
-          ],
-        }}
+      <div
+        className="app-header-right"
+        style={{ flex: '1 1 0', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}
       >
-        <Space size={10} style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}>
-          <Avatar style={{ background: token.colorPrimary }}>
-            {(user?.fullName ?? user?.username ?? '?').charAt(0).toUpperCase()}
-          </Avatar>
-          {/* Design Stitch: tên người dùng 14/600, role là nhãn 11/600 in hoa ngay dưới tên.
-              Màn rất hẹp thì ẩn khối chữ (xem .app-header-user ở stitch.css), chỉ giữ avatar. */}
-          <div className="app-header-user" style={{ lineHeight: 1.25, maxWidth: 170 }}>
-            <div
-              style={{
-                fontSize: 14, fontWeight: 600, color: token.colorText,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}
-            >
-              {user?.fullName ?? user?.username ?? '—'}
+        <Tooltip title="Thông báo">
+          <Badge dot>
+            <Button
+              type="text"
+              aria-label="Thông báo"
+              icon={<BellOutlined />}
+              onClick={() => message.info('Chưa có API thông báo — nối khi backend bổ sung /api/notifications')}
+            />
+          </Badge>
+        </Tooltip>
+
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: [
+              { key: 'profile', label: 'Hồ sơ cá nhân', onClick: () => navigate(paths.profile) },
+              { key: 'security', label: 'Bảo mật 2FA', onClick: () => navigate(paths.security) },
+              { type: 'divider' },
+              { key: 'logout', label: 'Đăng xuất', danger: true, icon: <LogoutOutlined />, onClick: logout },
+            ],
+          }}
+        >
+          <Space size={10} style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}>
+            <Avatar style={{ background: token.colorPrimary }}>
+              {(user?.fullName ?? user?.username ?? '?').charAt(0).toUpperCase()}
+            </Avatar>
+            {/* Design Stitch: tên người dùng 14/600, role là nhãn 11/600 in hoa ngay dưới tên.
+                Màn rất hẹp thì ẩn khối chữ (xem .app-header-user ở stitch.css), chỉ giữ avatar. */}
+            <div className="app-header-user" style={{ lineHeight: 1.25, maxWidth: 170 }}>
+              <div
+                style={{
+                  fontSize: 14, fontWeight: 600, color: token.colorText,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}
+              >
+                {user?.fullName ?? user?.username ?? '—'}
+              </div>
+              <div
+                style={{
+                  fontSize: 11, fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase',
+                  color: token.colorTextTertiary,
+                }}
+              >
+                {user?.role ?? '—'}
+              </div>
             </div>
-            <div
-              style={{
-                fontSize: 11, fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase',
-                color: token.colorTextTertiary,
-              }}
-            >
-              {user?.role ?? '—'}
-            </div>
-          </div>
-        </Space>
-      </Dropdown>
+          </Space>
+        </Dropdown>
+      </div>
     </AntHeader>
   )
 }

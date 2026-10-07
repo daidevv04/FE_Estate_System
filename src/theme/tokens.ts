@@ -39,11 +39,11 @@ export const tokens = {
     DemandType: { BUY: '#4F46E5', SELL: '#F59E0B' },
   },
 
-  // Typography Stitch: Be Vietnam Pro cho tiêu đề (tránh dấu tiếng Việt lệch dòng), Inter cho bảng/số
-  fontHeading: "'Be Vietnam Pro', Inter, 'Segoe UI', system-ui, sans-serif",
-  fontBody: "Inter, 'Segoe UI', system-ui, sans-serif",
+  // Một font JetBrains Mono cho toàn CRM: nhịp chữ, số và bảng đồng nhất.
+  fontHeading: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  fontBody: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
 
-  radiusSm: 6, radiusMd: 12, radiusLg: 16, radiusXl: 20, radius2xl: 28, radiusFull: 9999,
+  radiusSm: 8, radiusMd: 12, radiusLg: 16, radiusXl: 20, radius2xl: 24, radiusFull: 9999,
   controlHeight: 44, controlHeightLg: 48, tableRowHeight: 56,
   gutter: 24, margin: 32, cardPadding: 24,
   focusRing: '0 0 0 3px rgba(22,163,74,.12)',

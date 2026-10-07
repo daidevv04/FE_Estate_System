@@ -10,5 +10,10 @@ export default defineConfig({
   },
   // strictPort: gateway Render khai CORS_ALLOWED_ORIGINS theo origin chinh xac
   // (http://localhost:5173), nen KHONG duoc de Vite tu nhay sang 5174.
-  server: { port: 5173, strictPort: true },
+  server: {
+    port: 5173,
+    strictPort: true,
+    // Artifact QA bị browser/Windows lock có thể làm watcher Vite crash.
+    watch: { ignored: ['**/output/**'] },
+  },
 })

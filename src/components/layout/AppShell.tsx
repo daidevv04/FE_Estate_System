@@ -77,24 +77,25 @@ export function AppShell() {
   }
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className={`app-shell app-shell--${collapsed ? 'collapsed' : 'expanded'}`} style={{ minHeight: '100vh' }}>
       <Sider
         theme="light"
         width={264}
         collapsedWidth={80}
         collapsed={collapsed}
-        style={{ borderInlineEnd: `1px solid ${token.colorBorder}`, position: 'sticky', top: 0, height: '100vh' }}
+        className="app-shell__sider"
+        style={{ borderInlineEnd: `1px solid ${token.colorBorder}`, position: 'sticky', top: 12, height: 'calc(100vh - 24px)' }}
       >
-        <div style={{ height: 72, flex: '0 0 auto', display: 'flex', alignItems: 'center', padding: collapsed ? 12 : 20 }}>
+        <div className="app-shell__brand">
           <BrandLogo collapsed={collapsed} />
         </div>
         <div className="sidebar-scroll">
           <Sidebar />
         </div>
       </Sider>
-      <Layout>
+      <Layout className="app-shell__main">
         <Header />
-        <Content style={{ padding: 24 }}>
+        <Content className="app-shell__content">
           <Outlet />
         </Content>
       </Layout>

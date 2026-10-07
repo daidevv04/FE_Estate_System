@@ -1,5 +1,5 @@
 ﻿import {
-  CloudUploadOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, MoreOutlined, PauseCircleOutlined,
+  CloudUploadOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, EyeOutlined, MoreOutlined, PauseCircleOutlined,
   PlusOutlined, SearchOutlined, StarOutlined, TeamOutlined, UserSwitchOutlined,
 } from '@ant-design/icons'
 import { App, Avatar, Button, Card, Col, Dropdown, Input, Modal, Row, Select, Space, Table, Tooltip, Typography } from 'antd'
@@ -16,6 +16,7 @@ import {
   type Customer, type CustomerInput, type CustomerStatus, type DemandType,
 } from '../api'
 import { CustomerFormModal } from '../components/CustomerFormModal'
+import { CustomerDetailModal } from '../components/CustomerDetailModal'
 
 type Tone = 'green' | 'amber' | 'blue' | 'teal' | 'gray' | 'red' | 'purple'
 const TONE: Record<Tone, { bg: string; fg: string; dot: string }> = {
@@ -133,6 +134,7 @@ export function CustomersPage() {
   const [bulk, setBulk] = useState<{ mode: 'assign' | 'status'; value?: string } | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Customer | null>(null)
+  const [detailCustomerId, setDetailCustomerId] = useState<string>()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const rows = data?.content ?? []
@@ -173,6 +175,11 @@ export function CustomersPage() {
     setFormOpen(false)
     setBulk(null)
     message.success(msg)
+  }
+  const openEdit = (customer: Customer) => {
+    setDetailCustomerId(undefined)
+    setEditing(customer)
+    setFormOpen(true)
   }
 
   /** Ghi chú chăm sóc lúc tạo khách → POST /customers/{id}/cares (type NOTE), đúng mô tả màn 9.8 */
@@ -236,13 +243,13 @@ export function CustomersPage() {
     {
       title: 'Khách hàng', dataIndex: 'fullName', width: 240,
       render: (_v, row) => (
-        <Space size={10}>
+        <button type="button" className="customer-table__identity" onClick={() => setDetailCustomerId(row.id)}>
           <Avatar style={{ background: colorOf(row.fullName), fontWeight: 600 }}>{initials(row.fullName)}</Avatar>
           <div style={{ lineHeight: 1.25 }}>
             <div style={{ fontWeight: 600 }}>{row.fullName}</div>
             <div className="stitch-num" style={{ fontSize: 12, color: t.colorTextMuted }}>{customerCode(row)}</div>
           </div>
-        </Space>
+        </button>
       ),
     },
     {
@@ -290,8 +297,8 @@ export function CustomersPage() {
           trigger={['click']}
           menu={{
             items: [
-              { key: 'edit', icon: <EditOutlined />, label: 'Cập nhật', onClick: () => { setEditing(row); setFormOpen(true) } },
-              { key: 'del', icon: <DeleteOutlined />, label: 'Xóa', danger: true, onClick: () => removeOne(row) },
+              { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết', onClick: () => setDetailCustomerId(row.id) },
+              ...(canWrite ? [{ key: 'edit', icon: <EditOutlined />, label: 'Cập nhật', onClick: () => openEdit(row) }, { key: 'del', icon: <DeleteOutlined />, label: 'Xóa', danger: true, onClick: () => removeOne(row) }] : []),
             ],
           }}
         >
@@ -420,8 +427,16 @@ export function CustomersPage() {
         staff={staff}
         existing={rows}
         submitting={create.isPending || update.isPending}
-        onCancel={() => setFormOpen(false)}
+        onCancel={() => { setFormOpen(false); setEditing(null) }}
         onSubmit={submitForm}
+      />
+
+      <CustomerDetailModal
+        customerId={detailCustomerId}
+        staff={staff}
+        canWrite={canWrite}
+        onClose={() => setDetailCustomerId(undefined)}
+        onEdit={openEdit}
       />
 
       <Modal

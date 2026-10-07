@@ -23,6 +23,7 @@ import { StatusPill, isOverdue } from '../components/AppointmentStatusPill'
 import { AppointmentFormModal } from '../components/AppointmentFormModal'
 import { Legend } from '../components/Legend'
 import { WeekCalendar } from '../components/WeekCalendar'
+import './AppointmentDetailModal.css'
 
 const DATE = 'DD/MM/YYYY'
 const hhmm = (v: string) => dayjs(v).format('HH:mm')
@@ -390,11 +391,14 @@ export function AppointmentsPage() {
       <Modal
         open={Boolean(detail)}
         onCancel={() => setDetail(null)}
-        width={640}
+        width="92vw"
+        style={{ top: '5vh' }}
+        className="appointment-detail-modal"
+        destroyOnHidden
         title="Chi tiết lịch hẹn"
         footer={
           detail && (
-            <Space wrap>
+            <div className="appointment-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space wrap>
               <Button onClick={() => setDetail(null)}>Đóng</Button>
               {detail.status !== 'DONE' && (
                 <Button icon={<CheckOutlined />} onClick={() => setStatusQuick(detail, 'DONE', 'Đã đánh dấu hoàn thành')}>
@@ -405,7 +409,7 @@ export function AppointmentsPage() {
                 <Button danger icon={<StopOutlined />} onClick={() => void cancelOne(detail)}>Hủy lịch hẹn</Button>
               )}
               <Button type="primary" icon={<EditOutlined />} onClick={() => openEdit(detail)}>Sửa</Button>
-            </Space>
+            </Space></div>
           )
         }
       >

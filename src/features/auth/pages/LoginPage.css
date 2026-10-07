@@ -26,7 +26,7 @@
   --login-red-500: #ef4444;
   --login-red-600: #dc2626;
   --login-red-700: #b91c1c;
-  --login-font: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --login-font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .login-page {

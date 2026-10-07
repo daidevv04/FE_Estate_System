@@ -22,17 +22,17 @@ export function AppointmentDetail({ appointment: a, customerName, salesName }: P
 
   return (
     <div>
-      <Space align="start" size={12} style={{ justifyContent: 'space-between', width: '100%' }} wrap>
+      <Space className="appointment-detail__title" align="start" size={12} style={{ justifyContent: 'space-between', width: '100%' }} wrap>
         <Typography.Title level={5} style={{ margin: 0 }}>{a.title}</Typography.Title>
         <StatusPill status={a.status} overdue={isOverdue(a.status, a.endTime)} />
       </Space>
-      <div className="stitch-num" style={{ fontSize: 12.5, color: t.colorTextMuted, margin: '4px 0 16px' }}>
+      <div className="stitch-num appointment-detail__code">
         {appointmentCode(a)}
       </div>
 
       <div
-        className="stitch-panel"
-        style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}
+        className="stitch-panel appointment-detail__time"
+        style={{ display: 'flex', alignItems: 'center' }}
       >
         <span style={{
           width: 32, height: 32, borderRadius: t.radiusMd, display: 'grid', placeItems: 'center',
@@ -41,16 +41,16 @@ export function AppointmentDetail({ appointment: a, customerName, salesName }: P
           <ClockCircleOutlined />
         </span>
         <div style={{ lineHeight: 1.35 }}>
-          <div className="stitch-num" style={{ fontWeight: 600 }}>
+          <div className="stitch-num appointment-detail__time-main">
             {start.format('DD/MM/YYYY HH:mm')} → {end.format('HH:mm')}
           </div>
-          <div style={{ fontSize: 12.5, color: t.colorTextMuted }}>
+          <div className="appointment-detail__time-sub">
             {start.format('dddd')} · {duration}
           </div>
         </div>
       </div>
 
-      <Descriptions column={1} size="small" labelStyle={{ width: 150, color: t.colorTextMuted }} colon={false}>
+      <Descriptions className="appointment-detail__facts" column={1} size="small" labelStyle={{ width: 180, color: t.colorTextMuted }} colon={false}>
         <Descriptions.Item label={<Space size={6}><UserOutlined />Khách hàng</Space>}>
           <Link to={paths.customer(a.customerId)}>{customerName}</Link>
         </Descriptions.Item>
@@ -67,10 +67,6 @@ export function AppointmentDetail({ appointment: a, customerName, salesName }: P
           </Space>
         </Descriptions.Item>
       </Descriptions>
-
-      <div style={{ fontSize: 12.5, color: t.colorTextMuted }}>
-        Backend chỉ lưu lịch hẹn, không lưu nhật ký sửa đổi — chi tiết này không hiển thị lịch sử chỉnh sửa.
-      </div>
     </div>
   )
 }

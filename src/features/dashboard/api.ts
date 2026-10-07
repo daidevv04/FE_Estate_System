@@ -42,7 +42,7 @@ export interface LeadRow {
   id: UUID; customerId: UUID; productId: UUID; stage: LeadStage
   expectedValue: number | null; closeDate: string | null; assignedTo: UUID; createdAt: string
 }
-export interface ProductRow { id: UUID; projectId: UUID; code: string; block: string | null; price: number | null }
+export interface ProductRow { id: UUID; projectId: UUID; code: string; block: string | null; price: number | null; status: 'AVAILABLE' | 'RESERVED' | 'SOLD' }
 export interface ProjectRow { id: UUID; name: string; status: string }
 export interface CustomerRow { id: UUID; fullName: string; phone: string | null; status: string; createdAt: string }
 export interface UserRow { id: UUID; fullName: string; role: string; status: string }

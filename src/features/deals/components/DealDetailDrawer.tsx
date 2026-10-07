@@ -1,5 +1,5 @@
 import { CheckCircleOutlined, CloseCircleOutlined, EditOutlined, FilePdfOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Drawer, Empty, Popconfirm, Progress, Space, Table, Tag, Typography } from 'antd'
+import { Button, Card, Descriptions, Empty, Modal, Popconfirm, Progress, Space, Table, Tag, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { tokens as t } from '@/theme/tokens'
@@ -7,6 +7,7 @@ import {
   APPROVAL_STATUS_LABEL, DEAL_STATUS_LABEL, PAYMENT_STATUS_LABEL, paymentMethodLabel, progressPct,
   type Deal, type DealPayment,
 } from '../api'
+import './DealDetailDrawer.css'
 
 interface Props {
   open: boolean
@@ -47,7 +48,7 @@ const paymentTone = (deal: Deal) => {
   return t.colorError
 }
 
-/** Drawer chi tiết (khuôn 9.21 rút gọn): thông tin chung → tài chính → thanh toán → duyệt → file */
+/** Popup nổi chi tiết hợp đồng: dữ liệu thật, payment append-only, action sửa cố định ở footer. */
 export function DealDetailDrawer({
   open, deal, customerName, unitLabel, projectName, salesName, payments, collected,
   canApprove, submitting, loadingPayments, onClose, onApprove, onReject, onRecordPayment, onEdit,
@@ -72,26 +73,20 @@ export function DealDetailDrawer({
   ]
 
   return (
-    <Drawer
+    <Modal
       open={open}
-      onClose={onClose}
-      width={760}
-      title={deal ? (
-        <Space size={8} wrap>
-          <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{deal.contractCode}</span>
-          <Tag color={statusTone(deal)}>{DEAL_STATUS_LABEL[deal.status]}</Tag>
-          <Tag color={paymentTone(deal)}>{PAYMENT_STATUS_LABEL[deal.paymentStatus]}</Tag>
-        </Space>
-      ) : 'Chi tiết hợp đồng'}
-      extra={deal ? (
-        <Space wrap>
-          <Button icon={<EditOutlined />} onClick={onEdit}>Sửa</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={onRecordPayment}>Ghi nhận thanh toán</Button>
-        </Space>
-      ) : null}
+      onCancel={onClose}
+      width="92vw"
+      style={{ top: '5vh' }}
+      className="deal-detail-modal"
+      destroyOnHidden
+      title="Thông tin hợp đồng"
+      footer={deal && <div className="deal-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space><Button onClick={onClose}>Đóng</Button><Button icon={<PlusOutlined />} onClick={onRecordPayment}>Ghi nhận thanh toán</Button><Button type="primary" icon={<EditOutlined />} onClick={onEdit}>Chỉnh sửa</Button></Space></div>}
     >
       {!deal ? <Empty description="Không có dữ liệu hợp đồng" /> : (
-        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <div className="deal-detail-modal__content">
+          <div className="deal-detail-modal__hero"><div><Typography.Text type="secondary">MÃ HỢP ĐỒNG</Typography.Text><Typography.Title level={3}>{deal.contractCode}</Typography.Title><Space wrap size={[6, 6]}><Tag color={statusTone(deal)}>{DEAL_STATUS_LABEL[deal.status]}</Tag><Tag color={paymentTone(deal)}>{PAYMENT_STATUS_LABEL[deal.paymentStatus]}</Tag><Tag color={approvalTone(deal)}>{APPROVAL_STATUS_LABEL[deal.approvalStatus]}</Tag></Space></div><div className="deal-detail-modal__audit"><span>Ngày tạo</span><strong>{formatDateTime(deal.createdAt)}</strong><span>Cập nhật</span><strong>{formatDateTime(deal.updatedAt)}</strong></div></div>
+          <div className="deal-detail-modal__grid">
           <Card size="small" title="Thông tin chung">
             <Descriptions column={2} size="small" colon={false}>
               <Descriptions.Item label="Khách hàng">{customerName}</Descriptions.Item>
@@ -130,8 +125,9 @@ export function DealDetailDrawer({
               </Typography.Text>
             </div>
           </Card>
+          </div>
 
-          <Card
+          <Card className="deal-detail-modal__payments"
             size="small"
             title={`Các đợt thanh toán (${payments.length})`}
             extra={<Button size="small" type="primary" icon={<PlusOutlined />} onClick={onRecordPayment}>Ghi nhận</Button>}
@@ -151,7 +147,7 @@ export function DealDetailDrawer({
             </Typography.Text>
           </Card>
 
-          <Card size="small" title="Phê duyệt">
+          <Card className="deal-detail-modal__approval" size="small" title="Phê duyệt">
             <Descriptions column={2} size="small" colon={false}>
               <Descriptions.Item label="Trạng thái duyệt">
                 <Tag color={approvalTone(deal)}>{APPROVAL_STATUS_LABEL[deal.approvalStatus]}</Tag>
@@ -187,7 +183,7 @@ export function DealDetailDrawer({
             )}
           </Card>
 
-          <Card size="small" title="Tệp & ghi chú">
+          <Card className="deal-detail-modal__file" size="small" title="Tệp & ghi chú">
             {deal.fileUrl
               ? <Button icon={<FilePdfOutlined />} href={deal.fileUrl} target="_blank">Mở file hợp đồng</Button>
               : <Typography.Text type="secondary">Chưa có file hợp đồng</Typography.Text>}
@@ -195,9 +191,9 @@ export function DealDetailDrawer({
               {deal.note || <Typography.Text type="secondary">Không có ghi chú</Typography.Text>}
             </div>
           </Card>
-        </Space>
+        </div>
       )}
-    </Drawer>
+    </Modal>
   )
 }
 

@@ -26,7 +26,7 @@ export function AppTheme({ children }: { children: ReactNode }) {
           boxShadowTertiary: t.shadowMd,
         },
         components: {
-          Card: { borderRadiusLG: t.radiusXl, headerFontSize: 16 },
+          Card: { borderRadiusLG: t.radiusXl, headerFontSize: 15 },
           Modal: { borderRadiusLG: t.radius2xl },
           // Bảng Stitch: header xám lạnh in hoa 11px, hover dòng #F8FAFC, không kẻ dọc
           Table: {
@@ -34,9 +34,12 @@ export function AppTheme({ children }: { children: ReactNode }) {
             headerColor: t.colorTextMuted,
             headerSplitColor: 'transparent',
             rowHoverBg: t.colorSurfaceSunken,
-            headerBorderRadius: 0,
+            headerBorderRadius: t.radiusMd,
           },
-          Button: { borderRadius: t.radiusMd, controlHeight: 40 },
+          Button: { borderRadius: t.radiusMd, controlHeight: 40, fontWeight: 600 },
+          Input: { activeShadow: t.focusRing, hoverBorderColor: t.colorBrandHover },
+          Select: { optionSelectedBg: t.colorBrandBg, optionActiveBg: t.colorSurfaceSunken },
+          Menu: { itemBorderRadius: t.radiusMd, itemHeight: 44, groupTitleFontSize: 11 },
           Tag: { borderRadiusSM: t.radiusFull },
           Progress: { defaultColor: t.colorBrand },
           Layout: { headerBg: t.colorSurface, siderBg: t.colorSurface },

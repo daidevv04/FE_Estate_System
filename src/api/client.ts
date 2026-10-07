@@ -80,7 +80,8 @@ api.interceptors.response.use(
     }
 
     // 401 → thử refresh ĐÚNG 1 LẦN (dùng chung 1 promise cho mọi request song song), thành công thì gọi lại request cũ
-    if (error.response?.status === 401 && original && !original._retry && auth.refreshToken) {
+    const isPublicPasswordReset = original?.url?.startsWith('/auth/password-reset/')
+    if (error.response?.status === 401 && original && !isPublicPasswordReset && !original._retry && auth.refreshToken) {
       original._retry = true
       try {
         const data = await refreshSession()
@@ -92,7 +93,7 @@ api.interceptors.response.use(
     }
 
     // Vẫn 401 → kết thúc phiên, giữ URL hiện tại để quay lại sau khi đăng nhập (mục 9.32)
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isPublicPasswordReset) {
       auth.clear()
       const { pathname, search } = window.location
       if (!pathname.startsWith(paths.login)) {

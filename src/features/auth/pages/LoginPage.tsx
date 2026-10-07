@@ -46,7 +46,7 @@ const highlights = [
 ]
 
 /** Hoạ tiết SVG: đồi núi miền Trung + shophouse/Regal Towers + vòm Cầu Rồng + sóng biển — opacity .14 mix-blend-overlay */
-function BrandArt() {
+export function BrandArt() {
   return (
     <div className="login-brand-art" aria-hidden>
       <svg viewBox="0 0 700 900" fill="none" preserveAspectRatio="xMidYMax slice">

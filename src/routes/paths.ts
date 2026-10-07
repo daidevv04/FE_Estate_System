@@ -23,7 +23,9 @@ export const paths = {
 
   // F. Mẫu email
   emailTemplates: '/email-templates',
+  emailTemplateNew: '/email-templates/new',
   emailTemplate: (id = ':id') => `/email-templates/${id}`,
+  emailTemplateEdit: (id = ':id') => `/email-templates/${id}/edit`,
 
   // G. Dự án
   projects: '/projects',

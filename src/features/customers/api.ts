@@ -72,6 +72,16 @@ export function useCustomers() {
   })
 }
 
+/** Lấy bản ghi mới cho popup chi tiết, không dùng dữ liệu có thể đã cũ trong bảng. */
+export function useCustomer(id?: UUID) {
+  return useQuery({
+    queryKey: [...KEY, id],
+    enabled: Boolean(id),
+    retry: false,
+    queryFn: () => api.get<Customer>(`/customers/${id}`).then((r) => r.data),
+  })
+}
+
 /** Danh sách nhân viên để hiện tên + chọn người phụ trách; lỗi 403 thì coi như rỗng */
 export function useStaff() {
   return useQuery({

@@ -61,6 +61,7 @@ export function Header() {
 
   return (
     <AntHeader
+      className="app-header"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -94,6 +95,7 @@ export function Header() {
         onSelect={goTo}
       >
         <Input
+          className="app-header-search__input"
           ref={searchRef}
           allowClear
           prefix={<SearchOutlined style={{ color: token.colorTextPlaceholder }} />}
@@ -128,7 +130,7 @@ export function Header() {
             ],
           }}
         >
-          <Space size={10} style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}>
+          <Space className="app-header-profile" size={10} style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}>
             <Avatar style={{ background: token.colorPrimary }}>
               {(user?.fullName ?? user?.username ?? '?').charAt(0).toUpperCase()}
             </Avatar>

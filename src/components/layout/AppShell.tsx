@@ -5,6 +5,8 @@ import { api, refreshSession } from '@/api/client'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
+import { NotificationToastContainer } from '@/components/notification/NotificationToastContainer'
+
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
 
@@ -99,6 +101,7 @@ export function AppShell() {
           <Outlet />
         </Content>
       </Layout>
+      <NotificationToastContainer />
     </Layout>
   )
 }

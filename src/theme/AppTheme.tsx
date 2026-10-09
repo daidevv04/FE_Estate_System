@@ -27,7 +27,7 @@ export function AppTheme({ children }: { children: ReactNode }) {
         },
         components: {
           Card: { borderRadiusLG: t.radiusXl, headerFontSize: 15 },
-          Modal: { borderRadiusLG: t.radius2xl },
+          Modal: { borderRadiusLG: t.radius2xl, fontSize: 14 },
           // Bảng Stitch: header xám lạnh in hoa 11px, hover dòng #F8FAFC, không kẻ dọc
           Table: {
             headerBg: t.colorSurfaceSunken,

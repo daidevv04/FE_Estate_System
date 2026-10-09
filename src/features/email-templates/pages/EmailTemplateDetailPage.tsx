@@ -54,7 +54,7 @@ export function EmailTemplateDetailPage() {
       <PageHeader
         title={template?.name ?? 'Chi tiết mẫu email'}
         breadcrumb={[
-          { title: 'Chăm sóc' },
+          { title: 'Trang chủ', href: paths.dashboard },
           { title: 'Mẫu email', href: paths.emailTemplates },
           { title: 'Chi tiết' },
         ]}

@@ -21,11 +21,12 @@ export const paths = {
   appointments: '/appointments',
   appointment: (id = ':id') => `/appointments/${id}`,
 
-  // F. Mẫu email
+  // F. Mẫu email & Thông báo
   emailTemplates: '/email-templates',
   emailTemplateNew: '/email-templates/new',
   emailTemplate: (id = ':id') => `/email-templates/${id}`,
   emailTemplateEdit: (id = ':id') => `/email-templates/${id}/edit`,
+  notifications: '/notifications',
 
   // G. Dự án
   projects: '/projects',

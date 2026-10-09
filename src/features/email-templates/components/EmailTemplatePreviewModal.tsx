@@ -60,8 +60,8 @@ export function EmailTemplatePreviewModal({
     <Modal
       open={open}
       onCancel={onClose}
-      width="92vw"
-      style={{ top: '5vh', paddingBottom: 0 }}
+      width={960}
+      style={{ paddingBottom: 0 }}
       styles={{
         content: { display: 'flex', flexDirection: 'column', height: '90vh', padding: 0, overflow: 'hidden', borderRadius: 16 },
         header: { marginBottom: 0, padding: '20px 24px 18px', borderBottom: '1px solid #e5ebe7' },

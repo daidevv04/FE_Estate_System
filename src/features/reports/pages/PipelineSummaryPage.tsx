@@ -125,7 +125,7 @@ export function PipelineSummaryPage() {
 
   return <div className="pipeline-summary">
     <section className="pipeline-summary__head">
-      <div><div className="pipeline-summary__crumb">Báo cáo <span>/</span> Tổng quan Pipeline</div><div className="pipeline-summary__title"><h1>Tổng quan Pipeline Bán hàng</h1><span><i /> Dữ liệu lịch sử thật</span></div><p>Phân tích trạng thái lead đang có, event chuyển stage và hợp đồng đã ký trong kỳ đã chọn.</p></div>
+      <div><div className="pipeline-summary__title"><h1>Tổng quan Pipeline Bán hàng</h1><span><i /> Dữ liệu lịch sử thật</span></div><p>Phân tích trạng thái lead đang có, event chuyển stage và hợp đồng đã ký trong kỳ đã chọn.</p></div>
       <Space wrap className="pipeline-summary__actions"><Select value={range} onChange={setRange} options={rangeOptions} aria-label="Kỳ báo cáo" /><Select value={salesId} onChange={setSalesId} options={[{ value: 'all', label: 'Sales: Tất cả' }, ...report.people]} aria-label="Nhân viên sales" /><Tooltip title="Xuất số liệu pipeline đang lọc ra CSV"><Button type="primary" icon={<DownloadOutlined />} onClick={() => exportCsv(report.stages)}>Xuất báo cáo</Button></Tooltip><Tooltip title="Tải lại dữ liệu"><Button icon={<ReloadOutlined />} onClick={() => { data.refetch(); void summary.refetch() }} /></Tooltip></Space>
     </section>
 

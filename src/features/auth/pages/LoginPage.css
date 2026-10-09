@@ -26,7 +26,7 @@
   --login-red-500: #ef4444;
   --login-red-600: #dc2626;
   --login-red-700: #b91c1c;
-  --login-font: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --login-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .login-page {
@@ -371,6 +371,22 @@
 .login-submit.ant-btn .anticon { font-size: 16px; }
 
 .login-internal-note { margin: 16px 0 0; padding-top: 4px; text-align: center; color: var(--login-slate-400); font-size: 12px; line-height: 1.5; }
+.login-back-btn.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 14px auto 0;
+  padding: 0;
+  width: 100%;
+  color: var(--login-slate-600);
+  font-size: 13px;
+  font-weight: 500;
+}
+.login-back-btn.ant-btn:hover {
+  color: var(--login-emerald-700);
+}
+
 
 /* ---------- Pill hỗ trợ IT (ngoài card) ---------- */
 .login-support {

@@ -26,16 +26,148 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
   }
   const tone = customer ? statusTone(customer.status) : null
 
-  return <Modal open={Boolean(customerId)} onCancel={onClose} width="92vw" style={{ top: '5vh' }} className="customer-detail-modal" destroyOnHidden title="Thông tin khách hàng" footer={customer && <div className="customer-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space><Button onClick={onClose}>Đóng</Button>{canWrite && <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(customer)}>Chỉnh sửa</Button>}</Space></div>}>
-    {detail.isLoading ? <Skeleton active avatar paragraph={{ rows: 14 }} /> : !customer ? <Empty description={detail.isError ? 'Không thể tải thông tin khách hàng.' : 'Không tìm thấy khách hàng.'}><Button hidden={!detail.isError} onClick={() => void detail.refetch()}>Thử lại</Button></Empty> : <div className="customer-detail-modal__content">
-      <div className="customer-detail-modal__hero"><Avatar size={64} style={{ background: colorOf(customer.fullName) }}>{initials(customer.fullName)}</Avatar><div className="customer-detail-modal__identity"><Typography.Title level={3}>{customer.fullName}</Typography.Title><Typography.Text type="secondary">{customerCode(customer)}</Typography.Text><span className="customer-detail-modal__pill" style={{ background: tone!.bg, color: tone!.fg }}><i style={{ background: tone!.dot }} />{statusLabel(customer.status)}</span></div><div className="customer-detail-modal__audit"><span>Ngày tạo</span><strong>{date(customer.createdAt)}</strong><span>Cập nhật</span><strong>{date(customer.updatedAt)}</strong></div></div>
-      <div className="customer-detail-modal__grid">
-        <Card className="customer-detail-modal__card" size="small" title={<Space size={7}><IdcardOutlined />Hồ sơ khách hàng</Space>} extra="Thông tin liên hệ"><div className="customer-detail-modal__facts"><div><span>Họ và tên</span><strong>{customer.fullName}</strong></div><div><span>Mã khách hàng</span><strong>{customerCode(customer)}</strong></div><div><span><PhoneOutlined /> Số điện thoại</span><strong>{customer.phone || 'Chưa cập nhật'}</strong></div><div><span><MailOutlined /> Email</span><strong>{customer.email || 'Chưa cập nhật'}</strong></div><div><span><CalendarOutlined /> Tạo hồ sơ</span><strong>{date(customer.createdAt)}</strong></div><div><span>Cập nhật gần nhất</span><strong>{date(customer.updatedAt)}</strong></div></div></Card>
-        <Card className="customer-detail-modal__card" size="small" title={<Space size={7}><ThunderboltOutlined />Định hướng & nhu cầu</Space>} extra="Dữ liệu CRM"><div className="customer-detail-modal__facts customer-detail-modal__facts--one"><div><span>Nhu cầu bất động sản</span><strong>{demandLabel(customer.demandType)}</strong></div><div><span><EnvironmentOutlined /> Nguồn khách hàng</span><strong>{customer.source || 'Chưa cập nhật'}</strong></div><div><span>Trạng thái chăm sóc</span><span className="customer-detail-modal__pill" style={{ background: tone!.bg, color: tone!.fg }}><i style={{ background: tone!.dot }} />{statusLabel(customer.status)}</span></div></div></Card>
-      </div>
-      <Card className="customer-detail-modal__card" size="small" title={<Space size={7}><TeamOutlined />Phân công & phạm vi phụ trách</Space>}><div className="customer-detail-modal__owner"><Avatar size={42} icon={<UserOutlined />} style={{ background: owner ? colorOf(owner.fullName) : t.colorTextMuted }}>{owner ? initials(owner.fullName) : '?'}</Avatar><div><strong>{owner?.fullName ?? 'Chưa phân công nhân viên phụ trách'}</strong><span>{owner ? `${owner.role}${owner.status ? ` · ${owner.status}` : ''}` : 'Gán nhân viên phụ trách trong phần chỉnh sửa để theo dõi và chăm sóc.'}</span></div></div></Card>
-      <Card className="customer-detail-modal__card customer-detail-modal__note" size="small" title="Dữ liệu hoạt động CRM"><Typography.Paragraph>Nhật ký chăm sóc, lịch hẹn, lead và hợp đồng chưa có endpoint tổng hợp trong `CustomerResponse`. Popup chỉ hiển thị dữ liệu đã được API trả về để tránh số liệu sai.</Typography.Paragraph></Card>
-      {canWrite && <Card className="customer-detail-modal__card customer-detail-modal__danger" size="small" title={<Space size={7}><DeleteOutlined />Thao tác khách hàng (vùng nguy hiểm)</Space>}><div><strong>Xóa khách hàng vĩnh viễn</strong><span>Chỉ xóa khi không còn nhật ký chăm sóc hoặc lịch hẹn liên quan. Hành động không thể hoàn tác.</span><Button danger type="primary" icon={<DeleteOutlined />} loading={remove.isPending} onClick={removeCustomer}>Xóa khách hàng</Button></div></Card>}
-    </div>}
-  </Modal>
+  return (
+    <Modal
+      open={Boolean(customerId)}
+      onCancel={onClose}
+      width={880}
+      className="customer-detail-modal"
+      destroyOnHidden
+      title="Thông tin chi tiết khách hàng"
+      footer={
+        customer && (
+          <div className="customer-detail-modal__footer">
+            <Typography.Text>Dữ liệu được cập nhật tự động từ hệ thống CRM.</Typography.Text>
+            <Space>
+              <Button onClick={onClose}>Đóng</Button>
+              {canWrite && (
+                <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(customer)}>
+                  Chỉnh sửa
+                </Button>
+              )}
+            </Space>
+          </div>
+        )
+      }
+    >
+      {detail.isLoading ? (
+        <Skeleton active avatar paragraph={{ rows: 12 }} />
+      ) : !customer ? (
+        <Empty description={detail.isError ? 'Không thể tải thông tin khách hàng.' : 'Không tìm thấy khách hàng.'}>
+          <Button hidden={!detail.isError} onClick={() => void detail.refetch()}>Thử lại</Button>
+        </Empty>
+      ) : (
+        <div className="customer-detail-modal__content">
+          <div className="customer-detail-modal__hero">
+            <Avatar size={68} style={{ background: colorOf(customer.fullName) }}>
+              {initials(customer.fullName)}
+            </Avatar>
+            <div className="customer-detail-modal__identity">
+              <div className="customer-detail-modal__identity-top">
+                <Typography.Title level={3}>{customer.fullName}</Typography.Title>
+                <span className="customer-detail-modal__code-badge">{customerCode(customer)}</span>
+                <span className="customer-detail-modal__pill" style={{ background: tone!.bg, color: tone!.fg }}>
+                  <i style={{ background: tone!.dot }} />
+                  {statusLabel(customer.status)}
+                </span>
+              </div>
+            </div>
+            <div className="customer-detail-modal__audit">
+              <div>Ngày tạo: <strong>{date(customer.createdAt)}</strong></div>
+              <div>Cập nhật: <strong>{date(customer.updatedAt)}</strong></div>
+            </div>
+          </div>
+          <div className="customer-detail-modal__grid">
+            <Card
+              className="customer-detail-modal__card"
+              size="small"
+              title={<Space size={7}><IdcardOutlined />Hồ sơ khách hàng</Space>}
+              extra="Thông tin liên hệ"
+            >
+              <div className="customer-kv-list">
+                <div className="customer-kv-item"><span className="customer-kv-label"><UserOutlined /> Họ và tên</span><span className="customer-kv-value">{customer.fullName}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label">Mã khách hàng</span><span className="customer-kv-value">{customerCode(customer)}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label"><PhoneOutlined /> Số điện thoại</span><span className="customer-kv-value">{customer.phone || 'Chưa cập nhật'}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label"><MailOutlined /> Email</span><span className="customer-kv-value">{customer.email || 'Chưa cập nhật'}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label"><CalendarOutlined /> Tạo hồ sơ</span><span className="customer-kv-value">{date(customer.createdAt)}</span></div>
+              </div>
+            </Card>
+            <Card
+              className="customer-detail-modal__card"
+              size="small"
+              title={<Space size={7}><ThunderboltOutlined />Định hướng & nhu cầu</Space>}
+              extra="Dữ liệu bán hàng"
+            >
+              <div className="customer-kv-list">
+                <div className="customer-kv-item"><span className="customer-kv-label">Nhu cầu bất động sản</span><span className="customer-kv-value">{demandLabel(customer.demandType)}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label"><EnvironmentOutlined /> Nguồn khách hàng</span><span className="customer-kv-value">{customer.source || 'Chưa cập nhật'}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label">Trạng thái chăm sóc</span><span className="customer-detail-modal__pill" style={{ background: tone!.bg, color: tone!.fg }}><i style={{ background: tone!.dot }} />{statusLabel(customer.status)}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label">Phụ trách bởi</span><span className="customer-kv-value">{owner?.fullName ?? 'Chưa phân công'}</span></div>
+                <div className="customer-kv-item"><span className="customer-kv-label">Cập nhật gần nhất</span><span className="customer-kv-value">{date(customer.updatedAt)}</span></div>
+              </div>
+            </Card>
+          </div>
+          <Card
+            className="customer-detail-modal__card"
+            size="small"
+            title={<Space size={7}><TeamOutlined />Phân công & phạm vi phụ trách</Space>}
+          >
+            <div className="customer-detail-modal__owner">
+              <Avatar
+                size={44}
+                icon={<UserOutlined />}
+                style={{ background: owner ? colorOf(owner.fullName) : t.colorTextMuted }}
+              >
+                {owner ? initials(owner.fullName) : '?'}
+              </Avatar>
+              <div>
+                <strong>{owner?.fullName ?? 'Chưa phân công nhân viên phụ trách'}</strong>
+                <span>
+                  {owner
+                    ? `${owner.role}${owner.status ? ` · ${owner.status}` : ''}`
+                    : 'Gán nhân viên phụ trách trong phần chỉnh sửa để theo dõi và chăm sóc.'}
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          <Card
+            className="customer-detail-modal__card customer-detail-modal__crm-activity"
+            size="small"
+            title={<Space size={7}><CalendarOutlined />Hoạt động CRM gần đây</Space>}
+          >
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="Chưa có dữ liệu hoạt động CRM ghi nhận cho khách hàng này."
+              style={{ margin: '14px 0' }}
+            />
+          </Card>
+
+          {canWrite && (
+            <Card
+              className="customer-detail-modal__card customer-detail-modal__danger"
+              size="small"
+              title={<Space size={7}><DeleteOutlined />Thao tác khách hàng (vùng nguy hiểm)</Space>}
+            >
+              <div className="customer-detail-modal__danger-content">
+                <div className="customer-detail-modal__danger-text">
+                  <strong>Xóa khách hàng vĩnh viễn</strong>
+                  <span>Chỉ xóa khi không còn nhật ký chăm sóc hoặc hợp đồng liên quan. Hành động này không thể hoàn tác.</span>
+                </div>
+                <Button
+                  danger
+                  type="primary"
+                  icon={<DeleteOutlined />}
+                  loading={remove.isPending}
+                  onClick={removeCustomer}
+                >
+                  Xóa khách hàng
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+    </Modal>
+  )
 }

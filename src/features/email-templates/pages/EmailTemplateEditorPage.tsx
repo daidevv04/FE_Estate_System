@@ -116,7 +116,7 @@ export function EmailTemplateEditorPage() {
       <PageHeader
         title={heading}
         breadcrumb={[
-          { title: 'Chăm sóc' },
+          { title: 'Trang chủ', href: paths.dashboard },
           { title: 'Mẫu email', href: paths.emailTemplates },
           ...(isCreate ? [] : [{ title: template?.name ?? 'Chi tiết', href: backTo }]),
           { title: isCreate ? 'Tạo mới' : 'Biên soạn' },

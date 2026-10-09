@@ -8,6 +8,8 @@ import dayjs from 'dayjs'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { api } from '@/api/client'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { paths } from '@/routes/paths'
+
 import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import {
@@ -244,10 +246,10 @@ export function CustomersPage() {
       title: 'Khách hàng', dataIndex: 'fullName', width: 240,
       render: (_v, row) => (
         <button type="button" className="customer-table__identity" onClick={() => setDetailCustomerId(row.id)}>
-          <Avatar style={{ background: colorOf(row.fullName), fontWeight: 600 }}>{initials(row.fullName)}</Avatar>
-          <div style={{ lineHeight: 1.25 }}>
-            <div style={{ fontWeight: 600 }}>{row.fullName}</div>
-            <div className="stitch-num" style={{ fontSize: 12, color: t.colorTextMuted }}>{customerCode(row)}</div>
+          <Avatar size={34} style={{ background: colorOf(row.fullName), fontWeight: 700 }}>{initials(row.fullName)}</Avatar>
+          <div style={{ lineHeight: 1.3 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{row.fullName}</div>
+            <div className="stitch-num" style={{ fontSize: 13, color: t.colorBrand, fontWeight: 600 }}>{customerCode(row)}</div>
           </div>
         </button>
       ),
@@ -255,9 +257,9 @@ export function CustomersPage() {
     {
       title: 'Thông tin liên hệ', width: 210,
       render: (_v, row) => (
-        <div style={{ lineHeight: 1.3 }}>
-          <div className="stitch-num">{row.phone ?? '—'}</div>
-          <div style={{ fontSize: 12, color: t.colorTextMuted }}>{row.email ?? '—'}</div>
+        <div style={{ lineHeight: 1.35 }}>
+          <div className="stitch-num" style={{ fontSize: 14, fontWeight: 500 }}>{row.phone ?? '—'}</div>
+          <div style={{ fontSize: 13, color: t.colorTextMuted }}>{row.email ?? '—'}</div>
         </div>
       ),
     },
@@ -312,7 +314,7 @@ export function CustomersPage() {
     <>
       <PageHeader
         title="Danh sách khách hàng"
-        breadcrumb={[{ title: 'Trang chủ', href: '/dashboard' }, { title: 'Khách hàng' }]}
+        breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Khách hàng' }]}
         meta="Quản lý toàn bộ khách hàng, theo dõi hoạt động và phân công nhân viên phụ trách."
         actions={
           <>

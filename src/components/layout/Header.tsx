@@ -1,5 +1,5 @@
-import { BellOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SearchOutlined } from '@ant-design/icons'
-import { App, AutoComplete, Avatar, Badge, Button, Dropdown, Input, Layout, Space, Tooltip, theme } from 'antd'
+import { LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SearchOutlined } from '@ant-design/icons'
+import { AutoComplete, Avatar, Button, Dropdown, Input, Layout, Space, theme } from 'antd'
 import type { InputRef } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -8,6 +8,7 @@ import { api } from '@/api/client'
 import { paths } from '@/routes/paths'
 import { readRefreshToken, useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
+import { HeaderNotificationBox } from '@/components/notification/HeaderNotificationBox'
 
 const { Header: AntHeader } = Layout
 
@@ -17,7 +18,6 @@ const norm = (s: string) =>
 
 export function Header() {
   const navigate = useNavigate()
-  const { message } = App.useApp()
   const { token } = theme.useToken()
   const { sidebarCollapsed, toggleSidebar } = useUiStore()
   const { user, clear } = useAuthStore()
@@ -66,13 +66,11 @@ export function Header() {
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        padding: '0 16px',
-        borderBottom: `1px solid ${token.colorBorder}`,
-        // Design Stitch: header dính trên, trắng 85% + blur để nội dung cuộn phía sau không chói
-        background: 'rgba(255,255,255,.85)',
+        padding: '0 20px',
+        background: 'rgba(255,255,255,.92)',
         backdropFilter: 'blur(12px)',
         position: 'sticky',
-        top: 0,
+        top: 12,
         zIndex: 10,
       }}
     >
@@ -108,23 +106,13 @@ export function Header() {
         className="app-header-right"
         style={{ flex: '1 1 0', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}
       >
-        <Tooltip title="Thông báo">
-          <Badge dot>
-            <Button
-              type="text"
-              aria-label="Thông báo"
-              icon={<BellOutlined />}
-              onClick={() => message.info('Chưa có API thông báo — nối khi backend bổ sung /api/notifications')}
-            />
-          </Badge>
-        </Tooltip>
+        <HeaderNotificationBox />
 
         <Dropdown
-          trigger={['click']}
+          trigger={['hover']}
           menu={{
             items: [
               { key: 'profile', label: 'Hồ sơ cá nhân', onClick: () => navigate(paths.profile) },
-              { key: 'security', label: 'Bảo mật 2FA', onClick: () => navigate(paths.security) },
               { type: 'divider' },
               { key: 'logout', label: 'Đăng xuất', danger: true, icon: <LogoutOutlined />, onClick: logout },
             ],

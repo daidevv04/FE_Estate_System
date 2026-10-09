@@ -24,6 +24,8 @@ import { RevenueReportPage } from '@/features/reports/pages/RevenueReportPage'
 import { ProjectPerformanceReportPage } from '@/features/reports/pages/ProjectPerformanceReportPage'
 import { UserDetailPage } from '@/features/users/pages/UserDetailPage'
 import { UsersPage } from '@/features/users/pages/UsersPage'
+import { NotificationPage } from '@/features/notifications/pages/NotificationPage'
+
 import { paths } from './paths'
 import { ProtectedRoute } from './ProtectedRoute'
 
@@ -54,6 +56,7 @@ export const router = createBrowserRouter([
       { path: paths.emailTemplateNew, element: <EmailTemplateEditorPage /> },
       { path: paths.emailTemplateEdit(), element: <EmailTemplateEditorPage /> },
       { path: paths.emailTemplate(), element: <EmailTemplateDetailPage /> },
+      { path: paths.notifications, element: <NotificationPage /> },
       { path: paths.projects, element: <ProjectsPage /> },
       { path: paths.project(), element: <ProjectDetailPage /> },
       { path: paths.products, element: <ProductsPage /> },

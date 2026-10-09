@@ -1,5 +1,6 @@
 import {
   ApartmentOutlined,
+  ArrowLeftOutlined,
   ArrowRightOutlined,
   CheckCircleFilled,
   CloseCircleFilled,
@@ -80,6 +81,12 @@ export function LoginPage() {
   const [params] = useSearchParams()
   const [loading, setLoading] = useState(false)
   const [banner, setBanner] = useState<BannerState>(SECURED_BANNER)
+  const [twoFaMode, setTwoFaMode] = useState(false)
+  const [savedCredentials, setSavedCredentials] = useState<{
+    usernameOrEmail: string
+    password?: string
+    remember: boolean
+  } | null>(null)
   const setTokens = useAuthStore((s) => s.setTokens)
   const setUser = useAuthStore((s) => s.setUser)
 
@@ -108,9 +115,10 @@ export function LoginPage() {
   const onFinish = async (values: LoginForm) => {
     setLoading(true)
     setBanner(SECURED_BANNER)
+    const identifier = values.usernameOrEmail.trim()
     try {
       const { data } = await api.post<TokenResponse>('/auth/login', {
-        usernameOrEmail: values.usernameOrEmail,
+        usernameOrEmail: identifier,
         password: values.password,
       })
       setTokens(data, values.remember ?? false)
@@ -120,8 +128,40 @@ export function LoginPage() {
       const next = params.get('next')
       navigate(next ? decodeURIComponent(next) : paths.dashboard, { replace: true })
     } catch (e: unknown) {
-      const response = (e as { response?: { data?: { message?: string }; status?: number } }).response
+      const response = (e as {
+        response?: {
+          data?: { detail?: string; message?: string; title?: string; error?: string }
+          status?: number
+        }
+      }).response
       const status = response?.status
+      const detail = response?.data?.detail ?? response?.data?.message ?? response?.data?.error ?? ''
+      const lower = detail.toLowerCase()
+
+      // Backend ném 401 "Invalid TOTP code" khi tài khoản đã bật 2FA nhưng chưa gửi TOTP
+      const isTotpChallenge =
+        status === 401 &&
+        (detail === 'Invalid TOTP code' ||
+          lower.includes('totp') ||
+          lower.includes('2fa') ||
+          lower.includes('two-factor') ||
+          lower.includes('two factor') ||
+          lower.includes('second factor'))
+
+      if (isTotpChallenge) {
+        setSavedCredentials({
+          usernameOrEmail: identifier,
+          password: values.password,
+          remember: values.remember ?? false,
+        })
+        setTwoFaMode(true)
+        setBanner({
+          tone: 'secured',
+          text: 'Tài khoản đã kích hoạt 2FA. Vui lòng nhập mã xác thực từ ứng dụng Authenticator.',
+        })
+        return
+      }
+
       setBanner({
         tone: 'error',
         text:
@@ -129,15 +169,72 @@ export function LoginPage() {
             ? 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ít phút.'
             : status === 502 || status === 503
               ? 'Máy chủ đang khởi động lại (Render). Vui lòng chờ 1–2 phút rồi thử lại.'
-              : // Không có `response` = CORS chặn / sai địa chỉ API / mất mạng — KHÔNG phải sai mật khẩu.
-                // In ra địa chỉ API để biết bundle đang gọi backend nào (localhost hay Render).
-                status === undefined
+              : status === undefined
                 ? `Không kết nối được API ${API_BASE_URL}. Kiểm tra máy chủ đã lên chưa và CORS đã mở cho ${window.location.origin}.`
-                : (response?.data?.message ?? 'Tên đăng nhập hoặc mật khẩu không đúng'),
+                : status === 401 && (detail === 'Invalid credentials' || !detail)
+                  ? 'Tên đăng nhập hoặc mật khẩu không đúng'
+                  : (detail || 'Tên đăng nhập hoặc mật khẩu không đúng'),
       })
     } finally {
       setLoading(false)
     }
+  }
+
+  const onVerify2fa = async (code: string) => {
+    if (!savedCredentials) return
+    setLoading(true)
+    setBanner(SECURED_BANNER)
+    const trimmedCode = code.trim()
+    try {
+      let tokenData: TokenResponse
+      try {
+        const { data } = await api.post<TokenResponse>('/auth/2fa/verify', {
+          usernameOrEmail: savedCredentials.usernameOrEmail,
+          code: trimmedCode,
+        })
+        tokenData = data
+      } catch (err: unknown) {
+        const resp = (err as { response?: { status?: number } })?.response
+        // Fallback gọi /auth/login kèm totpCode nếu backend route /auth/2fa/verify bị 404
+        if (resp?.status === 404 && savedCredentials.password) {
+          const { data } = await api.post<TokenResponse>('/auth/login', {
+            usernameOrEmail: savedCredentials.usernameOrEmail,
+            password: savedCredentials.password,
+            totpCode: trimmedCode,
+          })
+          tokenData = data
+        } else {
+          throw err
+        }
+      }
+
+      setTokens(tokenData, savedCredentials.remember)
+      const me = await api.get('/users/me')
+      setUser(me.data)
+      setBanner({ tone: 'success', text: 'Xác thực thành công! Đang chuyển hướng tới Dashboard...' })
+      const next = params.get('next')
+      navigate(next ? decodeURIComponent(next) : paths.dashboard, { replace: true })
+    } catch (e: unknown) {
+      const response = (e as {
+        response?: { data?: { detail?: string; message?: string }; status?: number }
+      }).response
+      const status = response?.status
+      const detail = response?.data?.detail ?? response?.data?.message
+      setBanner({
+        tone: 'error',
+        text:
+          status === 401
+            ? 'Mã xác thực 2FA không chính xác hoặc đã hết hạn.'
+            : (detail || 'Xác thực hai lớp thất bại'),
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancel2fa = () => {
+    setTwoFaMode(false)
+    setBanner(SECURED_BANNER)
   }
 
   return (
@@ -200,64 +297,126 @@ export function LoginPage() {
             </div>
           </div>
 
-          <h2 className="login-card-title">Đăng nhập hệ thống</h2>
-          <p className="login-card-sub">Sử dụng tài khoản nội bộ để truy cập hệ thống CRM.</p>
+          <h2 className="login-card-title">{twoFaMode ? 'Xác thực hai lớp (2FA)' : 'Đăng nhập hệ thống'}</h2>
+          <p className="login-card-sub">
+            {twoFaMode
+              ? `Nhập mã xác thực gồm 6 chữ số từ ứng dụng Authenticator cho tài khoản ${savedCredentials?.usernameOrEmail ?? ''}.`
+              : 'Sử dụng tài khoản nội bộ để truy cập hệ thống CRM.'}
+          </p>
 
           <div className={`login-banner login-banner--${banner.tone}`} role="status" aria-live="polite">
             {bannerIcon(banner.tone)}
             <span>{banner.text}</span>
           </div>
 
-          <Form<LoginForm>
-            layout="vertical"
-            onFinish={onFinish}
-            disabled={loading}
-            requiredMark={false}
-          >
-            <Form.Item
-              name="usernameOrEmail"
-              label={
-                <span>
-                  Tên đăng nhập hoặc email <i className="login-required">*</i>
-                </span>
-              }
-              rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập hoặc email.' }]}
+          {twoFaMode ? (
+            <Form<{ code: string }>
+              layout="vertical"
+              onFinish={({ code }) => onVerify2fa(code)}
+              disabled={loading}
+              requiredMark={false}
             >
-              <Input prefix={<UserOutlined />} autoFocus autoComplete="username" placeholder="Nhập tên đăng nhập hoặc email" />
-            </Form.Item>
-            <Form.Item
-              name="password"
-              label={
-                <span>
-                  Mật khẩu <i className="login-required">*</i>
-                </span>
-              }
-              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu.' }]}
-            >
-              <Input.Password prefix={<LockOutlined />} autoComplete="current-password" placeholder="Nhập mật khẩu" />
-            </Form.Item>
-
-            <div className="login-options">
-              <Form.Item name="remember" valuePropName="checked" noStyle>
-                <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+              <Form.Item
+                name="code"
+                label={
+                  <span>
+                    Mã xác thực 2FA <i className="login-required">*</i>
+                  </span>
+                }
+                getValueFromEvent={(e) => (typeof e?.target?.value === 'string' ? e.target.value.replace(/\D/g, '').slice(0, 6) : '')}
+                rules={[
+                  { required: true, message: 'Vui lòng nhập mã xác thực.' },
+                  { pattern: /^\d{6}$/, message: 'Mã xác thực gồm 6 chữ số.' },
+                ]}
+              >
+                <Input
+                  prefix={<SafetyCertificateFilled />}
+                  autoFocus
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  placeholder="000000"
+                  style={{ textAlign: 'center', letterSpacing: 8, fontSize: 20, fontWeight: 700 }}
+                />
               </Form.Item>
-              <Button className="login-forgot" type="link" onClick={() => navigate(paths.forgotPassword)}>
-                Quên mật khẩu?
-              </Button>
-            </div>
 
-            <Button
-              className="login-submit"
-              type="primary"
-              htmlType="submit"
-              block
-              loading={loading}
-              icon={<ArrowRightOutlined />}
-              iconPosition="end"
+              <Button
+                className="login-submit"
+                type="primary"
+                htmlType="submit"
+                block
+                loading={loading}
+                icon={<ArrowRightOutlined />}
+                iconPosition="end"
+              >
+                {loading ? 'Đang xác thực...' : 'Xác thực & Đăng nhập'}
+              </Button>
+
+              <Button
+                className="login-back-btn"
+                type="link"
+                disabled={loading}
+                onClick={handleCancel2fa}
+              >
+                <ArrowLeftOutlined /> Quay lại đăng nhập
+              </Button>
+            </Form>
+          ) : (
+            <Form<LoginForm>
+              layout="vertical"
+              initialValues={{
+                usernameOrEmail: savedCredentials?.usernameOrEmail ?? '',
+                remember: savedCredentials?.remember ?? false,
+              }}
+              onFinish={onFinish}
+              disabled={loading}
+              requiredMark={false}
             >
-              {loading ? 'Đang xác thực...' : 'Đăng nhập'}
-            </Button>
-          </Form>
+              <Form.Item
+                name="usernameOrEmail"
+                label={
+                  <span>
+                    Tên đăng nhập hoặc email <i className="login-required">*</i>
+                  </span>
+                }
+                rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập hoặc email.' }]}
+              >
+                <Input prefix={<UserOutlined />} autoFocus autoComplete="username" placeholder="Nhập tên đăng nhập hoặc email" />
+              </Form.Item>
+              <Form.Item
+                name="password"
+                label={
+                  <span>
+                    Mật khẩu <i className="login-required">*</i>
+                  </span>
+                }
+                rules={[{ required: true, message: 'Vui lòng nhập mật khẩu.' }]}
+              >
+                <Input.Password prefix={<LockOutlined />} autoComplete="current-password" placeholder="Nhập mật khẩu" />
+              </Form.Item>
+
+              <div className="login-options">
+                <Form.Item name="remember" valuePropName="checked" noStyle>
+                  <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+                </Form.Item>
+                <Button className="login-forgot" type="link" onClick={() => navigate(paths.forgotPassword)}>
+                  Quên mật khẩu?
+                </Button>
+              </div>
+
+              <Button
+                className="login-submit"
+                type="primary"
+                htmlType="submit"
+                block
+                loading={loading}
+                icon={<ArrowRightOutlined />}
+                iconPosition="end"
+              >
+                {loading ? 'Đang xác thực...' : 'Đăng nhập'}
+              </Button>
+            </Form>
+          )}
 
           <p className="login-internal-note">Hệ thống nội bộ — Tài khoản do quản trị viên cấp</p>
         </div>

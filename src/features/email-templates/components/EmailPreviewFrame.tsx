@@ -17,7 +17,7 @@ export const emailSrcdoc = (html: string) => `<!doctype html>
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0; padding: 34px 40px; background: #fff; color: #1F2937;
-    font: 400 14px/1.7 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font: 400 14px/1.7 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     word-break: break-word; overflow-wrap: anywhere;
   }
   h1, h2, h3 { line-height: 1.3; }

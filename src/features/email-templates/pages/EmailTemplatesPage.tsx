@@ -40,7 +40,7 @@ export function EmailTemplatesPage() {
     <>
       <PageHeader
         title="Mẫu email chăm sóc khách hàng"
-        breadcrumb={[{ title: 'Chăm sóc' }, { title: 'Mẫu email' }]}
+        breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Mẫu email' }]}
         meta="Quản lý các mẫu email được sử dụng trong quá trình chăm sóc khách hàng."
         actions={
           canWrite && (

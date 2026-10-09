@@ -76,8 +76,7 @@ export function DealDetailDrawer({
     <Modal
       open={open}
       onCancel={onClose}
-      width="92vw"
-      style={{ top: '5vh' }}
+      width={920}
       className="deal-detail-modal"
       destroyOnHidden
       title="Thông tin hợp đồng"

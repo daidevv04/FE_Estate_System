@@ -15,7 +15,7 @@ export function ProjectDetailModal({ projectId, onClose, onEdit }: Props) {
   const project = detail.data
   const [imageFailed, setImageFailed] = useState(false)
 
-  return <Modal open={Boolean(projectId)} onCancel={onClose} width="92vw" style={{ top: '5vh' }} className="project-detail-modal" destroyOnHidden title="Thông tin dự án" footer={project && <div className="project-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space><Button onClick={onClose}>Đóng</Button><Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(project)}>Chỉnh sửa</Button></Space></div>}>
+  return <Modal open={Boolean(projectId)} onCancel={onClose} width={920} className="project-detail-modal" destroyOnHidden title="Thông tin dự án" footer={project && <div className="project-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space><Button onClick={onClose}>Đóng</Button><Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(project)}>Chỉnh sửa</Button></Space></div>}>
     {detail.isLoading ? <Skeleton active avatar paragraph={{ rows: 12 }} /> : !project ? <Empty description={detail.isError ? 'Không thể tải thông tin dự án.' : 'Không tìm thấy dự án.'}><Button hidden={!detail.isError} onClick={() => void detail.refetch()}>Thử lại</Button></Empty> : <div className="project-detail-modal__content">
       <div className="project-detail-modal__hero">
         <div className="project-detail-modal__cover">{project.imageUrl && !imageFailed ? <img src={project.imageUrl} alt={`Ảnh dự án ${project.name}`} onError={() => setImageFailed(true)} /> : <PictureOutlined />}</div>

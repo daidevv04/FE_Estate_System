@@ -9,6 +9,8 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { paths } from '@/routes/paths'
+
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useCustomers, useStaff } from '@/features/customers/api'
 import { useAuthStore } from '@/store/authStore'
@@ -234,7 +236,7 @@ export function AppointmentsPage() {
     <>
       <PageHeader
         title="Lịch hẹn"
-        breadcrumb={[{ title: 'Trang chủ', href: '/dashboard' }, { title: 'Lịch hẹn' }]}
+        breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Lịch hẹn' }]}
         meta={
           canViewAll
             ? `Quản lý lịch hẹn khách hàng trên toàn hệ thống · Tuần ${weekStart.format(DATE)} – ${weekStart.add(6, 'day').format(DATE)}`
@@ -391,8 +393,7 @@ export function AppointmentsPage() {
       <Modal
         open={Boolean(detail)}
         onCancel={() => setDetail(null)}
-        width="92vw"
-        style={{ top: '5vh' }}
+        width={880}
         className="appointment-detail-modal"
         destroyOnHidden
         title="Chi tiết lịch hẹn"

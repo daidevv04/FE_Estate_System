@@ -4,8 +4,30 @@
 
 body {
   background: #f9f9ff;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #111c2d;
+}
+
+/* Căn giữa màn hình tất cả modal chuẩn UX: căn giữa flexbox, hỗ trợ cuộn nếu nội dung dài */
+.ant-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+.ant-modal {
+  top: 0 !important;
+  margin: auto !important;
+  padding-bottom: 0 !important;
+}
+.ant-modal-content {
+  max-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+}
+.ant-modal-body {
+  overflow-y: auto;
 }
 
 /* label-sm trong designMd: 11px/600 hoa, giÃ£n nhÃ£n 0.02em */
@@ -83,26 +105,26 @@ h1, h2, h3, h4, h5,
 /* ===== Tổng quan: scan nhanh, không thay báo cáo chi tiết ===== */
 .overview-dashboard { display: flex; flex-direction: column; gap: 20px; max-width: 1440px; margin: 0 auto; }
 .overview-dashboard__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
-.overview-dashboard__eyebrow { margin-bottom: 6px; color: #006b2c; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.overview-dashboard__eyebrow { margin-bottom: 6px; color: #006b2c; font-size: 12px; font-weight: 800; letter-spacing: .08em; }
 .overview-dashboard__head h1 { margin: 0; color: #122219; font-size: 28px; line-height: 1.2; letter-spacing: -.045em; }
 .overview-dashboard__head p { margin: 7px 0 0; color: #718076; font-size: 13px; }
 .overview-dashboard__actions { display: flex; gap: 8px; align-items: center; }.overview-dashboard__actions .ant-segmented { padding: 4px; }
 .overview-dashboard__kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .overview-kpi { position: relative; overflow: hidden; min-height: 154px; border: 1px solid #e4ece7; border-radius: 16px; box-shadow: none; }.overview-kpi .ant-card-body { padding: 19px; display: flex; flex-direction: column; align-items: flex-start; }.overview-kpi--green { background: #f5fcf7; }.overview-kpi--blue { background: #f5faff; }.overview-kpi--amber { background: #fffbf1; }
 .overview-kpi__icon { position: absolute; top: 18px; right: 18px; display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #e7f6eb; color: #087b36; font-size: 17px; }.overview-kpi--blue .overview-kpi__icon { background: #e6f4ff; color: #1575b9; }.overview-kpi--amber .overview-kpi__icon { background: #fff0cf; color: #ad6e00; }
-.overview-kpi__label { color: #65766b; font-size: 11px; font-weight: 700; letter-spacing: .035em; text-transform: uppercase; }.overview-kpi__value { margin: 15px 0 6px; color: #15261c; font-size: clamp(23px, 2vw, 31px); line-height: 1; letter-spacing: -.065em; white-space: nowrap; }.overview-kpi small { color: #718076; font-size: 11px; }
+.overview-kpi__label { color: #65766b; font-size: 12px; font-weight: 700; letter-spacing: .035em; text-transform: uppercase; }.overview-kpi__value { margin: 15px 0 6px; color: #15261c; font-size: clamp(23px, 2vw, 31px); line-height: 1; letter-spacing: -.065em; white-space: nowrap; }.overview-kpi small { color: #718076; font-size: 12px; }
 .overview-dashboard__content { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(400px, .9fr); gap: 20px; }.overview-dashboard__chart, .overview-dashboard__deals { min-width: 0; }.overview-dashboard__chart .ant-card-body, .overview-dashboard__deals .ant-card-body { padding: 22px 24px; }
-.overview-dashboard__section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }.overview-dashboard__section-head h2 { margin: 0; color: #1a2b20; font-size: 16px; }.overview-dashboard__section-head p { margin: 5px 0 0; color: #718076; font-size: 12px; }.overview-dashboard__section-head > strong { color: #087b36; font-size: 15px; white-space: nowrap; }.overview-dashboard__chart-area { height: 266px; margin-top: 18px; }
+.overview-dashboard__section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }.overview-dashboard__section-head h2 { margin: 0; color: #1a2b20; font-size: 16px; }.overview-dashboard__section-head p { margin: 5px 0 0; color: #718076; font-size: 13px; }.overview-dashboard__section-head > strong { color: #087b36; font-size: 15px; white-space: nowrap; }.overview-dashboard__chart-area { height: 266px; margin-top: 18px; }
 .overview-dashboard__deals .ant-table { margin-top: 18px; border: 0; }.overview-dashboard__deals .ant-table-thead > tr > th { padding: 8px 9px; background: transparent; }.overview-dashboard__deals .ant-table-tbody > tr > td { padding: 12px 9px; }
-.overview-dashboard__operations { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 20px; }.overview-dashboard__attention .ant-card-body, .overview-dashboard__inventory .ant-card-body { padding: 20px 24px; }.overview-dashboard__section-head .ant-btn-link { height: auto; min-height: 0; padding: 0; font-size: 12px; }
-.overview-attention-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 17px; }.overview-attention { display: flex; min-width: 0; gap: 10px; align-items: center; padding: 10px; border: 1px solid #e9efeb; border-radius: 11px; background: #fff; text-align: left; cursor: pointer; transition: background .15s, border-color .15s; }.overview-attention:hover { border-color: #b5d7c0; background: #f7fcf8; }.overview-attention > span { display: grid; flex: 0 0 auto; width: 30px; height: 30px; place-items: center; border-radius: 9px; }.overview-attention--blue > span { color: #1575b9; background: #e6f4ff; }.overview-attention--amber > span { color: #ad6e00; background: #fff0cf; }.overview-attention--red > span { color: #b42318; background: #ffebe9; }.overview-attention div { min-width: 0; }.overview-attention strong, .overview-attention small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.overview-attention strong { color: #24382b; font-size: 12px; }.overview-attention small { margin-top: 2px; color: #7a8a80; font-size: 10px; }
-.overview-inventory__total { display: flex; align-items: baseline; gap: 8px; margin: 17px 0 13px; }.overview-inventory__total strong { color: #087b36; font-size: 30px; letter-spacing: -.07em; }.overview-inventory__total span { color: #65766b; font-size: 12px; }.overview-inventory__bar { display: flex; height: 9px; overflow: hidden; border-radius: 99px; background: #edf1ee; }.overview-inventory__bar i { display: block; min-width: 0; }.overview-inventory__bar .available, .overview-inventory__legend .available { background: #16a34a; }.overview-inventory__bar .reserved, .overview-inventory__legend .reserved { background: #f59e0b; }.overview-inventory__bar .sold, .overview-inventory__legend .sold { background: #0d9488; }.overview-inventory__legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 13px; color: #687970; font-size: 11px; }.overview-inventory__legend span { display: inline-flex; align-items: center; gap: 5px; }.overview-inventory__legend i { width: 7px; height: 7px; border-radius: 50%; }.overview-inventory__legend b { color: #263a2d; }
-.overview-status { display: inline-block; padding: 3px 7px; border-radius: 99px; font-size: 10px; font-weight: 700; white-space: nowrap; }.overview-status--warning { color: #9a6500; background: #fff1cf; }.overview-status--ok { color: #287344; background: #e8f7ed; }
+.overview-dashboard__operations { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 20px; }.overview-dashboard__attention .ant-card-body, .overview-dashboard__inventory .ant-card-body { padding: 20px 24px; }.overview-dashboard__section-head .ant-btn-link { height: auto; min-height: 0; padding: 0; font-size: 13px; }
+.overview-attention-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 17px; }.overview-attention { display: flex; min-width: 0; gap: 10px; align-items: center; padding: 10px; border: 1px solid #e9efeb; border-radius: 11px; background: #fff; text-align: left; cursor: pointer; transition: background .15s, border-color .15s; }.overview-attention:hover { border-color: #b5d7c0; background: #f7fcf8; }.overview-attention > span { display: grid; flex: 0 0 auto; width: 30px; height: 30px; place-items: center; border-radius: 9px; }.overview-attention--blue > span { color: #1575b9; background: #e6f4ff; }.overview-attention--amber > span { color: #ad6e00; background: #fff0cf; }.overview-attention--red > span { color: #b42318; background: #ffebe9; }.overview-attention div { min-width: 0; }.overview-attention strong, .overview-attention small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.overview-attention strong { color: #24382b; font-size: 13px; }.overview-attention small { margin-top: 2px; color: #7a8a80; font-size: 12px; }
+.overview-inventory__total { display: flex; align-items: baseline; gap: 8px; margin: 17px 0 13px; }.overview-inventory__total strong { color: #087b36; font-size: 30px; letter-spacing: -.07em; }.overview-inventory__total span { color: #65766b; font-size: 13px; }.overview-inventory__bar { display: flex; height: 9px; overflow: hidden; border-radius: 99px; background: #edf1ee; }.overview-inventory__bar i { display: block; min-width: 0; }.overview-inventory__bar .available, .overview-inventory__legend .available { background: #16a34a; }.overview-inventory__bar .reserved, .overview-inventory__legend .reserved { background: #f59e0b; }.overview-inventory__bar .sold, .overview-inventory__legend .sold { background: #0d9488; }.overview-inventory__legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 13px; color: #687970; font-size: 13px; }.overview-inventory__legend span { display: inline-flex; align-items: center; gap: 5px; }.overview-inventory__legend i { width: 7px; height: 7px; border-radius: 50%; }.overview-inventory__legend b { color: #263a2d; }
+.overview-status { display: inline-block; padding: 3px 7px; border-radius: 99px; font-size: 12px; font-weight: 700; white-space: nowrap; }.overview-status--warning { color: #9a6500; background: #fff1cf; }.overview-status--ok { color: #287344; background: #e8f7ed; }
 @media (max-width: 1000px) { .overview-dashboard__kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }.overview-dashboard__operations, .overview-dashboard__content { grid-template-columns: 1fr; }.overview-dashboard__head { align-items: flex-start; flex-direction: column; }.overview-dashboard__actions { width: 100%; justify-content: space-between; }.overview-dashboard__actions .ant-segmented { max-width: calc(100% - 48px); overflow-x: auto; } }
 @media (max-width: 560px) { .overview-dashboard { gap: 16px; }.overview-dashboard__kpis { gap: 10px; }.overview-kpi { min-height: 138px; }.overview-kpi .ant-card-body { padding: 15px; }.overview-kpi__icon { top: 13px; right: 13px; }.overview-kpi__value { font-size: 22px; }.overview-dashboard__chart .ant-card-body, .overview-dashboard__deals .ant-card-body { padding: 18px 14px; }.overview-dashboard__chart-area { height: 230px; }.overview-dashboard__deals .ant-table-thead > tr > th, .overview-dashboard__deals .ant-table-tbody > tr > td { padding-left: 5px; padding-right: 5px; font-size: 11px; } }
 
 /* ── Mono green workspace: foundation dùng chung mọi màn ── */
-:root { --crm-font: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; --crm-radius: 14px; --crm-radius-lg: 20px; --crm-shadow: 0 14px 36px -28px rgba(15, 47, 31, .45), 0 2px 8px rgba(15, 47, 31, .035); }
+:root { --crm-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; --crm-radius: 14px; --crm-radius-lg: 20px; --crm-shadow: 0 14px 36px -28px rgba(15, 47, 31, .45), 0 2px 8px rgba(15, 47, 31, .035); }
 html { min-width: 320px; background: #f5f8f6; }
 body, button, input, textarea, select, .ant-app, .ant-typography, .ant-btn, .ant-input, .ant-select, .ant-menu, .ant-table, .ant-modal, .ant-dropdown, .ant-form, .ant-pagination, .ant-descriptions, .ant-breadcrumb { font-family: var(--crm-font) !important; }
 /* CSS cũ có font shorthand theo từng feature. Ép một family duy nhất, không chạm font glyph của Ant icons. */
@@ -118,7 +140,7 @@ h1, h2, h3, h4, h5, .ant-typography h1, .ant-typography h2, .ant-typography h3, 
 .ant-input, .ant-input-affix-wrapper, .ant-picker, .ant-input-number { min-height: 40px; }
 .ant-select-single { min-height: 40px; }.ant-select-single .ant-select-selector { min-height: 40px !important; padding-inline: 12px !important; }.ant-select-single .ant-select-selection-item, .ant-select-single .ant-select-selection-placeholder { line-height: 38px !important; }
 .ant-input:focus, .ant-input-focused, .ant-input-affix-wrapper:focus, .ant-input-affix-wrapper-focused, .ant-select-focused .ant-select-selector, .ant-picker-focused { box-shadow: 0 0 0 3px rgba(22, 163, 74, .12) !important; }
-.ant-form-item-label > label { font-size: 12px; font-weight: 700; }.ant-form-item-explain, .ant-form-item-extra { font-size: 11px; }
+.ant-form-item-label > label { font-size: 13px; font-weight: 700; }.ant-form-item-explain, .ant-form-item-extra { font-size: 12px; }
 .ant-modal-mask { background: rgba(12, 31, 22, .48) !important; backdrop-filter: blur(4px); }.ant-modal-content { border: 1px solid rgba(228, 231, 240, .95); box-shadow: 0 28px 68px -20px rgba(10, 34, 22, .28) !important; }.ant-modal-header { border-bottom: 1px solid #edf1ee; }.ant-modal-title { font-weight: 700; }.ant-modal-close { border-radius: 10px; }.ant-modal-close:hover { background: #edf9f1; color: #006b2c; }
 .ant-dropdown .ant-dropdown-menu { padding: 6px; border: 1px solid #e4e7f0; border-radius: 14px; box-shadow: 0 18px 38px -20px rgba(15, 23, 42, .28); }.ant-dropdown-menu-item { border-radius: 9px; }
 .stitch-card { border-radius: var(--crm-radius-lg); box-shadow: var(--crm-shadow); transition: box-shadow .18s ease, transform .18s ease; }.stitch-card:hover { box-shadow: 0 18px 40px -30px rgba(15, 47, 31, .52), 0 3px 10px rgba(15, 47, 31, .04); }
@@ -160,6 +182,18 @@ h1, h2, h3, h4, h5, .ant-typography h1, .ant-typography h2, .ant-typography h3, 
 .ant-tag { font-size: 13px; }
 .ant-descriptions .ant-descriptions-item-label { font-size: 13px; }
 .ant-descriptions .ant-descriptions-item-content { font-size: 14px; }
+
+/* ── Global floor: nâng cỡ chữ tối thiểu toàn hệ thống cho dễ đọc ── */
+.ant-form-item-label > label { font-size: 13px; font-weight: 700; }
+.ant-form-item-explain, .ant-form-item-extra { font-size: 12px; }
+.ant-modal-title { font-size: 16px; }
+.ant-card-head-title { font-size: 15px; }
+.ant-btn { font-size: 14px; }
+.ant-input, .ant-input-affix-wrapper, .ant-select-selector, .ant-picker, .ant-input-number { font-size: 14px; }
+.page-header__meta { font-size: 13px; }
+.page-header__breadcrumb { font-size: 13px; }
+.stitch-pill { font-size: 13px; }
+.stitch-label { font-size: 12px; }
 
 /* â”€â”€ Lá»‹ch tuáº§n mÃ n 9.10: cá»™t giá» bÃªn trÃ¡i + 7 cá»™t ngÃ y, cuá»™n ngang khi háº¹p â”€â”€ */
 /*
@@ -866,6 +900,127 @@ h1, h2, h3, h4, h5, .ant-typography h1, .ant-typography h2, .ant-typography h3, 
 @media (prefers-reduced-motion: reduce) {
   .cal-event { transition: none; }
 }
+
+
+/* ── Scale-up: nâng cỡ chữ tối thiểu trong popup detail & form modals ── */
+
+/* Modal title → 16px */
+.customer-detail-modal .ant-modal-title,
+.deal-detail-modal .ant-modal-title,
+.product-detail-modal .ant-modal-title,
+.project-detail-modal .ant-modal-title,
+.user-detail-modal .ant-modal-title,
+.appointment-detail-modal .ant-modal-title,
+.create-user-modal .ant-modal-title { font-size: 16px; }
+
+/* Footer text */
+.customer-detail-modal__footer .ant-typography,
+.deal-detail-modal__footer .ant-typography,
+.product-detail-modal__footer .ant-typography,
+.project-detail-modal__footer .ant-typography,
+.user-detail-modal__footer .ant-typography,
+.appointment-detail-modal__footer .ant-typography { font-size: 12px; }
+
+/* Footer buttons */
+.customer-detail-modal__footer .ant-btn,
+.deal-detail-modal__footer .ant-btn,
+.product-detail-modal__footer .ant-btn,
+.project-detail-modal__footer .ant-btn,
+.user-detail-modal__footer .ant-btn,
+.appointment-detail-modal__footer .ant-btn { height: 38px; font-size: 13px; }
+
+/* Hero name */
+.customer-detail-modal__hero .ant-typography,
+.user-detail-modal__hero .ant-typography { font-size: 20px; }
+.deal-detail-modal__hero .ant-typography h3,
+.project-detail-modal__identity .ant-typography h3 { font-size: 21px; }
+
+/* Secondary text in hero */
+.customer-detail-modal__hero .ant-typography-secondary,
+.deal-detail-modal__hero .ant-typography-secondary,
+.product-detail-modal__identity .ant-typography-secondary,
+.project-detail-modal__identity .ant-typography-secondary,
+.user-detail-modal__hero .ant-typography-secondary { font-size: 13px; }
+
+/* Audit dates */
+.customer-detail-modal__audit, .deal-detail-modal__audit, .product-detail-modal__audit, .project-detail-modal__audit, .user-detail-modal__audit { font-size: 11px; }
+.customer-detail-modal__audit strong, .deal-detail-modal__audit strong, .product-detail-modal__audit strong, .project-detail-modal__audit strong, .user-detail-modal__audit strong { font-size: 12px; }
+
+/* Card section titles + extra */
+.customer-detail-modal__card .ant-card-head-title, .deal-detail-modal .ant-card-head-title, .product-detail-modal__card .ant-card-head-title, .project-detail-modal__card .ant-card-head-title { font-size: 13px; }
+.customer-detail-modal__card .ant-card-extra, .project-detail-modal__card .ant-card-extra { font-size: 11px; }
+
+/* Fact labels / values */
+.customer-detail-modal__facts span, .project-detail-modal__facts span, .detail-facts span { font-size: 12px; }
+.customer-detail-modal__facts strong, .project-detail-modal__facts strong, .detail-facts strong { font-size: 13px; }
+
+/* Deal/product descriptions */
+.deal-detail-modal .ant-descriptions-item-label { font-size: 12px; }
+.deal-detail-modal .ant-descriptions-item-content { font-size: 13px; }
+
+/* Tags / pills */
+.customer-detail-modal__pill, .deal-detail-modal__hero .ant-tag, .project-detail-modal__identity .ant-tag { font-size: 12px; }
+
+/* Owner / danger */
+.customer-detail-modal__owner strong { font-size: 14px; }
+.customer-detail-modal__owner span { font-size: 13px; }
+.customer-detail-modal__danger strong { font-size: 14px; }
+.customer-detail-modal__danger span { font-size: 13px; }
+.customer-detail-modal__danger .ant-btn { font-size: 13px; height: 38px; }
+
+/* User detail, security, danger zone */
+.user-section .ant-card-head-title { font-size: 14px; }
+.user-section .ant-card-extra { font-size: 12px; }
+.security-state strong { font-size: 13px; }
+.security-state span { font-size: 11px; }
+.security-state > b { font-size: 10px; }
+.user-profile-foot { font-size: 11px; }
+.user-readonly { font-size: 11px; }
+.user-danger-zone .ant-card-body > .ant-typography { font-size: 12px; }
+.user-danger-actions strong { font-size: 12px; }
+.user-danger-actions span { font-size: 11px; }
+.user-danger-actions .ant-btn { height: 32px; font-size: 12px; }
+.role-access-cards strong { font-size: 12px; }
+.role-access-cards span { font-size: 11px; }
+.role-access-cards b { font-size: 10px; }
+
+/* Create user modal */
+.create-user-modal__footer .ant-typography { font-size: 12px; }
+.create-user-modal__footer .ant-btn { height: 36px; font-size: 13px; }
+.create-user-form h3 { font-size: 11px; }
+.create-user-form .ant-form-item-label > label { font-size: 12px; }
+.create-user-form .ant-input, .create-user-form .ant-input-affix-wrapper { min-height: 38px; font-size: 13px; }
+.create-user-form .ant-form-item-extra { font-size: 11px; }
+
+/* User detail form (edit in drawer) */
+.user-detail-form .ant-form-item-label > label { font-size: 12px; }
+.user-detail-form .ant-input, .user-detail-form .ant-input-affix-wrapper, .user-detail-form .ant-select-selector { min-height: 38px !important; font-size: 13px; }
+.user-detail-form .ant-form-item-extra { font-size: 11px; }
+
+/* Profile page */
+.profile-form .ant-form-item-label > label { font-size: 12px; }
+.profile-form .ant-form-item-extra { font-size: 11px; }
+.profile-security__item strong { font-size: 13px; }
+.profile-security__item small { font-size: 12px; }
+
+/* Appointment detail */
+.appointment-detail__code { font-size: 14px; }
+.appointment-detail__time-sub { font-size: 14px; }
+.appointment-detail__facts .ant-descriptions-item-label { font-size: 14px; }
+.appointment-detail__facts .ant-descriptions-item-content { font-size: 15px; }
+
+/* Deal payments table */
+.deal-detail-modal__payments .ant-table { font-size: 12px; }
+.deal-detail-modal__payments .ant-table-thead > tr > th { font-size: 11px; }
+
+/* User hero on detail page */
+.user-hero__audit { font-size: 12px; }
+.user-hero__audit strong { font-size: 13px; }
+.user-hero__actions .ant-btn { font-size: 13px; }
+
+/* Sidebar menu */
+.app-sidebar-menu .ant-menu-item-group-title { font-size: 11px; }
+
 
 /* ── Shell spacing: sidebar và header là hai surface độc lập, không dính mép nhau. ── */
 .app-shell__sider { margin-right: 12px; }

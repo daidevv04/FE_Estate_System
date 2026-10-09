@@ -1,6 +1,7 @@
 import {
   AppstoreOutlined,
   BarChartOutlined,
+  BellOutlined,
   CalendarOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -48,6 +49,7 @@ export function buildNav(role?: UserRole): NavGroup[] {
     ] },
     { key: 'g-care', label: 'CHĂM SÓC', children: [
       { key: paths.emailTemplates, icon: <MailOutlined />, label: 'Mẫu email' },
+      { key: paths.notifications, icon: <BellOutlined />, label: 'Quản lý thông báo' },
     ] },
   ]
 

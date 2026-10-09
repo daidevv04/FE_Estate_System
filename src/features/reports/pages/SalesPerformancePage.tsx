@@ -129,7 +129,6 @@ export function SalesPerformancePage() {
   return <div className="sales-performance">
     <section className="sales-performance__head">
       <div>
-        <div className="sales-performance__crumb">Báo cáo <span>/</span> Hiệu suất Sales</div>
         <div className="sales-performance__title-row"><h1>Hiệu suất Sales</h1><span className="sales-live"><i /> Dữ liệu thật đang tải</span></div>
         <p>Đánh giá hoạt động và kết quả kinh doanh của đội ngũ Sales theo thời gian thực.</p>
       </div>

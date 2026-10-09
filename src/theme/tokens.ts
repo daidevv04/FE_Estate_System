@@ -39,9 +39,9 @@ export const tokens = {
     DemandType: { BUY: '#4F46E5', SELL: '#F59E0B' },
   },
 
-  // Một font JetBrains Mono cho toàn CRM: nhịp chữ, số và bảng đồng nhất.
-  fontHeading: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-  fontBody: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  // Inter cho toàn CRM: dễ đọc, hỗ trợ tiếng Việt tốt, số bảng vẫn rõ.
+  fontHeading: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  fontBody: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 
   radiusSm: 8, radiusMd: 12, radiusLg: 16, radiusXl: 20, radius2xl: 24, radiusFull: 9999,
   controlHeight: 44, controlHeightLg: 48, tableRowHeight: 56,

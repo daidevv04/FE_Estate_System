@@ -18,7 +18,6 @@ interface Props {
   onClose: () => void
 }
 
-/** Nhãn viết HOA + mã enum, đúng cách Stitch hiển thị: "HỢP ĐỒNG & GỬI CHỐ (CONTRACT)". */
 const CATEGORY_TEXT: Record<string, string> = {
   WELCOME: 'CHÀO MỪNG',
   FOLLOW_UP: 'THEO DÕI',
@@ -29,18 +28,14 @@ const STATUS_TEXT: Record<string, string> = {
   ACTIVE: 'Đang hoạt động',
   INACTIVE: 'Ngừng hoạt động',
 }
-/** Backend không có sender/recipient. Chỉ hiển thị đúng placeholder `{{...}}` là quy ước của mẫu. */
 const TO_PLACEHOLDER = '{{customer_name}}'
 
-/** 9.12 — modal lớn ở giữa: header icon + badge, metadata dạng dòng, email canvas, footer 2 nút. */
 export function EmailTemplatePreviewModal({
   open, loading, error, template, canEdit, onRetry, onClose,
 }: Props) {
   const navigate = useNavigate()
   const hasBody = Boolean(template?.body?.trim())
 
-  // ESC đóng từ mọi nơi. rc-dialog chỉ nghe keydown trong bản thân panel, nên nếu
-  // focus rơi ra (click vùng nền, đọc bằng screen reader) thì ESC bị bỏ qua.
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
@@ -61,6 +56,8 @@ export function EmailTemplatePreviewModal({
       open={open}
       onCancel={onClose}
       width={960}
+      centered
+      destroyOnHidden
       style={{ paddingBottom: 0 }}
       styles={{
         content: { display: 'flex', flexDirection: 'column', height: '90vh', padding: 0, overflow: 'hidden', borderRadius: 16 },
@@ -69,8 +66,6 @@ export function EmailTemplatePreviewModal({
         footer: { marginTop: 0, padding: '14px 24px', borderTop: '1px solid #e5ebe7' },
       }}
       rootClassName="etp-modal-root"
-      // Đưa focus vào chính modal khi mở để ESC luôn đóng được và có điểm neo
-      // cho screen reader; focus quay lại nút "Xem trước" là việc của antd.
       afterOpenChange={(opened) => {
         if (!opened) return
         const box = document.querySelector<HTMLElement>('.ant-modal-content')
@@ -112,7 +107,6 @@ export function EmailTemplatePreviewModal({
           </span>
         </div>
       }
-      destroyOnHidden
     >
       {loading && <div className="etp-state"><Skeleton active paragraph={{ rows: 8 }} /></div>}
 

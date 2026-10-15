@@ -9,7 +9,18 @@ export function ProjectFormModal({ open, editing, submitting, onCancel, onSubmit
   const [image, setImage] = useState<File>()
   useEffect(() => { if (open) { setImage(undefined); editing ? form.setFieldsValue(editing) : form.resetFields() } }, [open, editing, form])
   return (
-    <Modal open={open} title={editing ? `Sửa dự án ${editing.name}` : 'Thêm dự án'} width={650} destroyOnClose confirmLoading={submitting} okText={editing ? 'Lưu thay đổi' : 'Tạo dự án'} cancelText="Huỷ" onCancel={onCancel} onOk={() => void form.validateFields().then((body) => onSubmit(body, image))}>
+    <Modal
+      open={open}
+      title={editing ? `Sửa dự án ${editing.name}` : 'Thêm dự án'}
+      width={650}
+      centered
+      destroyOnHidden
+      confirmLoading={submitting}
+      okText={editing ? 'Lưu thay đổi' : 'Tạo dự án'}
+      cancelText="Huỷ"
+      onCancel={onCancel}
+      onOk={() => void form.validateFields().then((body) => onSubmit(body, image))}
+    >
       <Form form={form} layout="vertical" initialValues={{ status: 'PLANNING' }} style={{ marginTop: 12 }}>
         <Form.Item name="name" label="Tên dự án" rules={[{ required: true, message: 'Nhập tên dự án' }, { max: 200 }]}><Input id="projectName" placeholder="Ví dụ: Khu đô thị sinh thái…" /></Form.Item>
         <div style={{ display: 'flex', gap: 12 }}>

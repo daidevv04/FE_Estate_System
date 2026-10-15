@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { DownloadOutlined, ReloadOutlined, RiseOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Empty, Select, Skeleton, Space, Table, Tag, Tooltip } from 'antd'
+import { Alert, Button, Card, Empty, Select, Skeleton, Space, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { StatusPill } from '@/components/common/StatusPill'
 import { Bar, CartesianGrid, ComposedChart, Legend, Line, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts'
 import { formatMoney, formatMoneyShort, formatNumber } from '@/lib/format'
 import { tokens as t } from '@/theme/tokens'
@@ -47,7 +48,6 @@ function exportCsv(rows: SalesStat[]) {
   URL.revokeObjectURL(href)
 }
 
-/** Báo cáo tổng hợp tại client từ /deals, /leads, /users; không có API analytic-service. */
 export function SalesPerformancePage() {
   const [range, setRange] = useState<RangeKey>('30d')
   const [salesId, setSalesId] = useState<string>('all')
@@ -109,7 +109,7 @@ export function SalesPerformancePage() {
     { title: 'HẠNG', width: 72, render: (_value, _row, index) => <span className={`sales-rank sales-rank--${index + 1}`}>{index + 1}</span> },
     { title: 'NHÂN VIÊN SALES', dataIndex: 'name', width: 250, render: (name: string) => <strong>{name}</strong> },
     { title: 'LEAD TIẾP NHẬN', dataIndex: 'leads', align: 'center', width: 130, render: (value: number) => <b>{formatNumber(value)}</b> },
-    { title: 'DEAL CHỐT', dataIndex: 'deals', align: 'center', width: 105, render: (value: number) => <Tag color="green">{value} deal</Tag> },
+    { title: 'DEAL CHỐT', dataIndex: 'deals', align: 'center', width: 105, render: (value: number) => <StatusPill tone="green">{value} deal</StatusPill> },
     { title: 'DOANH THU (VND)', dataIndex: 'revenue', align: 'right', width: 210, render: (value: number) => <strong className="sales-revenue">{formatMoney(value)}</strong> },
     { title: 'TỶ LỆ CHUYỂN ĐỔI', dataIndex: 'winRate', align: 'center', width: 160, render: (value: number | null) => value == null ? 'Chưa cập nhật' : pct(value) },
   ]

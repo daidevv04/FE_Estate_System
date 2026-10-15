@@ -1,5 +1,6 @@
-import { Button, Modal, Space, Tag } from 'antd'
+import { Button, Modal, Space } from 'antd'
 import dayjs from 'dayjs'
+import { StatusPill, type Tone } from '@/components/common/StatusPill'
 import type { AppNotification } from '@/types/notification'
 
 interface Props {
@@ -7,19 +8,19 @@ interface Props {
   onClose: () => void
 }
 
-const TYPE_COLORS: Record<string, string> = {
+const TYPE_TONES: Record<string, Tone> = {
   SYSTEM: 'blue',
   DEAL: 'green',
-  CUSTOMER: 'cyan',
-  APPOINTMENT: 'gold',
+  CUSTOMER: 'teal',
+  APPOINTMENT: 'purple',
   ALERT: 'red',
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  LOW: 'default',
-  NORMAL: 'processing',
-  HIGH: 'warning',
-  URGENT: 'error',
+const PRIORITY_TONES: Record<string, Tone> = {
+  LOW: 'gray',
+  NORMAL: 'blue',
+  HIGH: 'amber',
+  URGENT: 'red',
 }
 
 export function NotificationDetailModal({ notif, onClose }: Props) {
@@ -29,6 +30,8 @@ export function NotificationDetailModal({ notif, onClose }: Props) {
     <Modal
       title={notif.title}
       open={Boolean(notif)}
+      centered
+      destroyOnHidden
       onCancel={onClose}
       footer={[
         <Button key="close" type="primary" onClick={onClose}>
@@ -37,8 +40,8 @@ export function NotificationDetailModal({ notif, onClose }: Props) {
       ]}
     >
       <Space wrap style={{ marginBottom: 12, marginTop: 8 }}>
-        <Tag color={TYPE_COLORS[notif.type] || 'blue'}>{notif.type}</Tag>
-        <Tag color={PRIORITY_COLORS[notif.priority] || 'default'}>{notif.priority}</Tag>
+        <StatusPill tone={TYPE_TONES[notif.type] || 'blue'} size="sm">{notif.type}</StatusPill>
+        <StatusPill tone={PRIORITY_TONES[notif.priority] || 'gray'} size="sm">{notif.priority}</StatusPill>
         <span style={{ fontSize: 12, color: '#64748b' }}>
           Người gửi: <b>{notif.senderName}</b>
         </span>

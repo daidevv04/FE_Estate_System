@@ -27,7 +27,6 @@ interface LoginForm {
   remember?: boolean
 }
 
-/** Banner trạng thái dưới tiêu đề card: kết nối cổng / lỗi đăng nhập / xác thực thành công */
 type BannerTone = 'secured' | 'error' | 'success'
 interface BannerState {
   tone: BannerTone
@@ -39,14 +38,12 @@ const SECURED_BANNER: BannerState = { tone: 'secured', text: 'Kết nối cổng
 const bannerIcon = (tone: BannerTone) =>
   tone === 'error' ? <CloseCircleFilled /> : tone === 'success' ? <CheckCircleFilled /> : <SafetyCertificateFilled />
 
-/** 3 nhóm nghiệp vụ chính — nội dung giới thiệu panel thương hiệu (Stitch 9.1 Enterprise Standard) */
 const highlights = [
   { icon: <ContactsOutlined />, title: 'Quản lý khách hàng', desc: 'Theo dõi thông tin và lịch sử tương tác.' },
   { icon: <ApartmentOutlined />, title: 'Quản lý giỏ hàng', desc: 'Theo dõi sản phẩm và tình trạng căn.' },
   { icon: <FileTextOutlined />, title: 'Quản lý giao dịch', desc: 'Theo dõi cơ hội, đặt cọc và hợp đồng.' },
 ]
 
-/** Hoạ tiết SVG: đồi núi miền Trung + shophouse/Regal Towers + vòm Cầu Rồng + sóng biển — opacity .14 mix-blend-overlay */
 export function BrandArt() {
   return (
     <div className="login-brand-art" aria-hidden>
@@ -75,7 +72,6 @@ export function BrandArt() {
   )
 }
 
-/** 9.1 — B2B nội bộ. Không đăng ký, social login, chọn công ty, hoặc portal khách hàng. */
 export function LoginPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -90,10 +86,6 @@ export function LoginPage() {
   const setTokens = useAuthStore((s) => s.setTokens)
   const setUser = useAuthStore((s) => s.setUser)
 
-  /**
-   * Layout login desktop là cố định: body mặc định margin 8px + quầng sáng tràn viền gây scrollbar
-   * dọc/ngang. Khoá cuộn khi ở breakpoint 2 cột; màn nhỏ (<1024) vẫn cuộn dọc bình thường.
-   */
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1024px)')
     const { margin, overflow } = document.body.style
@@ -121,7 +113,7 @@ export function LoginPage() {
         usernameOrEmail: identifier,
         password: values.password,
       })
-      setTokens(data, values.remember ?? false)
+      setTokens(data, values.remember ?? true)
       const me = await api.get('/users/me')
       setUser(me.data)
       setBanner({ tone: 'success', text: 'Xác thực thành công! Đang chuyển hướng tới Dashboard...' })
@@ -138,7 +130,6 @@ export function LoginPage() {
       const detail = response?.data?.detail ?? response?.data?.message ?? response?.data?.error ?? ''
       const lower = detail.toLowerCase()
 
-      // Backend ném 401 "Invalid TOTP code" khi tài khoản đã bật 2FA nhưng chưa gửi TOTP
       const isTotpChallenge =
         status === 401 &&
         (detail === 'Invalid TOTP code' ||
@@ -152,7 +143,7 @@ export function LoginPage() {
         setSavedCredentials({
           usernameOrEmail: identifier,
           password: values.password,
-          remember: values.remember ?? false,
+          remember: values.remember ?? true,
         })
         setTwoFaMode(true)
         setBanner({
@@ -195,7 +186,6 @@ export function LoginPage() {
         tokenData = data
       } catch (err: unknown) {
         const resp = (err as { response?: { status?: number } })?.response
-        // Fallback gọi /auth/login kèm totpCode nếu backend route /auth/2fa/verify bị 404
         if (resp?.status === 404 && savedCredentials.password) {
           const { data } = await api.post<TokenResponse>('/auth/login', {
             usernameOrEmail: savedCredentials.usernameOrEmail,
@@ -366,7 +356,7 @@ export function LoginPage() {
               layout="vertical"
               initialValues={{
                 usernameOrEmail: savedCredentials?.usernameOrEmail ?? '',
-                remember: savedCredentials?.remember ?? false,
+                remember: savedCredentials?.remember ?? true,
               }}
               onFinish={onFinish}
               disabled={loading}

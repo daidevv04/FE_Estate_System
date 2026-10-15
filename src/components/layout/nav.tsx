@@ -27,8 +27,6 @@ export interface NavGroup {
   children: NavLink[]
 }
 
-/** Menu mục 5.2 theo nhóm — mục không có quyền thì ẨN HẲN, không hiện xám.
- *  Dùng chung cho Sidebar (render Menu) và Header (ô tìm kiếm nhảy trang). */
 export function buildNav(role?: UserRole): NavGroup[] {
   const isAdmin = role === 'ADMIN'
   const canSeeReports = role === 'ADMIN' || role === 'MANAGER'
@@ -54,12 +52,17 @@ export function buildNav(role?: UserRole): NavGroup[] {
   ]
 
   if (canSeeReports) {
-    groups.push({ key: 'g-reports', label: 'BÁO CÁO', children: [
+    const reportChildren: NavLink[] = [
       { key: paths.reports.salesPerformance, icon: <BarChartOutlined />, label: 'Hiệu suất Sales' },
       { key: paths.reports.pipelineSummary, icon: <FunnelPlotOutlined />, label: 'Tổng quan pipeline' },
-      { key: paths.reports.revenue, icon: <BarChartOutlined />, label: 'Doanh thu' },
-      { key: paths.reports.projectPerformance, icon: <ProjectOutlined />, label: 'Hiệu suất dự án' },
-    ] })
+    ]
+    if (isAdmin) {
+      reportChildren.push(
+        { key: paths.reports.revenue, icon: <BarChartOutlined />, label: 'Doanh thu' },
+        { key: paths.reports.projectPerformance, icon: <ProjectOutlined />, label: 'Hiệu suất dự án' },
+      )
+    }
+    groups.push({ key: 'g-reports', label: 'BÁO CÁO', children: reportChildren })
   }
   if (isAdmin) {
     groups.push({ key: 'g-system', label: 'HỆ THỐNG', children: [
@@ -69,5 +72,4 @@ export function buildNav(role?: UserRole): NavGroup[] {
   return groups
 }
 
-/** Toàn bộ trang được phép truy cập (đã phẳng) — Header dùng để gợi ý tìm kiếm */
 export const flatNav = (role?: UserRole): NavLink[] => buildNav(role).flatMap((g) => g.children)

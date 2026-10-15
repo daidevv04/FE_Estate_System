@@ -6,8 +6,10 @@ import { AppointmentDetailPage } from '@/features/appointments/pages/Appointment
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
 import { CustomersPage } from '@/features/customers/pages/CustomersPage'
+import { CustomerDetailPage } from '@/features/customers/pages/CustomerDetailPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { DealsPage } from '@/features/deals/pages/DealsPage'
+import { DealDetailPage } from '@/features/deals/pages/DealDetailPage'
 import { EmailTemplateDetailPage } from '@/features/email-templates/pages/EmailTemplateDetailPage'
 import { EmailTemplateEditorPage } from '@/features/email-templates/pages/EmailTemplateEditorPage'
 import { EmailTemplatesPage } from '@/features/email-templates/pages/EmailTemplatesPage'
@@ -15,6 +17,7 @@ import { ProjectDetailPage } from '@/features/projects/pages/ProjectDetailPage'
 import { ProjectsPage } from '@/features/projects/pages/ProjectsPage'
 import { ForbiddenPage, NotFoundPage, ServerErrorPage } from '@/features/errors/pages/ErrorPages'
 import { LeadsPage } from '@/features/leads/pages/LeadsPage'
+import { LeadDetailPage } from '@/features/leads/pages/LeadDetailPage'
 import { ProductsPage } from '@/features/products/pages/ProductsPage'
 import { ProductDetailPage } from '@/features/products/pages/ProductDetailPage'
 import { ProfilePage } from '@/features/profile/pages/ProfilePage'
@@ -25,6 +28,7 @@ import { ProjectPerformanceReportPage } from '@/features/reports/pages/ProjectPe
 import { UserDetailPage } from '@/features/users/pages/UserDetailPage'
 import { UsersPage } from '@/features/users/pages/UsersPage'
 import { NotificationPage } from '@/features/notifications/pages/NotificationPage'
+import { SearchPage } from '@/features/search/pages/SearchPage'
 
 import { paths } from './paths'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -32,12 +36,10 @@ import { ProtectedRoute } from './ProtectedRoute'
 const ph = (title: string, spec: string) => <PlaceholderPage title={title} spec={spec} />
 
 export const router = createBrowserRouter([
-  // A. Xác thực — 3 route công khai duy nhất
   { path: paths.login, element: <LoginPage /> },
   { path: paths.login2fa, element: ph('Xác thực 2 lớp', '9.2') },
   { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
 
-  // Toàn bộ phần còn lại phải đăng nhập
   {
     element: (
       <ProtectedRoute>
@@ -47,9 +49,10 @@ export const router = createBrowserRouter([
     children: [
       { path: '/', element: <Navigate to={paths.dashboard} replace /> },
       { path: paths.dashboard, element: <DashboardPage /> },
+      { path: paths.search, element: <SearchPage /> },
 
       { path: paths.customers, element: <CustomersPage /> },
-      { path: paths.customer(), element: ph('Chi tiết khách hàng', '9.9') },
+      { path: paths.customer(), element: <CustomerDetailPage /> },
       { path: paths.appointments, element: <AppointmentsPage /> },
       { path: paths.appointment(), element: <AppointmentDetailPage /> },
       { path: paths.emailTemplates, element: <EmailTemplatesPage /> },
@@ -62,23 +65,40 @@ export const router = createBrowserRouter([
       { path: paths.products, element: <ProductsPage /> },
       { path: paths.product(), element: <ProductDetailPage /> },
       { path: paths.leads, element: <LeadsPage /> },
-      { path: paths.lead(), element: ph('Chi tiết lead', '9.19') },
+      { path: paths.lead(), element: <LeadDetailPage /> },
       { path: paths.deals, element: <DealsPage /> },
-      { path: paths.deal(), element: ph('Chi tiết hợp đồng', '9.21') },
+      { path: paths.deal(), element: <DealDetailPage /> },
 
-      { path: paths.reports.salesPerformance, element: <SalesPerformancePage /> },
-      { path: paths.reports.pipelineSummary, element: <PipelineSummaryPage /> },
-      { path: paths.reports.revenue, element: <RevenueReportPage /> },
-      { path: paths.reports.projectPerformance, element: <ProjectPerformanceReportPage /> },
+      {
+        path: paths.reports.salesPerformance,
+        element: <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><SalesPerformancePage /></ProtectedRoute>,
+      },
+      {
+        path: paths.reports.pipelineSummary,
+        element: <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><PipelineSummaryPage /></ProtectedRoute>,
+      },
+      {
+        path: paths.reports.revenue,
+        element: <ProtectedRoute allowedRoles={['ADMIN']}><RevenueReportPage /></ProtectedRoute>,
+      },
+      {
+        path: paths.reports.projectPerformance,
+        element: <ProtectedRoute allowedRoles={['ADMIN']}><ProjectPerformanceReportPage /></ProtectedRoute>,
+      },
 
-      { path: paths.users, element: <UsersPage /> },
-      { path: paths.user(), element: <UserDetailPage /> },
+      {
+        path: paths.users,
+        element: <ProtectedRoute allowedRoles={['ADMIN']}><UsersPage /></ProtectedRoute>,
+      },
+      {
+        path: paths.user(),
+        element: <ProtectedRoute allowedRoles={['ADMIN']}><UserDetailPage /></ProtectedRoute>,
+      },
       { path: paths.profile, element: <ProfilePage /> },
       { path: paths.security, element: ph('Bảo mật 2FA', '9.6') },
     ],
   },
 
-  // M. Trang hệ thống
   { path: paths.forbidden, element: <ForbiddenPage /> },
   { path: paths.serverError, element: <ServerErrorPage /> },
   { path: '*', element: <NotFoundPage /> },

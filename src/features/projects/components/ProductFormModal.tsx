@@ -4,14 +4,23 @@ import { DIRECTION, PRODUCT_STATUS, PRODUCT_TYPE, type Product, type ProductInpu
 
 interface Props { open: boolean; projectId?: UUID; projects?: { value: string; label: string }[]; editing: Product | null; submitting: boolean; onCancel: () => void; onSubmit: (body: ProductInput, image?: File) => void }
 const money = { formatter: (v: number | string | undefined) => v == null ? '' : new Intl.NumberFormat('vi-VN').format(Number(v)), parser: (v: string | undefined) => Number((v ?? '').replace(/[^\d]/g, '')) as unknown as number }
-/** Form đúng CreateProductRequest/UpdateProductRequest. Ở màn dự án (9.15) projectId ghim sẵn từ route;
- *  ở /products (9.16) không ghim nên hiện Select dự án — không cho sửa chéo dự án. */
 export function ProductFormModal({ open, projectId, projects, editing, submitting, onCancel, onSubmit }: Props) {
   const [form] = Form.useForm<ProductInput>()
   const [image, setImage] = useState<File>()
   useEffect(() => { if (open) { setImage(undefined); editing ? form.setFieldsValue(editing) : form.resetFields() } }, [open, editing, form])
   return (
-    <Modal open={open} title={editing ? `Sửa sản phẩm ${editing.code}` : 'Thêm sản phẩm'} width={720} destroyOnClose confirmLoading={submitting} okText={editing ? 'Lưu thay đổi' : 'Tạo sản phẩm'} cancelText="Huỷ" onCancel={onCancel} onOk={() => void form.validateFields().then((v) => onSubmit({ ...v, projectId: v.projectId ?? projectId }, image))}>
+    <Modal
+      open={open}
+      title={editing ? `Sửa sản phẩm ${editing.code}` : 'Thêm sản phẩm'}
+      width={720}
+      centered
+      destroyOnHidden
+      confirmLoading={submitting}
+      okText={editing ? 'Lưu thay đổi' : 'Tạo sản phẩm'}
+      cancelText="Huỷ"
+      onCancel={onCancel}
+      onOk={() => void form.validateFields().then((v) => onSubmit({ ...v, projectId: v.projectId ?? projectId }, image))}
+    >
       <Form form={form} layout="vertical" initialValues={{ type: 'APARTMENT', status: 'AVAILABLE', ...(projectId ? { projectId } : {}) }} style={{ marginTop: 12 }}>
         {!projectId && (
           <Form.Item name="projectId" label="Dự án" rules={[{ required: true, message: 'Chọn dự án' }]}>

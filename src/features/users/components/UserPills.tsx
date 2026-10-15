@@ -1,19 +1,30 @@
-import { tokens as t } from '@/theme/tokens'
+import { StatusPill as CommonStatusPill, type Tone } from '@/components/common/StatusPill'
 import { roleLabel, statusLabel, type ManagedUser, type UserStatus } from '../api'
 
-const ROLE = { ADMIN: { bg: t.colorTealBg, fg: t.colorTeal }, MANAGER: { bg: t.colorVioletBg, fg: t.colorVioletText }, SALES: { bg: t.colorInfoBg, fg: t.colorInfoText } }
-const STATUS: Record<UserStatus, { bg: string; fg: string; dot: string }> = {
-  ACTIVE: { bg: t.colorSuccessBg, fg: t.colorSuccessText, dot: t.colorSuccess },
-  INACTIVE: { bg: t.colorSurfaceSunken, fg: t.colorTextMuted, dot: t.colorBorderStrong },
-  LOCKED: { bg: t.colorErrorBg, fg: t.colorErrorText, dot: t.colorError },
+const ROLE_TONE: Record<ManagedUser['role'], Tone> = {
+  ADMIN: 'teal',
+  MANAGER: 'purple',
+  SALES: 'blue',
 }
 
-export function RolePill({ role }: Pick<ManagedUser, 'role'>) {
-  const tone = ROLE[role]
-  return <span className="stitch-pill" style={{ background: tone.bg, color: tone.fg }}>{roleLabel(role)}</span>
+const STATUS_TONE: Record<UserStatus, Tone> = {
+  ACTIVE: 'green',
+  INACTIVE: 'gray',
+  LOCKED: 'red',
 }
 
-export function StatusPill({ status }: Pick<ManagedUser, 'status'>) {
-  const tone = STATUS[status]
-  return <span className="stitch-pill" style={{ background: tone.bg, color: tone.fg }}><span className="stitch-pill__dot" style={{ background: tone.dot }} />{statusLabel(status)}</span>
+export function RolePill({ role, size }: Pick<ManagedUser, 'role'> & { size?: 'sm' | 'md' }) {
+  return (
+    <CommonStatusPill tone={ROLE_TONE[role]} size={size} dot={false}>
+      {roleLabel(role)}
+    </CommonStatusPill>
+  )
 }
+
+export function StatusPill({ status, size }: Pick<ManagedUser, 'status'> & { size?: 'sm' | 'md' }) {
+  return (
+    <CommonStatusPill tone={STATUS_TONE[status]} size={size}>
+      {statusLabel(status)}
+    </CommonStatusPill>
+  )
+}

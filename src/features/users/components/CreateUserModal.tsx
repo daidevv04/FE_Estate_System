@@ -5,7 +5,6 @@ import { USER_ROLES, roleScope, type CreateUserInput } from '../api'
 
 interface Props { open: boolean; submitting: boolean; onCancel: () => void; onSubmit: (body: CreateUserInput) => void }
 
-/** Password chỉ sống trong Form đang mở và bị reset khi đóng/submit; không đưa vào cache hoặc store. */
 export function CreateUserModal({ open, submitting, onCancel, onSubmit }: Props) {
   const [form] = Form.useForm<CreateUserInput>()
   const selectedRole = Form.useWatch('role', form) ?? 'SALES'
@@ -18,7 +17,7 @@ export function CreateUserModal({ open, submitting, onCancel, onSubmit }: Props)
     const body = await form.validateFields()
     onSubmit(body)
   }
-  return <Modal open={open} width={700} className="create-user-modal" destroyOnHidden maskClosable={!submitting} keyboard={!submitting} onCancel={close} footer={<div className="create-user-modal__footer"><Typography.Text>* Các trường bắt buộc không được để trống</Typography.Text><div><Button onClick={close} disabled={submitting}>Hủy</Button><Button type="primary" icon={<UserAddOutlined />} loading={submitting} onClick={() => void submit()}>Tạo người dùng</Button></div></div>} title={<div className="create-user-modal__title"><i><UserAddOutlined /></i><div>Tạo người dùng<small>Tạo tài khoản nhân viên mới cho hệ thống CRM Đất Xanh Miền Trung.</small></div></div>}>
+  return <Modal open={open} width={700} className="create-user-modal" centered destroyOnHidden maskClosable={!submitting} keyboard={!submitting} onCancel={close} footer={<div className="create-user-modal__footer"><Typography.Text>* Các trường bắt buộc không được để trống</Typography.Text><div><Button onClick={close} disabled={submitting}>Hủy</Button><Button type="primary" icon={<UserAddOutlined />} loading={submitting} onClick={() => void submit()}>Tạo người dùng</Button></div></div>} title={<div className="create-user-modal__title"><i><UserAddOutlined /></i><div>Tạo người dùng<small>Tạo tài khoản nhân viên mới cho hệ thống CRM Đất Xanh Miền Trung.</small></div></div>}>
     <Form form={form} layout="vertical" requiredMark onFinish={onSubmit} className="create-user-form">
       <h3>Thông tin người dùng</h3>
       <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: 'Nhập họ và tên' }, { max: 100 }]}><Input autoFocus placeholder="Ví dụ: Nguyễn Văn An" /></Form.Item>

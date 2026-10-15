@@ -1,7 +1,7 @@
 import { PlusOutlined } from '@ant-design/icons'
 import type { DragEvent } from 'react'
 import type { MenuProps } from 'antd'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Customer } from '@/features/customers/api'
 import {
   LEAD_STAGES, STAGE_CLASS, STAGE_LABEL, compactVnd, nextStage, overdueDays, stageIndex,
@@ -9,7 +9,6 @@ import {
 } from '../api'
 import { LeadCard } from './LeadCard'
 
-/** Số thẻ hiện đủ trong 1 cột trước khi gom phần còn lại vào nút "+N cơ hội khác" (như thiết kế) */
 const VISIBLE = 3
 
 interface Props {
@@ -26,7 +25,6 @@ interface Props {
   onDetail: (lead: Lead) => void
 }
 
-/** Bảng kanban 8 giai đoạn — cột 280px cố định, thiếu ngang thì cuộn, KHÔNG co cột */
 export function PipelineBoard({
   groups, customerById, productById, projectById, ownerName, canDrag,
   onOpen, onMove, onAdvance, onLose, onDetail,
@@ -34,6 +32,27 @@ export function PipelineBoard({
   const [expanded, setExpanded] = useState<Partial<Record<LeadStage, boolean>>>({})
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [overStage, setOverStage] = useState<LeadStage | null>(null)
+  const pendingDropRef = useRef<{ lead: Lead; stage: LeadStage } | null>(null)
+
+  const executePendingDrop = () => {
+    setDraggingId(null)
+    setOverStage(null)
+    if (pendingDropRef.current) {
+      const { lead, stage } = pendingDropRef.current
+      pendingDropRef.current = null
+      requestAnimationFrame(() => onMove(lead, stage))
+    }
+  }
+
+  useEffect(() => {
+    const clearDrag = () => {
+      executePendingDrop()
+    }
+    window.addEventListener('dragend', clearDrag)
+    return () => {
+      window.removeEventListener('dragend', clearDrag)
+    }
+  }, [onMove])
 
   const totals = useMemo(() => {
     const out = {} as Record<LeadStage, number>
@@ -43,10 +62,16 @@ export function PipelineBoard({
 
   const dropOn = (e: DragEvent, stage: LeadStage) => {
     e.preventDefault()
+    e.stopPropagation()
     setOverStage(null)
     const id = e.dataTransfer.getData('text/plain')
     const lead = Object.values(groups).flat().find((l) => l.id === id)
-    if (lead && lead.stage !== stage) onMove(lead, stage)
+    if (lead && lead.stage !== stage) {
+      pendingDropRef.current = { lead, stage }
+    }
+    setTimeout(() => {
+      executePendingDrop()
+    }, 60)
   }
 
   return (
@@ -114,8 +139,7 @@ export function PipelineBoard({
                       onOpen={onOpen}
                       onDragStart={setDraggingId}
                       onDragEnd={() => {
-                        setDraggingId(null)
-                        setOverStage(null)
+                        executePendingDrop()
                       }}
                     />
                   )

@@ -1,9 +1,10 @@
-import { DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
+import { ReloadOutlined } from '@ant-design/icons'
+import { Button, DatePicker, Form, Input, InputNumber, Modal, Select, Tooltip } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useMemo } from 'react'
 import {
   APPROVAL_STATUS_OPTIONS, DEAL_STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, PAYMENT_STATUS_OPTIONS,
-  type Deal, type DealInput, type DealStatus, type PaymentStatus, type UUID,
+  generateContractCode, type Deal, type DealInput, type DealStatus, type PaymentStatus, type UUID,
 } from '../api'
 
 interface Ref {
@@ -30,7 +31,6 @@ interface FormValues {
 interface Props {
   open: boolean
   editing: Deal | null
-  /** Lead đủ điều kiện tạo hợp đồng (stage WON và chưa có hợp đồng) — xem DealService.create */
   leadOptions: Ref[]
   staffOptions: Ref[]
   canAssign: boolean
@@ -46,7 +46,6 @@ const money = {
   parser: (v: string | undefined) => Number((v ?? '').replace(/[^\d]/g, '')) as unknown as number,
 }
 
-/** Modal tạo/sửa hợp đồng — chỉ dựng đúng field CreateDealRequest/UpdateDealRequest hỗ trợ */
 export function DealFormModal({
   open, editing, leadOptions, staffOptions, canAssign, canApprove, submitting, onCancel, onSubmit,
 }: Props) {
@@ -71,6 +70,14 @@ export function DealFormModal({
         note: editing.note,
         salesId: editing.salesId,
       })
+    } else {
+      const now = dayjs()
+      form.setFieldsValue({
+        contractCode: generateContractCode(now),
+        signedDate: now,
+        status: 'IN_PROGRESS',
+        paymentStatus: 'UNPAID',
+      })
     }
   }, [open, editing, form])
 
@@ -79,12 +86,18 @@ export function DealFormModal({
     [leadOptions],
   )
 
+  const staffSelect = useMemo(
+    () => staffOptions.map((s) => ({ value: s.id, label: s.label })),
+    [staffOptions],
+  )
+
   return (
     <Modal
       open={open}
       title={isEdit ? `Sửa hợp đồng ${editing?.contractCode ?? ''}` : 'Thêm hợp đồng mới'}
       width={720}
-      destroyOnClose
+      centered
+      destroyOnHidden
       okText={isEdit ? 'Lưu thay đổi' : 'Tạo hợp đồng'}
       cancelText="Hủy"
       confirmLoading={submitting}
@@ -103,10 +116,9 @@ export function DealFormModal({
             fileUrl: v.fileUrl?.trim() || null,
             note: v.note ?? null,
           }
-          // Trạng thái duyệt chỉ ADMIN/MANAGER gửi được (DealService.update chặn 403 cho SALES)
           if (!isEdit) body.leadId = v.leadId
           if (canApprove) body.approvalStatus = v.approvalStatus as DealInput['approvalStatus']
-          if (canAssign && v.salesId) body.salesId = v.salesId
+          if (canAssign) body.salesId = v.salesId || undefined
           onSubmit(body)
         })
       }}
@@ -139,12 +151,34 @@ export function DealFormModal({
             label="Mã hợp đồng"
             style={{ flex: 1 }}
             rules={[
-              { required: true, message: 'Nhập mã hợp đồng' },
+              { required: true, message: 'Vui lòng nhập hoặc tạo mã hợp đồng' },
               { max: 50, message: 'Tối đa 50 ký tự' },
+              {
+                pattern: /^HD-\d{8}-[A-Za-z0-9]+$/i,
+                message: 'Mã hợp đồng chuẩn: HD-YYYYMMDD-XXXX (VD: HD-20261013-1024)',
+              },
             ]}
-            extra="Backend không tự sinh mã — nhập theo quy tắc công ty (VD HD-2026-0012)"
+            extra="Chuẩn quy tắc: HD-{NămThángNgày}-{MãSố} thuận tiện tra cứu và đối chiếu"
           >
-            <Input id="contractCode" placeholder="HD-2026-0012" />
+            <Input
+              id="contractCode"
+              placeholder="HD-20261013-1024"
+              suffix={
+                !isEdit ? (
+                  <Tooltip title="Tạo lại mã tự động">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<ReloadOutlined style={{ color: '#006b2c' }} />}
+                      onClick={() => {
+                        const date = form.getFieldValue('signedDate') as dayjs.Dayjs | null | undefined
+                        form.setFieldValue('contractCode', generateContractCode(date ?? dayjs()))
+                      }}
+                    />
+                  </Tooltip>
+                ) : undefined
+              }
+            />
           </Form.Item>
         </div>
 
@@ -171,7 +205,6 @@ export function DealFormModal({
                 },
               }),
             ]}
-            extra="Backend chặn deposit > giá trị hợp đồng"
           >
             <InputNumber id="depositAmount" style={{ width: '100%' }} min={0} step={50_000_000} {...money} />
           </Form.Item>
@@ -182,7 +215,20 @@ export function DealFormModal({
             <DatePicker id="depositDate" style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="dd/mm/yyyy" />
           </Form.Item>
           <Form.Item name="signedDate" label="Ngày ký" style={{ flex: 1 }}>
-            <DatePicker id="signedDate" style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="dd/mm/yyyy" />
+            <DatePicker
+              id="signedDate"
+              style={{ width: '100%' }}
+              format="DD/MM/YYYY"
+              placeholder="dd/mm/yyyy"
+              onChange={(date) => {
+                if (!isEdit && date) {
+                  const current = form.getFieldValue('contractCode') as string | undefined
+                  if (!current || /^HD-\d{8}-/i.test(current)) {
+                    form.setFieldValue('contractCode', generateContractCode(date))
+                  }
+                }
+              }}
+            />
           </Form.Item>
         </div>
 
@@ -225,7 +271,7 @@ export function DealFormModal({
               showSearch
               optionFilterProp="label"
               placeholder="Chọn nhân viên"
-              options={staffOptions}
+              options={staffSelect}
             />
           </Form.Item>
         </div>

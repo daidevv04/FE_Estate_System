@@ -27,10 +27,6 @@ function KpiCard({ item, loading }: { item: Item; loading: boolean }) {
 
 interface Props { total: number; active: number; inactive: number; loading: boolean }
 
-/**
- * 9.12 KPI: chỉ 3 chỉ số suy ra được từ chính GET /email-templates (tổng / đang dùng / ngừng dùng).
- * Stitch còn "Đã sử dụng" và "Email đã gửi" nhưng backend chưa có lịch sử gửi → không dựng thẻ rỗng.
- */
 export function EmailTemplateSummary({ total, active, inactive, loading }: Props) {
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 1000) / 10 : 0)
   const items: Item[] = [

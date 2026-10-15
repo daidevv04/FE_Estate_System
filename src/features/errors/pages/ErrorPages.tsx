@@ -2,7 +2,6 @@ import { Button, Result } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { paths } from '@/routes/paths'
 
-/** 9.28 / 9.29 / 9.30 — dùng chung khối Result, khác nội dung */
 export function ForbiddenPage() {
   const navigate = useNavigate()
   return (

@@ -1,14 +1,10 @@
-// Nguồn màu/thông số duy nhất của app — lấy từ design system Stitch "Đất Xanh Miền Trung Real Estate CRM"
-// (designMd: M3 tonal palette + narrative "ĐẤT XANH MIỀN TRUNG"). Không hardcode hex trong component.
 export const tokens = {
-  // M3 primary/secondary (designMd) — xanh lá đậm cho nav active/nút chính, teal cho phụ
   colorBrand: '#006B2C', colorBrandHover: '#00873A', colorBrandActive: '#005320',
   colorBrandBg: '#DCFCE7', colorBrandGradient: 'linear-gradient(135deg,#16A34A 0%,#0D9488 100%)',
   colorBrandDeep: '#14532D',
   colorTeal: '#006A61', colorTealBg: '#86F2E4',
   colorAccent: '#F59E0B', colorAccentBg: '#FEF3C7',
 
-  // Surface tiers (designMd): canvas #F9F9FF, card trắng, panel lồng #F0F3FF/#E7EEFF
   colorCanvas: '#F9F9FF', colorSurface: '#FFFFFF', colorSurfaceAlt: '#F0F3FF',
   colorSurfaceSunken: '#F8FAFC', colorSurfaceContainer: '#E7EEFF',
   colorBorder: '#E4E7F0', colorBorderStrong: '#BDCABA', colorOutline: '#6E7B6C',
@@ -22,9 +18,7 @@ export const tokens = {
 
   chartColors: ['#16A34A', '#0D9488', '#F59E0B', '#8B5CF6', '#0EA5E9', '#EF4444'],
 
-  // Màu theo đúng enum backend — dùng cho Tag / chấm Kanban / Progress / thanh pipeline
   statusColors: {
-    // Pipeline 6 bước đang chạy dùng dải xanh lá → teal (đúng tông dashboard Stitch 9.7)
     LeadStage: { NEW: '#16A34A', CONTACTED: '#15A05A', INTERESTED: '#0F9B6B', PROPOSAL_SENT: '#0B9478',
                  NEGOTIATION: '#0D9488', INTERNAL_REVIEW: '#006A61', WON: '#16A34A', LOST: '#EF4444' },
     DealStatus: { IN_PROGRESS: '#0EA5E9', ACTIVE: '#4F46E5', COMPLETED: '#16A34A', CANCELLED: '#94A3B8' },
@@ -39,9 +33,18 @@ export const tokens = {
     DemandType: { BUY: '#4F46E5', SELL: '#F59E0B' },
   },
 
-  // Inter cho toàn CRM: dễ đọc, hỗ trợ tiếng Việt tốt, số bảng vẫn rõ.
-  fontHeading: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  fontHeading: "'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   fontBody: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+
+  tones: {
+    green: { bg: '#DCFCE7', fg: '#15803D', dot: '#16A34A', border: '#B5E4CA' },
+    teal: { bg: '#CCFBF1', fg: '#0F766E', dot: '#0D9488', border: '#99F6E4' },
+    amber: { bg: '#FEF3C7', fg: '#B45309', dot: '#F59E0B', border: '#FDE68A' },
+    blue: { bg: '#E0F2FE', fg: '#0369A1', dot: '#0EA5E9', border: '#BAE6FD' },
+    purple: { bg: '#F3E8FF', fg: '#6D28D9', dot: '#8B5CF6', border: '#DDD6FE' },
+    red: { bg: '#FEE2E2', fg: '#B91C1C', dot: '#EF4444', border: '#FECACA' },
+    gray: { bg: '#F1F5F9', fg: '#475569', dot: '#94A3B8', border: '#E2E8F0' },
+  },
 
   radiusSm: 8, radiusMd: 12, radiusLg: 16, radiusXl: 20, radius2xl: 24, radiusFull: 9999,
   controlHeight: 44, controlHeightLg: 48, tableRowHeight: 56,

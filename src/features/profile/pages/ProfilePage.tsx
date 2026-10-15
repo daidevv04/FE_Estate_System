@@ -19,7 +19,7 @@ import {
   Typography,
 } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
 import { paths } from '@/routes/paths'
@@ -99,6 +99,15 @@ function detectCurrentSession(): SessionDevice {
   }
 }
 
+interface BackendSession {
+  id: string
+  deviceName: string
+  ipAddress?: string
+  createdAt: string
+  lastUsedAt?: string
+  current: boolean
+}
+
 export function ProfilePage() {
   const { message, modal } = App.useApp()
   const navigate = useNavigate()
@@ -106,6 +115,7 @@ export function ProfilePage() {
   const setTokens = useAuthStore((state) => state.setTokens)
 
   const [profile, setProfile] = useState<ManagedUser | null>(null)
+  const [sessions, setSessions] = useState<SessionDevice[]>([])
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
@@ -123,7 +133,6 @@ export function ProfilePage() {
   const [twoFaDisablePassword, setTwoFaDisablePassword] = useState('')
   const [twoFaDisableCode, setTwoFaDisableCode] = useState('')
 
-  // Notification switches persisted in localStorage per user
   const notifStorageKey = profile ? `profile_notif_${profile.id}` : null
   const [notifDeals, setNotifDeals] = useState(true)
   const [notifAppointments, setNotifAppointments] = useState(true)
@@ -138,9 +147,7 @@ export function ProfilePage() {
         if (typeof parsed.deals === 'boolean') setNotifDeals(parsed.deals)
         if (typeof parsed.appointments === 'boolean') setNotifAppointments(parsed.appointments)
         if (typeof parsed.reports === 'boolean') setNotifReports(parsed.reports)
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
   }, [notifStorageKey])
 
@@ -171,7 +178,6 @@ export function ProfilePage() {
     message.success(`Đã ${val ? 'bật' : 'tắt'} báo cáo tuần`)
   }
 
-  // Real backend queries for deals, leads, catalog
   const dealsQuery = useDeals({})
   const leadsQuery = useLeads()
   const dealCatalog = useDealCatalog()
@@ -234,8 +240,38 @@ export function ProfilePage() {
     })
   }, [userDeals, dealCatalog])
 
-  // Current real device session
-  const session = useMemo<SessionDevice>(() => detectCurrentSession(), [])
+  const fallbackSession = useMemo<SessionDevice>(() => detectCurrentSession(), [])
+
+  const loadSessions = useCallback(async () => {
+    try {
+      const res = await api.get<BackendSession[]>('/auth/sessions')
+      const mapped: SessionDevice[] = res.data.map((s) => {
+        const isMobile = /iphone|ipad|android|mobile/i.test(s.deviceName)
+        const parts = s.deviceName.split('(')
+        const browser = parts[0]?.trim() || s.deviceName
+        const os = parts[1]?.replace(')', '').trim() || ''
+        const locationText = s.lastUsedAt
+          ? `Hoạt động ${formatDate(s.lastUsedAt)}`
+          : `Đăng nhập ${formatDate(s.createdAt)}`
+        return {
+          id: s.id,
+          name: os || 'Thiết bị',
+          browser,
+          ip: s.ipAddress || '—',
+          location: locationText,
+          isCurrent: s.current,
+          type: isMobile ? 'mobile' : 'desktop',
+        }
+      })
+      setSessions(mapped.length > 0 ? mapped : [fallbackSession])
+    } catch {
+      setSessions([fallbackSession])
+    }
+  }, [fallbackSession])
+
+  useEffect(() => {
+    loadSessions()
+  }, [loadSessions])
 
   const [form] = Form.useForm<ProfileInput>()
   const [passwordForm] = Form.useForm<PasswordInput>()
@@ -351,25 +387,64 @@ export function ProfilePage() {
     }
   }
 
-  const handleRevokeSession = () => {
+  const handleRevokeSession = (sessionId?: string) => {
+    const isTargetCurrent = !sessionId || sessions.find((s) => s.id === sessionId)?.isCurrent
+
+    if (isTargetCurrent) {
+      modal.confirm({
+        title: 'Đăng xuất phiên làm việc',
+        content: 'Bạn có chắc chắn muốn đăng xuất tài khoản và kết thúc phiên làm việc trên thiết bị này?',
+        okText: 'Đăng xuất',
+        okType: 'danger',
+        cancelText: 'Hủy',
+        onOk: async () => {
+          try {
+            const stored = readRefreshToken()
+            if (stored) {
+              await api.post('/auth/logout', { refreshToken: stored })
+            }
+          } catch {} finally {
+            useAuthStore.getState().clear()
+            message.success('Đã đăng xuất phiên làm việc thành công')
+            navigate(paths.login, { replace: true })
+          }
+        },
+      })
+      return
+    }
+
     modal.confirm({
-      title: 'Đăng xuất phiên làm việc',
-      content: 'Bạn có chắc chắn muốn đăng xuất tài khoản và kết thúc phiên làm việc trên thiết bị này?',
-      okText: 'Đăng xuất',
+      title: 'Xóa thiết bị đăng nhập',
+      content: 'Thiết bị này sẽ bị đăng xuất khỏi tài khoản ngay lập tức. Bạn có chắc chắn không?',
+      okText: 'Xóa thiết bị',
       okType: 'danger',
       cancelText: 'Hủy',
       onOk: async () => {
         try {
-          const stored = readRefreshToken()
-          if (stored) {
-            await api.post('/auth/logout', { refreshToken: stored })
-          }
-        } catch {
-          // Token expired or revoked
-        } finally {
-          useAuthStore.getState().clear()
-          message.success('Đã đăng xuất phiên làm việc thành công')
-          navigate(paths.login, { replace: true })
+          await api.delete(`/auth/sessions/${sessionId}`)
+          message.success('Đã xóa thiết bị đăng nhập thành công')
+          loadSessions()
+        } catch (error) {
+          message.error(apiErrorMessage(error))
+        }
+      },
+    })
+  }
+
+  const handleRevokeOtherSessions = () => {
+    modal.confirm({
+      title: 'Đăng xuất tất cả thiết bị khác',
+      content: 'Tất cả các phiên làm việc trên thiết bị khác sẽ bị đăng xuất ngay lập tức. Thiết bị này vẫn được giữ đăng nhập.',
+      okText: 'Đăng xuất tất cả',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await api.delete('/auth/sessions')
+          message.success('Đã đăng xuất tất cả các thiết bị khác thành công')
+          loadSessions()
+        } catch (error) {
+          message.error(apiErrorMessage(error))
         }
       },
     })
@@ -412,7 +487,6 @@ export function ProfilePage() {
         purpose: 'VERIFY_EMAIL',
         code,
       })
-      // Reload profile to get updated emailVerifiedAt
       const { data } = await api.get<ManagedUser>('/users/me')
       setProfile(data)
       setUser(authUser(data))
@@ -627,9 +701,10 @@ export function ProfilePage() {
             emailVerified={Boolean(profile.emailVerifiedAt)}
             hasEmail={Boolean(profile.email)}
             passwordChangedText={passwordChangedText}
-            session={session}
+            sessions={sessions}
             onChangePassword={() => setPasswordOpen(true)}
             onRevokeSession={handleRevokeSession}
+            onRevokeOtherSessions={handleRevokeOtherSessions}
             onVerifyEmail={handleOpenVerifyEmail}
             onToggle2fa={handleToggle2fa}
           />
@@ -666,6 +741,7 @@ export function ProfilePage() {
         okText="Lưu thay đổi"
         cancelText="Hủy"
         confirmLoading={saving}
+        centered
         destroyOnHidden
         onCancel={() => {
           if (!saving) setEditOpen(false)
@@ -745,6 +821,7 @@ export function ProfilePage() {
         okText="Cập nhật mật khẩu"
         cancelText="Hủy"
         confirmLoading={passwordSaving}
+        centered
         destroyOnHidden
         maskClosable={!passwordSaving}
         onCancel={() => {
@@ -817,6 +894,7 @@ export function ProfilePage() {
           </span>
         }
         footer={null}
+        centered
         destroyOnHidden
         maskClosable={!verifySending}
         onCancel={() => {
@@ -901,6 +979,7 @@ export function ProfilePage() {
           </span>
         }
         footer={null}
+        centered
         destroyOnHidden
         maskClosable={false}
         onCancel={handleClose2faModal}

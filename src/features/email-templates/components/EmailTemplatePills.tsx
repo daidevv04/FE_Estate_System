@@ -1,6 +1,5 @@
 import { categoryLabel, statusLabel } from '../api'
 
-/** Màu pill theo enum backend — cùng tông với bảng 9.12. */
 const CATEGORY_PILL: Record<string, { bg: string; fg: string }> = {
   WELCOME: { bg: '#DCFCE7', fg: '#15803D' },
   FOLLOW_UP: { bg: '#E0F2FE', fg: '#0369A1' },

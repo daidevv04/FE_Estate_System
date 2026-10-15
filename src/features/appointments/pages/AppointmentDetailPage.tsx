@@ -14,7 +14,6 @@ import {
 import { AppointmentDetail } from '../components/AppointmentDetail'
 import { AppointmentFormModal } from '../components/AppointmentFormModal'
 
-/** Chi tiết lịch hẹn khi truy cập trực tiếp bằng URL /appointments/:id (mục 9.11) */
 export function AppointmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()

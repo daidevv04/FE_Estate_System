@@ -1,7 +1,8 @@
 import { CheckCircleOutlined, CloseCircleOutlined, EditOutlined, FilePdfOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Empty, Modal, Popconfirm, Progress, Space, Table, Tag, Typography } from 'antd'
+import { Button, Card, Descriptions, Empty, Modal, Popconfirm, Progress, Space, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
+import { StatusPill, type StatusTone } from '@/components/common/StatusPill'
 import { tokens as t } from '@/theme/tokens'
 import {
   APPROVAL_STATUS_LABEL, DEAL_STATUS_LABEL, PAYMENT_STATUS_LABEL, paymentMethodLabel, progressPct,
@@ -28,27 +29,26 @@ interface Props {
   onEdit: () => void
 }
 
-const statusTone = (deal: Deal) => {
-  if (deal.status === 'COMPLETED') return t.colorSuccess
-  if (deal.status === 'CANCELLED') return t.colorTextMuted
-  if (deal.status === 'ACTIVE') return t.colorViolet
-  return t.colorInfo
+const statusTone = (deal: Deal): StatusTone => {
+  if (deal.status === 'COMPLETED') return 'green'
+  if (deal.status === 'CANCELLED') return 'gray'
+  if (deal.status === 'ACTIVE') return 'purple'
+  return 'blue'
 }
 
-const approvalTone = (deal: Deal) => {
-  if (deal.approvalStatus === 'APPROVED') return t.colorSuccess
-  if (deal.approvalStatus === 'REJECTED') return t.colorError
-  if (deal.approvalStatus === 'PENDING') return t.colorWarning
-  return t.colorTextMuted
+const approvalTone = (deal: Deal): StatusTone => {
+  if (deal.approvalStatus === 'APPROVED') return 'green'
+  if (deal.approvalStatus === 'REJECTED') return 'red'
+  if (deal.approvalStatus === 'PENDING') return 'amber'
+  return 'gray'
 }
 
-const paymentTone = (deal: Deal) => {
-  if (deal.paymentStatus === 'PAID') return t.colorSuccess
-  if (deal.paymentStatus === 'PARTIAL') return t.colorWarning
-  return t.colorError
+const paymentTone = (deal: Deal): StatusTone => {
+  if (deal.paymentStatus === 'PAID') return 'green'
+  if (deal.paymentStatus === 'PARTIAL') return 'amber'
+  return 'red'
 }
 
-/** Popup nổi chi tiết hợp đồng: dữ liệu thật, payment append-only, action sửa cố định ở footer. */
 export function DealDetailDrawer({
   open, deal, customerName, unitLabel, projectName, salesName, payments, collected,
   canApprove, submitting, loadingPayments, onClose, onApprove, onReject, onRecordPayment, onEdit,
@@ -78,13 +78,14 @@ export function DealDetailDrawer({
       onCancel={onClose}
       width={920}
       className="deal-detail-modal"
+      centered
       destroyOnHidden
       title="Thông tin hợp đồng"
       footer={deal && <div className="deal-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space><Button onClick={onClose}>Đóng</Button><Button icon={<PlusOutlined />} onClick={onRecordPayment}>Ghi nhận thanh toán</Button><Button type="primary" icon={<EditOutlined />} onClick={onEdit}>Chỉnh sửa</Button></Space></div>}
     >
       {!deal ? <Empty description="Không có dữ liệu hợp đồng" /> : (
         <div className="deal-detail-modal__content">
-          <div className="deal-detail-modal__hero"><div><Typography.Text type="secondary">MÃ HỢP ĐỒNG</Typography.Text><Typography.Title level={3}>{deal.contractCode}</Typography.Title><Space wrap size={[6, 6]}><Tag color={statusTone(deal)}>{DEAL_STATUS_LABEL[deal.status]}</Tag><Tag color={paymentTone(deal)}>{PAYMENT_STATUS_LABEL[deal.paymentStatus]}</Tag><Tag color={approvalTone(deal)}>{APPROVAL_STATUS_LABEL[deal.approvalStatus]}</Tag></Space></div><div className="deal-detail-modal__audit"><span>Ngày tạo</span><strong>{formatDateTime(deal.createdAt)}</strong><span>Cập nhật</span><strong>{formatDateTime(deal.updatedAt)}</strong></div></div>
+          <div className="deal-detail-modal__hero"><div><Typography.Text type="secondary">MÃ HỢP ĐỒNG</Typography.Text><Typography.Title level={3}>{deal.contractCode}</Typography.Title><Space wrap size={[6, 6]}><StatusPill tone={statusTone(deal)} size="sm">{DEAL_STATUS_LABEL[deal.status]}</StatusPill><StatusPill tone={paymentTone(deal)} size="sm">{PAYMENT_STATUS_LABEL[deal.paymentStatus]}</StatusPill><StatusPill tone={approvalTone(deal)} size="sm">{APPROVAL_STATUS_LABEL[deal.approvalStatus]}</StatusPill></Space></div><div className="deal-detail-modal__audit"><span>Ngày tạo</span><strong>{formatDateTime(deal.createdAt)}</strong><span>Cập nhật</span><strong>{formatDateTime(deal.updatedAt)}</strong></div></div>
           <div className="deal-detail-modal__grid">
           <Card size="small" title="Thông tin chung">
             <Descriptions column={2} size="small" colon={false}>
@@ -142,14 +143,14 @@ export function DealDetailDrawer({
               locale={{ emptyText: 'Chưa ghi nhận đợt thanh toán nào' }}
             />
             <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-              Danh sách append-only: backend không cho sửa/xoá đợt đã ghi.
+              Lịch sử thanh toán được ghi nhận theo từng đợt, không thể thay đổi sau khi xác nhận.
             </Typography.Text>
           </Card>
 
           <Card className="deal-detail-modal__approval" size="small" title="Phê duyệt">
             <Descriptions column={2} size="small" colon={false}>
               <Descriptions.Item label="Trạng thái duyệt">
-                <Tag color={approvalTone(deal)}>{APPROVAL_STATUS_LABEL[deal.approvalStatus]}</Tag>
+                <StatusPill tone={approvalTone(deal)} size="sm">{APPROVAL_STATUS_LABEL[deal.approvalStatus]}</StatusPill>
               </Descriptions.Item>
               <Descriptions.Item label="Thời điểm duyệt">{formatDateTime(deal.approvedAt)}</Descriptions.Item>
             </Descriptions>
@@ -162,11 +163,11 @@ export function DealDetailDrawer({
                   disabled={deal.approvalStatus === 'APPROVED'}
                   onClick={onApprove}
                 >
-                  Phê duyệt
+                  Xác nhận phê duyệt
                 </Button>
                 <Popconfirm
-                  title="Từ chối hợp đồng này?"
-                  description="Backend không có field lý do từ chối — ghi lý do vào ô Ghi chú khi bấm Sửa nếu cần."
+                  title="Xác nhận từ chối hợp đồng này?"
+                  description="Hợp đồng sẽ chuyển sang trạng thái Từ chối. Bạn có thể ghi chú thêm thông tin vào hợp đồng nếu cần."
                   okText="Từ chối"
                   cancelText="Huỷ"
                   okButtonProps={{ danger: true }}

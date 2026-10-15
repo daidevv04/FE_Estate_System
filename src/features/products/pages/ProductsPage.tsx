@@ -1,9 +1,10 @@
-import { CloseOutlined, DownloadOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
-import { App, Button, Card, Modal, Pagination, Select, Space, Typography } from 'antd'
+import { CloseOutlined, DownloadOutlined, EditOutlined, EyeOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
+import { App, Button, Card, Modal, Pagination, Select, Space, Tooltip, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { formatMoney } from '@/lib/format'
 import { paths } from '@/routes/paths'
+import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import { ProductFormModal } from '@/features/projects/components/ProductFormModal'
 import {
@@ -19,9 +20,11 @@ import { ProductDetailModal } from '../components/ProductDetailModal'
 const INITIAL: FilterState = { page: 0, size: 10 }
 const PAGE_SIZE = [{ value: 10, label: '10' }, { value: 20, label: '20' }, { value: 50, label: '50' }]
 
-/** 9.16: danh sách sản phẩm toàn hệ thống — KPI + lọc + bảng + phân trang, dữ liệu 100% từ API. */
 export function ProductsPage() {
   const { message } = App.useApp()
+  const user = useAuthStore((s) => s.user)
+  const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
+  const isAdmin = user?.role === 'ADMIN'
   const [filters, setFilters] = useState<FilterState>(INITIAL)
   const [selected, setSelected] = useState<string[]>([])
   const [bulkStatus, setBulkStatus] = useState<ProductStatus | undefined>()
@@ -29,7 +32,6 @@ export function ProductsPage() {
   const [detailProductId, setDetailProductId] = useState<string>()
   const mutations = useProductMutations()
 
-  // Tham số chỉ gửi field ProductController.list thực sự nhận.
   const list = useProducts(filters)
   const projects = useProjects({ page: 0, size: 200, sort: 'name,asc' })
   const totals = useProductTotals()
@@ -46,7 +48,6 @@ export function ProductsPage() {
   const projectOptions = (projects.data?.content ?? []).map((p) => ({ value: p.id, label: p.name }))
   const submitting = mutations.createProduct.isPending || mutations.updateProduct.isPending || mutations.uploadProductImage.isPending
 
-  /** Backend chỉ có PATCH /products/{id} — cập nhật từng bản ghi thật, không giả bulk endpoint. */
   const applyBulk = async (status: ProductStatus) => {
     const targets = rows.filter((p) => selected.includes(p.id))
     const failed: string[] = []
@@ -82,12 +83,17 @@ export function ProductsPage() {
       <PageHeader
         breadcrumb={[{ title: 'Danh mục' }, { title: 'Sản phẩm', href: paths.products }]}
         title="Quản lý sản phẩm"
-        status={<span className="products-scope">● Admin Scope · Toàn hệ thống</span>}
+        status={
+          <span className="pipe-scope">
+            <span className="pipe-scope__dot" />
+            Phạm vi: {canManage ? 'Toàn hệ thống' : 'Bảng hàng kinh doanh'}
+          </span>
+        }
         meta="Quản lý toàn bộ danh sách căn hộ, đất nền và nhà phố trên toàn hệ thống."
         actions={
           <>
             <Button icon={<DownloadOutlined />} onClick={() => message.info('Chức năng xuất bảng hàng cần API xuất dữ liệu')}>Xuất bảng hàng</Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing(null)}>Thêm sản phẩm</Button>
+            {isAdmin && <Button type="primary" icon={<PlusOutlined />} onClick={() => setEditing(null)}>Thêm sản phẩm</Button>}
           </>
         }
       />
@@ -108,7 +114,40 @@ export function ProductsPage() {
         {selected.length > 0 && (
           <div className="products-bulk">
             <span className="products-bulk__count">Đã chọn <strong>{selected.length}</strong> sản phẩm</span>
-            <Button icon={<SwapOutlined />} onClick={() => setBulkStatus('AVAILABLE')}>Đổi trạng thái</Button>
+
+            <Tooltip title={selected.length > 1 ? 'Chỉ xem chi tiết khi chọn 1 sản phẩm' : undefined}>
+              <span>
+                <Button
+                  icon={<EyeOutlined />}
+                  disabled={selected.length !== 1}
+                  style={{ opacity: selected.length !== 1 ? 0.45 : 1 }}
+                  onClick={() => setDetailProductId(selected[0])}
+                >
+                  Xem chi tiết
+                </Button>
+              </span>
+            </Tooltip>
+
+            {canManage && (
+              <Tooltip title={selected.length > 1 ? 'Chỉ chỉnh sửa khi chọn 1 sản phẩm' : undefined}>
+                <span>
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    disabled={selected.length !== 1}
+                    style={{ opacity: selected.length !== 1 ? 0.45 : 1 }}
+                    onClick={() => {
+                      const p = rows.find((item) => item.id === selected[0])
+                      if (p) setEditing(p)
+                    }}
+                  >
+                    Chỉnh sửa
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
+
+            {canManage && <Button icon={<SwapOutlined />} onClick={() => setBulkStatus('AVAILABLE')}>Đổi trạng thái ({selected.length})</Button>}
             <Button type="text" icon={<CloseOutlined />} onClick={() => setSelected([])}>Bỏ chọn</Button>
             <div className="products-bulk__meta">
               <span>Đang xem {from} - {from + rows.length - 1} của {total} sản phẩm</span>
@@ -123,6 +162,7 @@ export function ProductsPage() {
           emptyText={list.isError ? apiErrorMessage(list.error) : 'Chưa có sản phẩm phù hợp bộ lọc'}
           selected={selected}
           projectNames={projectNames}
+          canManage={canManage}
           onSelect={setSelected}
           onEdit={setEditing}
           onView={(product) => setDetailProductId(product.id)}
@@ -144,6 +184,8 @@ export function ProductsPage() {
         title="Đổi trạng thái sản phẩm"
         okText="Áp dụng"
         cancelText="Hủy"
+        centered
+        destroyOnHidden
         onCancel={() => setBulkStatus(undefined)}
         onOk={() => { if (bulkStatus) void applyBulk(bulkStatus); setBulkStatus(undefined) }}
       >

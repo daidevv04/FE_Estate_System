@@ -1,9 +1,8 @@
 import { LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SearchOutlined } from '@ant-design/icons'
-import { AutoComplete, Avatar, Button, Dropdown, Input, Layout, Space, theme } from 'antd'
+import { Avatar, Button, Dropdown, Input, Layout, Space, theme } from 'antd'
 import type { InputRef } from 'antd'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { flatNav } from '@/components/layout/nav'
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
 import { paths } from '@/routes/paths'
 import { readRefreshToken, useAuthStore } from '@/store/authStore'
@@ -12,25 +11,27 @@ import { HeaderNotificationBox } from '@/components/notification/HeaderNotificat
 
 const { Header: AntHeader } = Layout
 
-/** Bỏ dấu tiếng Việt để gõ "hop dong" vẫn ra "Hợp đồng" */
-const norm = (s: string) =>
-  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase()
-
 export function Header() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { token } = theme.useToken()
   const { sidebarCollapsed, toggleSidebar } = useUiStore()
   const { user, clear } = useAuthStore()
 
   const searchRef = useRef<InputRef>(null)
-  const [keyword, setKeyword] = useState('')
-  const pages = useMemo(() => flatNav(user?.role), [user?.role])
-  const options = useMemo(() => {
-    const q = norm(keyword.trim())
-    return pages.filter((p) => !q || norm(p.label).includes(q)).map((p) => ({ value: p.label, label: p.label }))
-  }, [keyword, pages])
 
-  // Ctrl/Cmd + K → focus ô tìm kiếm (đúng phím tắt ghi trên placeholder)
+  const isSearchPage = location.pathname === paths.search
+  const queryFromUrl = isSearchPage ? new URLSearchParams(location.search).get('q') ?? '' : ''
+  const [keyword, setKeyword] = useState(queryFromUrl)
+
+  useEffect(() => {
+    if (isSearchPage) {
+      setKeyword(queryFromUrl)
+    } else {
+      setKeyword('')
+    }
+  }, [isSearchPage, queryFromUrl])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
@@ -42,15 +43,18 @@ export function Header() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const goTo = (label: string) => {
-    const page = pages.find((p) => p.label === label)
-    if (page) navigate(page.key)
-    setKeyword('')
+  const handleKeywordChange = (val: string) => {
+    setKeyword(val)
+    const trimmed = val.trim()
+    if (trimmed) {
+      navigate(`${paths.search}?q=${encodeURIComponent(trimmed)}`, { replace: isSearchPage })
+    } else if (isSearchPage) {
+      navigate(paths.search, { replace: true })
+    }
   }
 
   const logout = async () => {
     try {
-      // Lấy token MỚI NHẤT từ storage: tab khác có thể đã xoay token, bản trong RAM đã chết.
       const stored = readRefreshToken()
       if (stored) await api.post('/auth/logout', { refreshToken: stored })
     } finally {
@@ -85,22 +89,24 @@ export function Header() {
         />
       </div>
 
-      <AutoComplete
-        className="app-header-search"
-        options={options}
-        value={keyword}
-        onChange={setKeyword}
-        onSelect={goTo}
-      >
+      <div className="app-header-search" style={{ display: 'flex', justifyContent: 'center' }}>
         <Input
           className="app-header-search__input"
           ref={searchRef}
           allowClear
-          prefix={<SearchOutlined style={{ color: token.colorTextPlaceholder }} />}
-          placeholder="Tìm trang (Ctrl+K)"
-          onPressEnter={(e) => goTo((e.target as HTMLInputElement).value)}
+          value={keyword}
+          onChange={(e) => handleKeywordChange(e.target.value)}
+          prefix={<SearchOutlined style={{ color: token.colorTextPlaceholder, fontSize: 16 }} />}
+          placeholder="Tìm kiếm hệ thống... (Ctrl+K)"
+          style={{ width: '100%', borderRadius: 24 }}
+          onPressEnter={(e) => {
+            const val = (e.target as HTMLInputElement).value.trim()
+            if (val) {
+              navigate(`${paths.search}?q=${encodeURIComponent(val)}`, { replace: isSearchPage })
+            }
+          }}
         />
-      </AutoComplete>
+      </div>
 
       <div
         className="app-header-right"

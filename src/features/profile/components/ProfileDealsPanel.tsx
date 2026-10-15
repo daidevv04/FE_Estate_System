@@ -1,5 +1,6 @@
 import { FileTextOutlined, RightOutlined } from '@ant-design/icons'
-import { Empty, Skeleton, Tag } from 'antd'
+import { Empty, Skeleton } from 'antd'
+import { StatusPill, type Tone } from '@/components/common/StatusPill'
 import { formatMoney } from '@/lib/format'
 
 export interface ProfileDealItem {
@@ -19,14 +20,14 @@ interface ProfileDealsPanelProps {
   onViewAllDeals: () => void
 }
 
-const statusTagMap: Record<string, { color: string; label: string }> = {
-  ACTIVE: { color: 'processing', label: 'Đang thực hiện' },
-  IN_PROGRESS: { color: 'processing', label: 'Đang xử lý' },
-  SIGNED: { color: 'success', label: 'Đã ký' },
-  COMPLETED: { color: 'success', label: 'Hoàn tất' },
-  DEPOSIT: { color: 'warning', label: 'Đang cọc' },
-  DRAFT: { color: 'default', label: 'Bản thảo' },
-  CANCELLED: { color: 'error', label: 'Đã hủy' },
+const statusTagMap: Record<string, { tone: Tone; label: string }> = {
+  ACTIVE: { tone: 'blue', label: 'Đang thực hiện' },
+  IN_PROGRESS: { tone: 'blue', label: 'Đang xử lý' },
+  SIGNED: { tone: 'green', label: 'Đã ký' },
+  COMPLETED: { tone: 'teal', label: 'Hoàn tất' },
+  DEPOSIT: { tone: 'amber', label: 'Đang cọc' },
+  DRAFT: { tone: 'gray', label: 'Bản thảo' },
+  CANCELLED: { tone: 'red', label: 'Đã hủy' },
 }
 
 export function ProfileDealsPanel({
@@ -65,15 +66,15 @@ export function ProfileDealsPanel({
       ) : (
         <div className="profile-deals-list">
           {deals.map((deal) => {
-            const tag = statusTagMap[deal.status] ?? { color: 'default', label: deal.status }
+            const tag = statusTagMap[deal.status] ?? { tone: 'gray' as Tone, label: deal.status }
             return (
               <div key={deal.id} className="profile-deal-item">
                 <div className="profile-deal-item__row">
                   <div className="profile-deal-item__title-wrap">
                     <span className="profile-deal-item__code">{deal.contractCode}</span>
-                    <Tag color={tag.color} className="profile-deal-tag">
+                    <StatusPill tone={tag.tone} size="sm">
                       {tag.label}
-                    </Tag>
+                    </StatusPill>
                   </div>
                   <span className="profile-deal-item__amount">
                     {formatMoney(deal.contractValue)}

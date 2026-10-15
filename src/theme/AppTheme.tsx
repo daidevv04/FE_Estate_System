@@ -7,7 +7,6 @@ import { tokens as t } from './tokens'
 
 dayjs.locale('vi')
 
-/** Bọc toàn app: AntD theme + locale tiếng Việt + <App> để dùng message/notification không cần static. */
 export function AppTheme({ children }: { children: ReactNode }) {
   return (
     <ConfigProvider
@@ -28,7 +27,6 @@ export function AppTheme({ children }: { children: ReactNode }) {
         components: {
           Card: { borderRadiusLG: t.radiusXl, headerFontSize: 15 },
           Modal: { borderRadiusLG: t.radius2xl, fontSize: 14 },
-          // Bảng Stitch: header xám lạnh in hoa 11px, hover dòng #F8FAFC, không kẻ dọc
           Table: {
             headerBg: t.colorSurfaceSunken,
             headerColor: t.colorTextMuted,

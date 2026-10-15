@@ -28,7 +28,6 @@ function KpiCard({ item }: { item: Item }) {
 
 interface Props { total: number; counts: Record<ProductStatus, number> }
 
-/** 9.16: 4 thẻ KPI — nhãn hoa + icon tint góc phải + số lớn + thanh tỉ lệ + caption. */
 export function ProductSummary({ total, counts }: Props) {
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 1000) / 10 : 0)
   const items: Item[] = [

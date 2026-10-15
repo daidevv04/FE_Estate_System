@@ -1,5 +1,11 @@
-import { EyeOutlined } from '@ant-design/icons'
-import { Button, Table } from 'antd'
+import {
+  CalendarOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
+  MailOutlined,
+  TagOutlined,
+} from '@ant-design/icons'
+import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ReactNode } from 'react'
 import { formatDateTime } from '@/lib/format'
@@ -11,43 +17,94 @@ interface Props {
   loading: boolean
   emptyText: ReactNode
   onPreview: (row: EmailTemplate) => void
+  selectedRowKeys?: string[]
+  onSelect?: (keys: string[]) => void
 }
 
-/** 9.12: cột chính là tên mẫu + tiêu đề; "Xem trước" là hành động nổi bật của màn. */
-export function EmailTemplateTable({ rows, loading, emptyText, onPreview }: Props) {
+export function EmailTemplateTable({ rows, loading, emptyText, onPreview, selectedRowKeys, onSelect }: Props) {
   const columns: ColumnsType<EmailTemplate> = [
     {
-      title: 'TÊN MẪU',
+      title: (
+        <span>
+          <FileTextOutlined style={{ marginRight: 5, color: '#059669' }} />
+          Tên mẫu
+        </span>
+      ),
       dataIndex: 'name',
-      width: 260,
+      width: 220,
+      ellipsis: true,
       render: (value, row) => <button type="button" className="product-code product-code--button" onClick={() => onPreview(row)}>{value}</button>,
     },
-    { title: 'TIÊU ĐỀ EMAIL', dataIndex: 'subject', ellipsis: true, render: (value) => value || '—' },
-    { title: 'DANH MỤC', dataIndex: 'category', width: 150, render: (value: string) => <CategoryPill category={value} /> },
-    { title: 'TRẠNG THÁI', dataIndex: 'status', width: 140, render: (value: string) => <StatusPill status={value} /> },
-    { title: 'CẬP NHẬT', dataIndex: 'updatedAt', width: 165, render: (value: string) => <span className="product-muted">{formatDateTime(value)}</span> },
     {
-      title: 'THAO TÁC',
-      width: 70,
-      render: (_, row) => (
-        <div className="product-actions">
-          <Button type="text" size="small" aria-label={`Xem chi tiết ${row.name}`} icon={<EyeOutlined />} onClick={() => onPreview(row)} />
-        </div>
+      title: (
+        <span>
+          <MailOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Tiêu đề email
+        </span>
       ),
+      dataIndex: 'subject',
+      ellipsis: true,
+      render: (value) => value || '—',
+    },
+    {
+      title: (
+        <span>
+          <TagOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Danh mục
+        </span>
+      ),
+      dataIndex: 'category',
+      width: 140,
+      render: (value: string) => <CategoryPill category={value} />,
+    },
+    {
+      title: (
+        <span>
+          <CheckCircleOutlined style={{ marginRight: 5, color: '#059669' }} />
+          Trạng thái
+        </span>
+      ),
+      dataIndex: 'status',
+      width: 120,
+      render: (value: string) => <StatusPill status={value} />,
+    },
+    {
+      title: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Cập nhật
+        </span>
+      ),
+      dataIndex: 'updatedAt',
+      width: 150,
+      render: (value: string) => <span className="product-muted">{formatDateTime(value)}</span>,
     },
   ]
 
   return (
     <Table<EmailTemplate>
-      className="product-table"
+      className="product-table crm-compact-table"
       rowKey="id"
-      size="middle"
+      size="small"
       loading={loading}
       columns={columns}
       dataSource={rows}
       pagination={false}
-      scroll={{ x: 1200 }}
+      scroll={{ x: 750 }}
       locale={{ emptyText }}
+      rowSelection={onSelect ? {
+        selectedRowKeys,
+        onChange: (keys) => onSelect(keys.map(String)),
+        preserveSelectedRowKeys: true,
+      } : undefined}
+      onRow={(row) => ({
+        onClick: (e) => {
+          const target = e.target as HTMLElement
+          if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
+          onPreview(row)
+        },
+        style: { cursor: 'pointer' },
+      })}
     />
   )
 }

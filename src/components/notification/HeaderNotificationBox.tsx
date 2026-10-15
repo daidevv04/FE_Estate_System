@@ -7,10 +7,11 @@ import {
   InfoCircleOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Badge, Button, Empty, Popover, Tag } from 'antd'
+import { Badge, Button, Empty, Popover } from 'antd'
 import dayjs from 'dayjs'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { StatusPill } from '@/components/common/StatusPill'
 import { paths } from '@/routes/paths'
 import { useNotificationStore } from '@/store/notificationStore'
 import type { AppNotification, NotificationType } from '@/types/notification'
@@ -45,8 +46,13 @@ export function HeaderNotificationBox() {
   const [tab, setTab] = useState<'all' | 'unread'>('all')
 
   const notifications = useNotificationStore((s) => s.notifications)
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications)
   const markAsRead = useNotificationStore((s) => s.markAsRead)
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead)
+
+  useEffect(() => {
+    void fetchNotifications()
+  }, [fetchNotifications])
 
   const unreadCount = notifications.filter((n) => !n.read).length
   const displayedList = tab === 'unread' ? notifications.filter((n) => !n.read) : notifications
@@ -64,7 +70,7 @@ export function HeaderNotificationBox() {
       <div className="header-notif-head">
         <div className="header-notif-head-title">
           <span>Thông báo</span>
-          {unreadCount > 0 && <Tag color="blue">{unreadCount} mới</Tag>}
+          {unreadCount > 0 && <StatusPill tone="blue" size="sm">{unreadCount} mới</StatusPill>}
         </div>
         {unreadCount > 0 && (
           <Button

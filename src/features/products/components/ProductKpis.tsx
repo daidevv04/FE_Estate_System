@@ -14,7 +14,6 @@ interface Kpi {
   meta: { text: string; accent?: boolean }[]
 }
 
-/** 9.17 — 4 thẻ KPI dưới header: nhãn hoa + icon bo tròn góc phải + giá trị lớn + pill metadata. Toàn bộ số lấy từ API. */
 export function ProductKpis({ product, projectName }: Props) {
   const perM2 = product.price && product.area ? Math.round(product.price / product.area) : null
   const statusLabel = labelOf(PRODUCT_STATUS, product.status)

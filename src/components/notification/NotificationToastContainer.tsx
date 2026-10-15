@@ -28,17 +28,15 @@ function playDing() {
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.type = 'sine'
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime) // D5
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12) // A5
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime) 
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12) 
     gain.gain.setValueAtTime(0.08, ctx.currentTime)
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
     osc.connect(gain)
     gain.connect(ctx.destination)
     osc.start()
     osc.stop(ctx.currentTime + 0.3)
-  } catch {
-    /* audio play blocked or unsupported */
-  }
+  } catch {}
 }
 
 export function NotificationToastContainer() {
@@ -47,7 +45,6 @@ export function NotificationToastContainer() {
   const dismissToast = useNotificationStore((s) => s.dismissToast)
   const markAsRead = useNotificationStore((s) => s.markAsRead)
 
-  // Play subtle chime when a new toast appears
   useEffect(() => {
     if (activeToasts.length > 0 && !activeToasts[activeToasts.length - 1].isLeaving) {
       playDing()

@@ -1,5 +1,5 @@
-import { CheckOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Input, Select } from 'antd'
+import { CheckOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Card, Input, Select } from 'antd'
 
 interface Props {
   search: string
@@ -10,6 +10,8 @@ interface Props {
   onPriorityChange: (v: string) => void
   filterRead: string
   onReadChange: (v: string) => void
+  hasFilters: boolean
+  onResetFilters: () => void
   unreadCount: number
   onMarkAllAsRead: () => void
 }
@@ -23,24 +25,26 @@ export function NotificationFilterBar({
   onPriorityChange,
   filterRead,
   onReadChange,
+  hasFilters,
+  onResetFilters,
   unreadCount,
   onMarkAllAsRead,
 }: Props) {
   return (
-    <div className="notif-filter-bar">
-      <div className="notif-filter-left">
+    <Card className="stitch-card crm-filter-card" variant="borderless" styles={{ body: { padding: '12px 16px' } }} style={{ marginBottom: 16 }}>
+      <div className="crm-filter-bar">
         <Input
           placeholder="Tìm theo tiêu đề, nội dung..."
           prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          style={{ width: 240 }}
+          style={{ flex: '1.8 1 200px', minWidth: 180 }}
           allowClear
         />
         <Select
           value={filterType}
           onChange={onTypeChange}
-          style={{ width: 140 }}
+          style={{ flex: '1 1 130px', minWidth: 120 }}
           options={[
             { value: 'ALL', label: 'Tất cả loại' },
             { value: 'SYSTEM', label: 'Hệ thống' },
@@ -53,9 +57,9 @@ export function NotificationFilterBar({
         <Select
           value={filterPriority}
           onChange={onPriorityChange}
-          style={{ width: 140 }}
+          style={{ flex: '1 1 130px', minWidth: 120 }}
           options={[
-            { value: 'ALL', label: 'Mức độ' },
+            { value: 'ALL', label: 'Mức độ: Tất cả' },
             { value: 'LOW', label: 'Thấp' },
             { value: 'NORMAL', label: 'Thông thường' },
             { value: 'HIGH', label: 'Quan trọng' },
@@ -65,19 +69,28 @@ export function NotificationFilterBar({
         <Select
           value={filterRead}
           onChange={onReadChange}
-          style={{ width: 130 }}
+          style={{ flex: '1.2 1 150px', minWidth: 140 }}
           options={[
             { value: 'ALL', label: 'Tất cả trạng thái' },
             { value: 'UNREAD', label: 'Chưa đọc' },
             { value: 'READ', label: 'Đã đọc' },
           ]}
         />
+        {hasFilters && (
+          <Button
+            className="crm-filter-clear-btn"
+            icon={<ReloadOutlined />}
+            onClick={onResetFilters}
+          >
+            Xoá lọc
+          </Button>
+        )}
+        {unreadCount > 0 && (
+          <Button icon={<CheckOutlined />} onClick={onMarkAllAsRead} style={{ flex: '0 0 auto' }}>
+            Đọc tất cả ({unreadCount})
+          </Button>
+        )}
       </div>
-      {unreadCount > 0 && (
-        <Button icon={<CheckOutlined />} onClick={onMarkAllAsRead}>
-          Đọc tất cả ({unreadCount})
-        </Button>
-      )}
-    </div>
+    </Card>
   )
 }

@@ -1,12 +1,17 @@
 import { MoreOutlined, WarningOutlined } from '@ant-design/icons'
-import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
-import type { MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react'
 import type { Customer } from '@/features/customers/api'
 import {
   PRODUCT_TYPE_LABEL, avatarClass, fullVnd, initials, shortDate, shortName,
   type Lead, type Product, type Project,
 } from '../api'
+
+export interface CardActionItem {
+  key: string
+  label: ReactNode
+  danger?: boolean
+}
 
 interface Props {
   lead: Lead
@@ -23,17 +28,20 @@ interface Props {
   onDragEnd: () => void
 }
 
-/** Tên căn + dự án hiển thị dưới tên khách: "Căn hộ A-1205 · Regal Victoria" */
 const productLabel = (lead: Lead, product?: Product, project?: Project) => {
   if (!product) return `Căn #${lead.productId.slice(0, 8)}`
   const unit = `${PRODUCT_TYPE_LABEL[product.type] ?? 'Căn'} ${product.code}`
   return project ? `${unit} · ${project.name}` : unit
 }
 
-/** Thẻ lead màn 9.18: tên khách hàng nổi nhất → giá trị → ngày chốt/cảnh báo quá hạn → nguồn + phụ trách */
+let globalLastDragEndTime = 0
+
 export function LeadCard({
   lead, customer, product, project, ownerName, overdue, dragging, actions, onAction, onOpen, onDragStart, onDragEnd,
 }: Props) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuWrapRef = useRef<HTMLDivElement>(null)
+  const isDraggingRef = useRef(false)
   const isLost = lead.stage === 'LOST'
   const cls = [
     'kb-card',
@@ -45,6 +53,19 @@ export function LeadCard({
 
   const stop = (e: MouseEvent) => e.stopPropagation()
 
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDocClick = (e: globalThis.MouseEvent) => {
+      if (menuWrapRef.current && !menuWrapRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    window.addEventListener('click', onDocClick)
+    return () => {
+      window.removeEventListener('click', onDocClick)
+    }
+  }, [menuOpen])
+
   return (
     <div
       className={cls}
@@ -52,7 +73,14 @@ export function LeadCard({
       tabIndex={0}
       draggable
       aria-label={`${customer?.fullName ?? 'Khách hàng'} · ${fullVnd(lead.expectedValue)}`}
-      onClick={() => onOpen(lead)}
+      onClick={(e) => {
+        if (isDraggingRef.current || Date.now() - globalLastDragEndTime < 250) {
+          e.preventDefault()
+          e.stopPropagation()
+          return
+        }
+        onOpen(lead)
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -60,19 +88,53 @@ export function LeadCard({
         }
       }}
       onDragStart={(e) => {
+        isDraggingRef.current = true
         e.dataTransfer.setData('text/plain', lead.id)
         e.dataTransfer.effectAllowed = 'move'
         onDragStart(lead.id)
       }}
-      onDragEnd={onDragEnd}
+      onDragEnd={() => {
+        globalLastDragEndTime = Date.now()
+        setTimeout(() => {
+          isDraggingRef.current = false
+        }, 120)
+        onDragEnd()
+      }}
     >
       <div className="kb-card__top">
         <span className="kb-card__name">{customer?.fullName ?? `Khách #${lead.customerId.slice(0, 8)}`}</span>
-        <Dropdown menu={{ items: actions, onClick: ({ key }) => onAction(key) }} trigger={['click']} placement="bottomRight">
-          <button type="button" className="kb-card__more-btn" aria-label="Thao tác" onClick={stop}>
+        <div className="kb-card__more-wrap" ref={menuWrapRef} onClick={stop}>
+          <button
+            type="button"
+            className="kb-card__more-btn"
+            aria-label="Thao tác"
+            onClick={(e) => {
+              stop(e)
+              setMenuOpen((v) => !v)
+            }}
+          >
             <MoreOutlined />
           </button>
-        </Dropdown>
+          {menuOpen && (
+            <div className="kb-card__menu" role="menu">
+              {((actions ?? []) as CardActionItem[]).filter(Boolean).map((act) => (
+                <button
+                  key={act.key}
+                  type="button"
+                  role="menuitem"
+                  className={`kb-card__menu-item${act.danger ? ' is-danger' : ''}`}
+                  onClick={(e) => {
+                    stop(e)
+                    setMenuOpen(false)
+                    onAction(act.key)
+                  }}
+                >
+                  {act.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="kb-card__prod">{productLabel(lead, product, project)}</div>

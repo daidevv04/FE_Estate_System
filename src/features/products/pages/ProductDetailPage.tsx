@@ -1,7 +1,8 @@
 import { EditOutlined, HistoryOutlined, SwapOutlined } from '@ant-design/icons'
-import { App, Button, Dropdown, Empty, Modal, Skeleton, Tag } from 'antd'
+import { App, Button, Dropdown, Empty, Modal, Skeleton } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { StatusPill } from '@/components/common/StatusPill'
 import { useCustomers, useStaff, type Customer } from '@/features/customers/api'
 import { useLeads, type Lead } from '@/features/leads/api'
 import { ProductFormModal } from '@/features/projects/components/ProductFormModal'
@@ -17,13 +18,15 @@ import { ProductKpis } from '../components/ProductKpis'
 import { ProductLocation } from '../components/ProductLocation'
 import { ProductPaymentPolicy } from '../components/ProductPaymentPolicy'
 import { ProductSpecs } from '../components/ProductSpecs'
+import { useAuthStore } from '@/store/authStore'
 import { PRODUCT_STATUS, PRODUCT_TYPE, apiErrorMessage, labelOf, useProductMutations, type ProductInput, type ProductStatus } from '../api'
 
-/** 9.17: chi tiết sản phẩm — header + KPI + 2 cột, dữ liệu 100% từ API (product / project / leads / customers). */
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { message } = App.useApp()
+  const user = useAuthStore((s) => s.user)
+  const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
   const product = useProduct(id)
   const project = useProject(product.data?.projectId)
   const leads = useLeads()
@@ -71,15 +74,17 @@ export function ProductDetailPage() {
       }
     })()
   }
-return (
+  const productTone = item.status === 'AVAILABLE' ? 'green' : item.status === 'RESERVED' ? 'amber' : 'blue'
+
+  return (
     <>
       <section className="stitch-card pd-head">
         <div className="pd-head__top">
           <div className="pd-head__id">
             <h1>{labelOf(PRODUCT_TYPE, item.type)} {item.code}</h1>
-            <Tag color={item.status === 'AVAILABLE' ? 'green' : item.status === 'RESERVED' ? 'gold' : 'default'}>
-              {labelOf(PRODUCT_STATUS, item.status)} ({item.status})
-            </Tag>
+            <StatusPill tone={productTone}>
+              {labelOf(PRODUCT_STATUS, item.status)}
+            </StatusPill>
           </div>
           <span className="pd-head__brand"><HistoryOutlined /> Bất động sản Đất Xanh Miền Trung độc quyền</span>
         </div>
@@ -93,15 +98,19 @@ return (
           <span><em>Cập nhật:</em> <b>{formatDate(item.updatedAt)}</b></span>
         </div>
         <div className="pd-head__actions">
-          <Dropdown
-            menu={{
-              items: PRODUCT_STATUS.filter((s) => s.value !== item.status).map((s) => ({ key: s.value, label: s.label })),
-              onClick: ({ key }) => setStatus(key as ProductStatus),
-            }}
-          >
-            <Button icon={<SwapOutlined />} loading={mutations.updateProduct.isPending}>Đổi trạng thái</Button>
-          </Dropdown>
-          <Button type="primary" icon={<EditOutlined />} onClick={() => setEditing(true)}>Chỉnh sửa</Button>
+          {canManage && (
+            <>
+              <Dropdown
+                menu={{
+                  items: PRODUCT_STATUS.filter((s) => s.value !== item.status).map((s) => ({ key: s.value, label: s.label })),
+                  onClick: ({ key }) => setStatus(key as ProductStatus),
+                }}
+              >
+                <Button icon={<SwapOutlined />} loading={mutations.updateProduct.isPending}>Đổi trạng thái</Button>
+              </Dropdown>
+              <Button type="primary" icon={<EditOutlined />} onClick={() => setEditing(true)}>Chỉnh sửa</Button>
+            </>
+          )}
         </div>
       </section>
 

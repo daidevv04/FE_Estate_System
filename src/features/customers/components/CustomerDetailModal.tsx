@@ -1,8 +1,11 @@
 import { CalendarOutlined, DeleteOutlined, EditOutlined, EnvironmentOutlined, IdcardOutlined, MailOutlined, PhoneOutlined, TeamOutlined, ThunderboltOutlined, UserOutlined } from '@ant-design/icons'
 import { App, Avatar, Button, Card, Empty, Modal, Skeleton, Space, Typography } from 'antd'
 import dayjs from 'dayjs'
+import { useState } from 'react'
+import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import { apiErrorMessage, customerCode, demandLabel, statusLabel, useCustomer, useCustomerMutations, type Customer, type StaffUser } from '../api'
+import { SendCustomerEmailModal } from './SendCustomerEmailModal'
 import './CustomerDetailModal.css'
 
 interface Props { customerId?: string; staff: StaffUser[]; canWrite: boolean; onClose: () => void; onEdit: (customer: Customer) => void }
@@ -13,9 +16,11 @@ const initials = (name: string) => { const words = name.trim().split(/\s+/); ret
 const date = (value: string) => dayjs(value).format('DD/MM/YYYY · HH:mm')
 const statusTone = (status: Customer['status']) => ({ NEW: { bg: t.colorInfoBg, fg: t.colorInfoText, dot: t.colorInfo }, POTENTIAL: { bg: t.colorWarningBg, fg: t.colorWarningText, dot: t.colorWarning }, CUSTOMER: { bg: t.colorSuccessBg, fg: t.colorSuccessText, dot: t.colorSuccess }, INACTIVE: { bg: t.colorSurfaceSunken, fg: t.colorTextMuted, dot: t.colorBorderStrong } })[status]
 
-/** Popup chi tiết customer chỉ hiện dữ liệu CustomerResponse thật; không dựng lịch sử CRM chưa có endpoint đọc. */
 export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEdit }: Props) {
   const { message, modal } = App.useApp()
+  const user = useAuthStore((s) => s.user)
+  const canSendEmail = user?.role === 'MANAGER' || user?.role === 'SALES'
+  const [emailModalOpen, setEmailModalOpen] = useState(false)
   const detail = useCustomer(customerId)
   const { remove } = useCustomerMutations()
   const customer = detail.data
@@ -32,6 +37,7 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
       onCancel={onClose}
       width={880}
       className="customer-detail-modal"
+      centered
       destroyOnHidden
       title="Thông tin chi tiết khách hàng"
       footer={
@@ -40,6 +46,11 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
             <Typography.Text>Dữ liệu được cập nhật tự động từ hệ thống CRM.</Typography.Text>
             <Space>
               <Button onClick={onClose}>Đóng</Button>
+              {canSendEmail && customer.email && (
+                <Button icon={<MailOutlined />} onClick={() => setEmailModalOpen(true)}>
+                  Gửi email
+                </Button>
+              )}
               {canWrite && (
                 <Button type="primary" icon={<EditOutlined />} onClick={() => onEdit(customer)}>
                   Chỉnh sửa
@@ -167,6 +178,14 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
             </Card>
           )}
         </div>
+      )}
+
+      {customer && (
+        <SendCustomerEmailModal
+          open={emailModalOpen}
+          customer={customer}
+          onClose={() => setEmailModalOpen(false)}
+        />
       )}
     </Modal>
   )

@@ -1,21 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import dayjs, { type ConfigType } from 'dayjs'
 import { api } from '@/api/client'
 import type { Page, UUID } from '@/types/api'
 
-/** api dùng chung kiểu UUID của app — re-export để component chỉ cần import từ '../api' */
 export type { UUID }
 
-/**
- * Hợp đồng — shape THẬT của crm-service (Deal.java / DealResponse.java):
- * id, leadId, salesId, contractCode, contractValue, depositAmount, depositDate, signedDate,
- * paymentStatus, paymentMethod (chuỗi tự do), approvalStatus, approvedBy, approvedAt,
- * fileUrl, status, note, createdAt, updatedAt.
- *
- * Endpoint THẬT (DealController.java): GET /deals (lọc leadId|salesId|status|paymentStatus|approvalStatus
- * + page/size/sort), GET /deals/{id}, POST /deals, PATCH /deals/{id}, DELETE /deals/{id},
- * GET|POST /deals/{id}/payments (append-only). KHÔNG có /deals/{id}/approve|reject|payment-status|deposit
- * → duyệt/từ chối và cập nhật tiền cọc đều đi qua PATCH /deals/{id}.
- */
 export type DealStatus = 'IN_PROGRESS' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
 export type PaymentStatus = 'UNPAID' | 'PARTIAL' | 'PAID'
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'NOT_REQUIRED'
@@ -53,8 +42,18 @@ export interface DealPayment {
   createdBy: UUID | null
   createdAt: string
 }
+export interface ContactDetail {
+  id: UUID
+  dealId: UUID
+  productId: UUID
+  unitPrice: number | null
+  quantity: number
+  note: string | null
+  createdAt: string
+  updatedAt: string
+}
 
-/** PATCH chỉ đổi field nào gửi lên; POST bắt buộc leadId + contractCode */
+
 export interface DealInput {
   leadId?: UUID
   contractCode?: string
@@ -120,9 +119,13 @@ export const approvalStatusLabel = (v: string) => APPROVAL_STATUS_LABEL[v as App
 export const paymentMethodLabel = (v: string | null) =>
   v ? (PAYMENT_METHOD_LABEL[v as PaymentMethod] ?? v) : '—'
 
-// ─────────────────────────── Bộ lọc ───────────────────────────
+export function generateContractCode(dateInput?: ConfigType): string {
+  const d = dateInput ? dayjs(dateInput) : dayjs()
+  const dateStr = d.isValid() ? d.format('YYYYMMDD') : dayjs().format('YYYYMMDD')
+  const seq = Math.floor(1000 + Math.random() * 9000)
+  return `HD-${dateStr}-${seq}`
+}
 
-/** Lọc gửi THẲNG lên server (DealController.list nhận đúng các tham số này) */
 export interface DealServerFilters {
   status?: DealStatus
   paymentStatus?: PaymentStatus
@@ -130,7 +133,6 @@ export interface DealServerFilters {
   salesId?: UUID
 }
 
-/** Lọc phía client: backend không có `keyword` cho /deals nên tìm chữ + khoảng ngày/giá trị ở FE */
 export interface DealFilters extends DealServerFilters {
   q: string
   signedFrom: string | null
@@ -160,7 +162,6 @@ export const matchValue = (range: string, value: number | null) => {
   return ty > 10
 }
 
-/** Chuỗi tìm kiếm của 1 hợp đồng: mã HĐ + tên/SĐT khách + mã căn + tên dự án + ghi chú */
 export interface DealSearchContext {
   customerName: string
   customerPhone: string
@@ -184,16 +185,9 @@ export const matchDeal = (deal: Deal, f: DealFilters, ctx: DealSearchContext) =>
   return true
 }
 
-
-// ─────────────────────────── Hooks ───────────────────────────
-
 const KEY = ['deals']
 
-/**
- * 1 request (size 500) như màn 9.8/9.18: vừa đổ bảng, vừa tính 4 thẻ KPI + dòng tổng kết cùng lúc.
- * ponytail: trần 500 hợp đồng; vượt thì chuyển sang phân trang server (API đã có page/size).
- */
-export function useDeals(filters: DealServerFilters) {
+export function useDeals(filters: DealServerFilters = {}) {
   return useQuery({
     queryKey: [...KEY, 'list', filters],
     queryFn: () =>
@@ -208,7 +202,6 @@ interface CustomerRef { id: UUID; fullName: string; phone: string | null }
 interface ProductRef { id: UUID; projectId: UUID; code: string }
 interface ProjectRef { id: UUID; name: string }
 
-/** Danh mục suy ra tên khách/căn/dự án: GET /deals chỉ trả leadId, không trả tên khách */
 export function useDealCatalog() {
   const leads = useQuery({
     queryKey: ['leads', 'list'],
@@ -229,7 +222,6 @@ export function useDealCatalog() {
   return { leads, customers, products, projects }
 }
 
-/** GET /users trả mảng trần và chỉ ADMIN đọc được — SALES/MANAGER 403 thì coi như rỗng */
 export function useDealStaff() {
   return useQuery({
     queryKey: ['staff'],
@@ -238,7 +230,6 @@ export function useDealStaff() {
   })
 }
 
-/** Chạy N promise với tối đa `limit` request song song — không bắn 500 request cùng lúc */
 async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length)
   let cursor = 0
@@ -253,12 +244,6 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
   return out
 }
 
-/**
- * Các đợt thanh toán của từng hợp đồng — API hiện tại KHÔNG có endpoint tổng hợp doanh thu
- * (9.24 doanh thu vẫn chờ analytic-service). SALES không có quyền trên hợp đồng của người khác
- * → 403 được coi là "chưa có đợt nào" thay vì làm hỏng cả bảng.
- * ponytail: mỗi hợp đồng 1 GET (song song tối đa 6); có endpoint tổng hợp thì thay bằng 1 call.
- */
 export function useDealPayments(dealIds: UUID[]) {
   const key = [...dealIds].sort().join(',')
   return useQuery({
@@ -273,6 +258,29 @@ export function useDealPayments(dealIds: UUID[]) {
     },
   })
 }
+export function useDeal(id?: string) {
+  return useQuery({
+    queryKey: [...KEY, 'detail', id],
+    queryFn: () => api.get<Deal>(`/deals/${id}`).then((r) => r.data),
+    enabled: Boolean(id),
+  })
+}
+
+export function useSingleDealPayments(dealId?: string) {
+  return useQuery({
+    queryKey: [...KEY, 'single-payments', dealId],
+    queryFn: () => api.get<DealPayment[]>(`/deals/${dealId}/payments`).then((r) => r.data).catch(() => [] as DealPayment[]),
+    enabled: Boolean(dealId),
+  })
+}
+export function useDealItems(dealId?: string) {
+  return useQuery({
+    queryKey: [...KEY, 'items', dealId],
+    queryFn: () => api.get<ContactDetail[]>(`/deals/${dealId}/items`).then((r) => r.data).catch(() => [] as ContactDetail[]),
+    enabled: Boolean(dealId),
+  })
+}
+
 
 export function useDealMutations() {
   const qc = useQueryClient()
@@ -299,10 +307,13 @@ export function useDealMutations() {
   }
 }
 
-/** Câu lỗi tiếng Việt theo ApiExceptionHandler của crm-service */
 export function apiErrorMessage(e: unknown) {
-  const err = e as { response?: { status?: number; data?: { detail?: string; message?: string } } }
-  const detail = err.response?.data?.detail ?? err.response?.data?.message
+  const err = e as { response?: { status?: number; data?: { detail?: string; message?: string; errors?: string[] } } }
+  const data = err.response?.data
+  if (Array.isArray(data?.errors) && data.errors.length) {
+    return data.errors.join('; ')
+  }
+  const detail = data?.detail ?? data?.message
   if (err.response?.status === 409) return detail ?? 'Trùng mã hợp đồng hoặc lead đã có hợp đồng'
   if (err.response?.status === 403) return 'Bạn không có quyền với hợp đồng này'
   if (err.response?.status === 404) return 'Không tìm thấy hợp đồng'
@@ -310,6 +321,5 @@ export function apiErrorMessage(e: unknown) {
   return detail ?? 'Có lỗi xảy ra, vui lòng thử lại'
 }
 
-/** % đã thu = tổng các đợt thanh toán / giá trị hợp đồng. Tiền cọc KHÔNG cộng vào đây (xem DealPaymentService). */
 export const progressPct = (collected: number, contractValue: number | null) =>
   contractValue && contractValue > 0 ? Math.min(100, Math.round((collected / contractValue) * 100)) : 0

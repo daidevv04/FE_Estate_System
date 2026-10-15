@@ -1,19 +1,21 @@
-import { DeleteOutlined, DownloadOutlined, EyeOutlined, LockOutlined, MoreOutlined, PlusOutlined, SafetyCertificateOutlined, SearchOutlined, TeamOutlined, UnlockOutlined, UsergroupAddOutlined } from '@ant-design/icons'
-import { App, Avatar, Button, Card, Dropdown, Empty, Input, Progress, Select, Table, Tooltip } from 'antd'
+import { DeleteOutlined, DownloadOutlined, EditOutlined, LockOutlined, PlusOutlined, ReloadOutlined, SafetyCertificateOutlined, SearchOutlined, TeamOutlined, UsergroupAddOutlined } from '@ant-design/icons'
+import { App, Avatar, Button, Card, Col, Empty, Input, Row, Select, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { formatDate } from '@/lib/format'
 import { useAuthStore } from '@/store/authStore'
+import { tokens as t } from '@/theme/tokens'
 import { USER_ROLES, USER_STATUSES, apiErrorMessage, useUserMutations, useUsers, type CreateUserInput, type ManagedUser, type UserStatus } from '../api'
 import { CreateUserModal } from '../components/CreateUserModal'
 import { UserDetailDrawer } from '../components/UserDetailDrawer'
 import { RolePill, StatusPill } from '../components/UserPills'
+import { KpiCard } from '@/components/common/KpiCard'
 import './Users.css'
 
 const initials = (name: string) => name.trim().split(/\s+/).map((word) => word[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
 const avatarColor = (seed: string) => ['#087f43', '#0d9488', '#5b4cc4', '#0284c7'][[...seed].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 4]
 
-/** 9.26 — bảng quản trị người dùng. Tạo user chỉ ADMIN, backend cũng chặn POST /users bằng hasRole('ADMIN'). */
 export function UsersPage() {
   const { message, modal } = App.useApp()
   const isAdmin = useAuthStore((s) => s.user?.role === 'ADMIN')
@@ -25,12 +27,6 @@ export function UsersPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [createOpen, setCreateOpen] = useState(false)
   const [detailUserId, setDetailUserId] = useState<string>()
-  const dragSelection = useRef<{ active: boolean; shouldSelect: boolean }>({ active: false, shouldSelect: false })
-  useEffect(() => {
-    const stopDragSelection = () => { dragSelection.current.active = false }
-    window.addEventListener('mouseup', stopDragSelection)
-    return () => window.removeEventListener('mouseup', stopDragSelection)
-  }, [])
   const rows = useMemo(() => data.filter((user) => {
     const q = keyword.trim().toLocaleLowerCase('vi')
     return (!q || [user.fullName, user.username, user.email ?? '', user.phone ?? ''].some((value) => value.toLocaleLowerCase('vi').includes(q))) && (!role || user.role === role) && (!userStatus || user.status === userStatus)
@@ -39,28 +35,7 @@ export function UsersPage() {
   const activeRate = data.length ? Math.round((count('ACTIVE') / data.length) * 100) : 0
   const roleCount = (value: ManagedUser['role']) => data.filter((u) => u.role === value).length
   const selectedUsers = data.filter((u) => selected.includes(u.id))
-  const dragSelect = (user: ManagedUser) => {
-    const { active, shouldSelect } = dragSelection.current
-    if (!active) return
-    setSelected((keys) => shouldSelect ? [...new Set([...keys, user.id])] : keys.filter((key) => key !== user.id))
-  }
 
-  const setStatus = (user: ManagedUser, next: UserStatus) => modal.confirm({
-    title: next === 'LOCKED' ? `Khóa tài khoản ${user.fullName}?` : `Cập nhật trạng thái ${user.fullName}?`,
-    content: next === 'LOCKED' ? 'Người dùng sẽ không thể đăng nhập cho đến khi tài khoản được mở khóa.' : `Trạng thái tài khoản sẽ chuyển thành “${USER_STATUSES.find((x) => x.value === next)?.label}”.`,
-    okText: next === 'LOCKED' ? 'Khóa tài khoản' : 'Xác nhận', cancelText: 'Hủy', okButtonProps: next === 'LOCKED' ? { danger: true } : undefined,
-    onOk: () => status.mutateAsync({ id: user.id, status: next }).then(() => message.success('Đã cập nhật trạng thái tài khoản')).catch((e) => { message.error(apiErrorMessage(e)); throw e }),
-  })
-  const deleteUser = (user: ManagedUser) => modal.confirm({
-    title: `Xóa người dùng ${user.fullName}?`, content: 'Hành động này không hoàn tác được. Hãy khóa tài khoản nếu chỉ muốn ngừng quyền truy cập.',
-    okText: 'Xóa người dùng', cancelText: 'Hủy', okButtonProps: { danger: true },
-    onOk: () => remove.mutateAsync(user.id).then(() => { if (detailUserId === user.id) setDetailUserId(undefined); message.success('Đã xóa người dùng') }).catch((e) => { message.error(apiErrorMessage(e)); throw e }),
-  })
-  const statusItem = (user: ManagedUser) => {
-    if (user.status === 'LOCKED') return { key: 'activate', label: 'Mở khóa và kích hoạt', icon: <UnlockOutlined /> }
-    if (user.status === 'INACTIVE') return { key: 'activate', label: 'Kích hoạt tài khoản', icon: <UnlockOutlined /> }
-    return { key: 'deactivate', label: 'Ngừng hoạt động', icon: <LockOutlined />, danger: true }
-  }
   const bulkStatus = (next: UserStatus) => {
     if (!selectedUsers.length) return
     modal.confirm({
@@ -88,35 +63,210 @@ export function UsersPage() {
   const createUser = (body: CreateUserInput) => create.mutate(body, { onSuccess: () => { setCreateOpen(false); message.success(`Đã tạo tài khoản ${body.username}`) }, onError: (e) => message.error(apiErrorMessage(e)) })
 
   const columns: ColumnsType<ManagedUser> = [
-    { title: 'Người dùng', key: 'user', width: 235, render: (_, user) => <button type="button" className="user-cell" onClick={() => setDetailUserId(user.id)}><Avatar size={32} style={{ background: avatarColor(user.id) }}>{initials(user.fullName)}</Avatar><span><strong>{user.fullName}</strong><small>@{user.username}</small></span></button> },
-    { title: 'Email', dataIndex: 'email', width: 210, render: (email) => <span className="user-email">{email || 'Chưa cập nhật'}</span> },
-    { title: 'Vai trò', dataIndex: 'role', width: 122, render: (_, user) => <RolePill role={user.role} /> },
-    { title: 'Trạng thái', dataIndex: 'status', width: 128, render: (_, user) => <StatusPill status={user.status} /> },
-    { title: 'Bảo mật', key: 'security', width: 102, render: (_, user) => <Tooltip title={user.is2faEnabled === null ? 'Chưa có dữ liệu xác thực hai lớp từ API' : user.is2faEnabled ? 'Xác thực hai lớp đã bật' : 'Xác thực hai lớp chưa bật'}><span className={`user-security ${user.is2faEnabled ? 'is-enabled' : ''}`}><SafetyCertificateOutlined /> 2FA</span></Tooltip> },
-    { title: 'Ngày cập nhật', dataIndex: 'updatedAt', width: 132, render: (value) => <span className="user-updated">{value ? new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value)) : '—'}</span> },
-    { title: '', key: 'actions', fixed: 'right', width: 56, render: (_, user) => <Dropdown trigger={['click']} menu={{ items: [
-      { key: 'view', label: 'Xem chi tiết', icon: <EyeOutlined /> },
-      ...(isAdmin ? [{ type: 'divider' as const }, statusItem(user), { key: 'lock', label: user.status === 'LOCKED' ? 'Mở khóa tài khoản' : 'Khóa tài khoản', icon: user.status === 'LOCKED' ? <UnlockOutlined /> : <LockOutlined />, danger: user.status !== 'LOCKED' }, { key: 'delete', label: 'Xóa người dùng', icon: <DeleteOutlined />, danger: true }] : []),
-    ], onClick: ({ key }) => { if (key === 'view') setDetailUserId(user.id); if (key === 'lock') setStatus(user, user.status === 'LOCKED' ? 'ACTIVE' : 'LOCKED'); if (key === 'activate') setStatus(user, 'ACTIVE'); if (key === 'deactivate') setStatus(user, 'INACTIVE'); if (key === 'delete') deleteUser(user) } }}><Button type="text" aria-label={`Thao tác với ${user.fullName}`} icon={<MoreOutlined />} /></Dropdown> },
+    {
+      title: 'Người dùng', key: 'user', width: 230, fixed: 'left',
+      render: (_, user) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Avatar size={34} style={{ background: avatarColor(user.id), fontWeight: 600, flexShrink: 0 }}>
+            {initials(user.fullName)}
+          </Avatar>
+          <div style={{ minWidth: 0, lineHeight: 1.35 }}>
+            <div style={{ fontWeight: 600, color: '#0f172a', fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.fullName}
+            </div>
+            <div style={{ fontSize: 12, color: t.colorTextMuted }}>@{user.username}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Email', dataIndex: 'email', width: 220, ellipsis: true,
+      render: (email) => <span style={{ fontSize: 13, color: '#334155' }}>{email || '—'}</span>,
+    },
+    { title: 'Vai trò', dataIndex: 'role', width: 140, render: (_, user) => <RolePill role={user.role} /> },
+    { title: 'Trạng thái', dataIndex: 'status', width: 140, render: (_, user) => <StatusPill status={user.status} /> },
+    {
+      title: 'Bảo mật', key: 'security', width: 100,
+      render: (_, user) => (
+        <Tooltip title={user.is2faEnabled === null ? 'Chưa có dữ liệu 2FA từ API' : user.is2faEnabled ? 'Xác thực 2FA đã bật' : 'Xác thực 2FA chưa bật'}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 500,
+            color: user.is2faEnabled ? t.colorSuccessText : t.colorTextMuted,
+          }}>
+            <SafetyCertificateOutlined style={{ color: user.is2faEnabled ? t.colorSuccess : t.colorTextMuted }} />
+            2FA
+          </span>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Cập nhật', dataIndex: 'updatedAt', width: 130,
+      render: (value: string | null) => (
+        <span className="stitch-num" style={{ whiteSpace: 'nowrap', fontSize: 13, color: '#64748b' }}>
+          {value ? formatDate(value) : '—'}
+        </span>
+      ),
+    },
   ]
 
   return <>
-    <PageHeader breadcrumb={[{ title: 'Hệ thống' }, { title: 'Người dùng' }]} title="Quản lý người dùng" meta="Quản lý tài khoản, vai trò và trạng thái truy cập trong hệ thống CRM." actions={<><Button icon={<DownloadOutlined />} onClick={() => exportUsers()}>Xuất danh sách</Button>{isAdmin && <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>Thêm người dùng</Button>}</>} />
-    <div className="user-kpis" aria-label="Tổng quan người dùng">
-      <Card className="user-kpi" variant="borderless"><div className="user-kpi__head"><span>TỔNG NGƯỜI DÙNG</span><i className="is-green"><UsergroupAddOutlined /></i></div><strong>{data.length}</strong><small>{roleCount('ADMIN')} Admin · {roleCount('MANAGER')} Manager · {roleCount('SALES')} Sales</small></Card>
-      <Card className="user-kpi" variant="borderless"><div className="user-kpi__head"><span>ĐANG HOẠT ĐỘNG</span><i className="is-teal"><SafetyCertificateOutlined /></i></div><strong>{count('ACTIVE')} <em>ACTIVE</em></strong><div className="user-kpi__progress"><span>Tỷ lệ hoạt động</span><b>{activeRate}%</b></div><Progress percent={activeRate} showInfo={false} size="small" strokeColor="#16A34A" trailColor="#e6f4ea" /></Card>
-      <Card className="user-kpi" variant="borderless"><div className="user-kpi__head"><span>BỊ KHÓA / VÔ HIỆU HÓA</span><i className="is-red"><LockOutlined /></i></div><strong className="is-danger">{count('LOCKED') + count('INACTIVE')}</strong><small>{count('LOCKED')} Đã khóa <b>·</b> {count('INACTIVE')} Vô hiệu hóa</small></Card>
-      <Card className="user-kpi" variant="borderless"><div className="user-kpi__head"><span>PHÂN BỐ THEO VAI TRÒ</span><i className="is-blue"><TeamOutlined /></i></div><div className="user-role-distribution"><span>ADMIN <b>{roleCount('ADMIN')}</b></span><span>MANAGER <b>{roleCount('MANAGER')}</b></span><span>SALES <b>{roleCount('SALES')}</b></span></div><div className="user-role-bars"><i style={{ width: `${data.length ? (roleCount('ADMIN') / data.length) * 100 : 0}%` }} /><i style={{ width: `${data.length ? (roleCount('MANAGER') / data.length) * 100 : 0}%` }} /><i style={{ width: `${data.length ? (roleCount('SALES') / data.length) * 100 : 0}%` }} /></div><small>{roleCount('ADMIN')} quản trị · {roleCount('MANAGER')} quản lý · {roleCount('SALES')} kinh doanh</small></Card>
-    </div>
-    <Card className="stitch-card users-table-card" variant="borderless" styles={{ body: { padding: 20 } }}>
-      <div className="users-toolbar">
-        <Input allowClear prefix={<SearchOutlined />} aria-label="Tìm kiếm người dùng" placeholder="Tìm theo tên, username, email, số điện thoại..." value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-        <Select allowClear aria-label="Lọc theo vai trò" placeholder="Tất cả vai trò" value={role} onChange={setRole} options={USER_ROLES.map(({ value, label }) => ({ value, label }))} />
-        <Select allowClear aria-label="Lọc theo trạng thái" placeholder="Tất cả trạng thái" value={userStatus} onChange={setUserStatus} options={USER_STATUSES} />
-        <Button type="text" onClick={() => { setKeyword(''); setRole(undefined); setUserStatus(undefined) }}>Xóa lọc</Button>
+    <PageHeader
+      breadcrumb={[{ title: 'Hệ thống' }, { title: 'Người dùng' }]}
+      title="Quản lý người dùng"
+      meta="Quản lý tài khoản, vai trò và trạng thái truy cập trong hệ thống CRM."
+      actions={(
+        <>
+          <Button icon={<DownloadOutlined />} onClick={() => exportUsers()}>Xuất danh sách</Button>
+          {isAdmin && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+              Thêm người dùng
+            </Button>
+          )}
+        </>
+      )}
+    />
+
+    <Row gutter={[16, 16]}>
+      <Col xs={24} sm={12} xl={6}>
+        <KpiCard
+          tone="green"
+          label="Tổng người dùng"
+          value={String(data.length)}
+          sub={`${roleCount('ADMIN')} Admin · ${roleCount('MANAGER')} Manager · ${roleCount('SALES')} Sales`}
+          icon={<UsergroupAddOutlined />}
+        />
+      </Col>
+      <Col xs={24} sm={12} xl={6}>
+        <KpiCard
+          tone="teal"
+          label="Đang hoạt động"
+          value={String(count('ACTIVE'))}
+          sub={`Tỷ lệ hoạt động đạt ${activeRate}%`}
+          icon={<SafetyCertificateOutlined />}
+        />
+      </Col>
+      <Col xs={24} sm={12} xl={6}>
+        <KpiCard
+          tone={count('LOCKED') + count('INACTIVE') > 0 ? 'red' : 'gray'}
+          label="Bị khóa / Vô hiệu hóa"
+          value={String(count('LOCKED') + count('INACTIVE'))}
+          sub={`${count('LOCKED')} đã khóa · ${count('INACTIVE')} vô hiệu hóa`}
+          icon={<LockOutlined />}
+        />
+      </Col>
+      <Col xs={24} sm={12} xl={6}>
+        <KpiCard
+          tone="blue"
+          label="Chuyên viên kinh doanh"
+          value={String(roleCount('SALES'))}
+          sub={`${roleCount('MANAGER')} Quản lý · ${roleCount('ADMIN')} Quản trị`}
+          icon={<TeamOutlined />}
+        />
+      </Col>
+    </Row>
+    <Card className="stitch-card crm-filter-card" variant="borderless" style={{ marginTop: 16 }} styles={{ body: { padding: '12px 16px' } }}>
+      <div className="crm-filter-bar">
+        <Input
+          allowClear
+          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+          aria-label="Tìm kiếm người dùng"
+          placeholder="Tìm theo tên, email, SĐT..."
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          style={{ flex: '2 1 240px', minWidth: 200 }}
+        />
+        <Select
+          allowClear
+          aria-label="Lọc theo vai trò"
+          placeholder="Tất cả vai trò"
+          value={role}
+          onChange={setRole}
+          options={USER_ROLES.map(({ value, label }) => ({ value, label }))}
+          style={{ flex: '1 1 150px', minWidth: 130 }}
+        />
+        <Select
+          allowClear
+          aria-label="Lọc theo trạng thái"
+          placeholder="Tất cả trạng thái"
+          value={userStatus}
+          onChange={setUserStatus}
+          options={USER_STATUSES}
+          style={{ flex: '1 1 150px', minWidth: 130 }}
+        />
+        {(keyword || role || userStatus) && (
+          <Button
+            className="crm-filter-clear-btn"
+            icon={<ReloadOutlined />}
+            onClick={() => { setKeyword(''); setRole(undefined); setUserStatus(undefined) }}
+          >
+            Xoá lọc
+          </Button>
+        )}
       </div>
-      {selected.length > 0 && <div className="users-bulkbar"><span><b>{selected.length}</b> Đã chọn {selected.length} người dùng <small>Giữ Shift rồi click checkbox để chọn dải.</small></span><div><Button size="small" danger icon={<LockOutlined />} onClick={() => bulkStatus('LOCKED')}>Khóa tài khoản</Button><Button size="small" icon={<LockOutlined />} onClick={() => bulkStatus('INACTIVE')}>Vô hiệu hóa</Button><Button size="small" danger icon={<DeleteOutlined />} onClick={bulkDelete}>Xóa ({selectedUsers.length})</Button><Button size="small" icon={<DownloadOutlined />} onClick={() => exportUsers(selectedUsers)}>Xuất dữ liệu</Button><Button size="small" type="text" onClick={() => setSelected([])}>Bỏ chọn</Button></div></div>}
-      {isError ? <Empty description="Không thể tải danh sách người dùng." image={Empty.PRESENTED_IMAGE_SIMPLE}><Button type="primary" onClick={() => void refetch()}>Thử lại</Button></Empty> : <Table rowKey="id" columns={columns} dataSource={rows} loading={isLoading} rowSelection={{ selectedRowKeys: selected, onChange: (keys) => setSelected(keys.map(String)), onSelectMultiple: (checked, _rows, changedRows) => setSelected((keys) => checked ? [...new Set([...keys, ...changedRows.map((user) => user.id)])] : keys.filter((key) => !changedRows.some((user) => user.id === key))), renderCell: (checked, _user, _index, originNode) => <span onMouseDown={(event) => { if (event.button === 0) dragSelection.current = { active: true, shouldSelect: !checked } }}>{originNode}</span>, preserveSelectedRowKeys: true }} onRow={(user) => ({ onMouseEnter: () => dragSelect(user) })} scroll={{ x: 'max-content' }} pagination={{ defaultPageSize: 10, showSizeChanger: true, pageSizeOptions: [10, 20, 50], showTotal: (total, range) => `Hiển thị ${range[0]}–${range[1]} trong tổng số ${total} người dùng` }} locale={{ emptyText: 'Không có người dùng phù hợp' }} />}
+    </Card>
+
+    <Card className="stitch-card" variant="borderless" style={{ marginTop: 16 }} styles={{ body: { padding: 20 } }}>
+      {selected.length > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14,
+          padding: '10px 14px', borderRadius: t.radiusMd, background: t.colorSurfaceAlt,
+        }}>
+          <span style={{ fontWeight: 600 }}>Đã chọn {selected.length} người dùng</span>
+          <Tooltip title={selected.length > 1 ? 'Chỉ xem chi tiết / sửa khi chọn 1 người dùng' : undefined}>
+            <span>
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                disabled={selected.length !== 1}
+                style={{ opacity: selected.length !== 1 ? 0.45 : 1 }}
+                onClick={() => setDetailUserId(selected[0])}
+              >
+                Chi tiết / Sửa
+              </Button>
+            </span>
+          </Tooltip>
+          <Button icon={<LockOutlined />} onClick={() => bulkStatus('LOCKED')}>Khóa tài khoản ({selected.length})</Button>
+          <Button icon={<LockOutlined />} onClick={() => bulkStatus('INACTIVE')}>Vô hiệu hóa ({selected.length})</Button>
+          <Button danger icon={<DeleteOutlined />} onClick={bulkDelete}>Xóa ({selectedUsers.length})</Button>
+          <Button icon={<DownloadOutlined />} onClick={() => exportUsers(selectedUsers)}>Xuất dữ liệu</Button>
+          <div style={{ flex: 1 }} />
+          <Button type="text" onClick={() => setSelected([])}>Bỏ chọn</Button>
+        </div>
+      )}
+      {isError ? (
+        <Empty description="Không thể tải danh sách người dùng." image={Empty.PRESENTED_IMAGE_SIMPLE}>
+          <Button type="primary" onClick={() => void refetch()}>Thử lại</Button>
+        </Empty>
+      ) : (
+        <Table<ManagedUser>
+          rowKey="id"
+          size="middle"
+          columns={columns}
+          dataSource={rows}
+          loading={isLoading}
+          scroll={{ x: 1000 }}
+          rowSelection={{
+            selectedRowKeys: selected,
+            onChange: (keys) => setSelected(keys.map(String)),
+            preserveSelectedRowKeys: true,
+          }}
+          onRow={(user) => ({
+            onClick: (e) => {
+              const target = e.target as HTMLElement
+              if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
+              setDetailUserId(user.id)
+            },
+            style: { cursor: 'pointer' },
+          })}
+          pagination={{
+            defaultPageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: [10, 20, 50],
+            showTotal: (total, range) => `Hiển thị ${range[0]} - ${range[1]} trong tổng số ${total} người dùng`,
+          }}
+          locale={{ emptyText: 'Không có người dùng phù hợp' }}
+        />
+      )}
     </Card>
     {isAdmin && <CreateUserModal open={createOpen} submitting={create.isPending} onCancel={() => setCreateOpen(false)} onSubmit={createUser} />}
     <UserDetailDrawer userId={detailUserId} onClose={() => setDetailUserId(undefined)} />

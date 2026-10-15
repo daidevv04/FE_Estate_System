@@ -1,11 +1,14 @@
-﻿import {
-  CloudUploadOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, EyeOutlined, MoreOutlined, PauseCircleOutlined,
-  PlusOutlined, SearchOutlined, StarOutlined, TeamOutlined, UserSwitchOutlined,
+import {
+  CalendarOutlined, CheckCircleOutlined, CloudUploadOutlined, CompassOutlined, DeleteOutlined,
+  DownloadOutlined, EditOutlined, EyeOutlined, MailOutlined, PauseCircleOutlined, PhoneOutlined, PlusOutlined,
+  ReloadOutlined, SearchOutlined, ShareAltOutlined, StarOutlined, TeamOutlined, UserOutlined,
+  UserSwitchOutlined,
 } from '@ant-design/icons'
-import { App, Avatar, Button, Card, Col, Dropdown, Input, Modal, Row, Select, Space, Table, Tooltip, Typography } from 'antd'
+import { App, Button, Card, Col, Input, Modal, Row, Select, Space, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { paths } from '@/routes/paths'
@@ -19,66 +22,16 @@ import {
 } from '../api'
 import { CustomerFormModal } from '../components/CustomerFormModal'
 import { CustomerDetailModal } from '../components/CustomerDetailModal'
+import { SendCustomerEmailModal } from '../components/SendCustomerEmailModal'
+import { StatusPill as Pill, type StatusTone as Tone } from '@/components/common/StatusPill'
+import { KpiCard } from '@/components/common/KpiCard'
 
-type Tone = 'green' | 'amber' | 'blue' | 'teal' | 'gray' | 'red' | 'purple'
-const TONE: Record<Tone, { bg: string; fg: string; dot: string }> = {
-  green: { bg: t.colorSuccessBg, fg: t.colorSuccessText, dot: t.colorSuccess },
-  amber: { bg: t.colorWarningBg, fg: t.colorWarningText, dot: t.colorWarning },
-  blue: { bg: t.colorInfoBg, fg: t.colorInfoText, dot: t.colorInfo },
-  teal: { bg: t.colorTealBg, fg: t.colorTeal, dot: t.colorTeal },
-  gray: { bg: t.colorSurfaceSunken, fg: t.colorTextMuted, dot: t.colorBorderStrong },
-  red: { bg: t.colorErrorBg, fg: t.colorErrorText, dot: t.colorError },
-  purple: { bg: t.colorVioletBg, fg: t.colorVioletText, dot: t.colorViolet },
-}
-
-/** Trạng thái khách hàng → tông màu (đúng ngữ nghĩa enum backend) */
 const STATUS_TONE: Record<CustomerStatus, Tone> = {
   NEW: 'blue', POTENTIAL: 'amber', CUSTOMER: 'green', INACTIVE: 'gray',
 }
 
-function Pill({ tone, children }: { tone: Tone; children: ReactNode }) {
-  const c = TONE[tone]
-  return (
-    <span className="stitch-pill" style={{ background: c.bg, color: c.fg }}>
-      <span className="stitch-pill__dot" style={{ background: c.dot }} />
-      {children}
-    </span>
-  )
-}
-
-const AVATAR_COLORS = ['#16A34A', '#0D9488', '#7C3AED', '#0EA5E9', '#F59E0B', '#EF4444']
-const colorOf = (seed: string) => AVATAR_COLORS[[...seed].reduce((a, ch) => a + ch.charCodeAt(0), 0) % AVATAR_COLORS.length]
-
-/** "Nguyễn Nhật Minh" → NM (chữ đầu + chữ cuối, đúng kiểu avatar màn 9.8) */
-const initials = (name: string) => {
-  const w = name.trim().split(/\s+/)
-  return ((w[0]?.[0] ?? '') + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase()
-}
 const fmtDate = (v: string | null) => (v ? dayjs(v).format('DD/MM/YYYY') : '—')
 
-/** Thẻ KPI Stitch: nhãn hoa 11px + icon tint góc phải + số 28px */
-function KpiCard({ label, value, sub, icon, tone }: { label: string; value: string; sub: string; icon: ReactNode; tone: Tone }) {
-  const c = TONE[tone]
-  return (
-    <Card className="stitch-card" variant="borderless" style={{ height: '100%' }} styles={{ body: { padding: 20 } }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-        <Typography.Text className="stitch-label" style={{ color: t.colorTextMuted }}>{label}</Typography.Text>
-        <span style={{
-          flex: '0 0 auto', width: 36, height: 36, borderRadius: t.radiusMd, display: 'grid', placeItems: 'center',
-          background: c.bg, color: c.fg, fontSize: 17,
-        }}>
-          {icon}
-        </span>
-      </div>
-      <div className="stitch-num" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.15, marginTop: 6 }}>
-        {value}
-      </div>
-      <div style={{ fontSize: 12.5, color: t.colorTextMuted, marginTop: 4 }}>{sub}</div>
-    </Card>
-  )
-}
-
-/** Xuất CSV (Excel mở được) — BOM để không lỗi dấu tiếng Việt */
 function exportCsv(rows: Customer[], ownerName: (id: string) => string) {
   const head = ['Mã khách hàng', 'Họ tên', 'Số điện thoại', 'Email', 'Nhu cầu', 'Nguồn', 'Nhân viên phụ trách', 'Trạng thái', 'Ngày tạo']
   const q = (v: string) => `"${v.replace(/"/g, '""')}"`
@@ -95,7 +48,6 @@ function exportCsv(rows: Customer[], ownerName: (id: string) => string) {
   URL.revokeObjectURL(url)
 }
 
-/** CSV nhập hàng loạt: dòng đầu là tên cột (fullName, phone, email, demandType, source, status) */
 function parseCsv(text: string): CustomerInput[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim())
   if (lines.length < 2) return []
@@ -119,8 +71,11 @@ function parseCsv(text: string): CustomerInput[] {
 
 export function CustomersPage() {
   const { message, modal } = App.useApp()
-  const role = useAuthStore((s) => s.user?.role)
+  const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user)
+  const role = user?.role
   const canWrite = role === 'ADMIN' || role === 'MANAGER'
+  const canSendEmail = role === 'MANAGER' || role === 'SALES'
 
   const { data, isLoading, isError, error } = useCustomers()
   const { data: staff = [] } = useStaff()
@@ -137,6 +92,7 @@ export function CustomersPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Customer | null>(null)
   const [detailCustomerId, setDetailCustomerId] = useState<string>()
+  const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const rows = data?.content ?? []
@@ -153,16 +109,18 @@ export function CustomersPage() {
     }
   }, [rows])
 
-  // Nguồn là chuỗi tự do ở DB → dựng lựa chọn từ dữ liệu thật đang có
   const sources = useMemo(
     () => [...new Set(rows.map((c) => c.source).filter((s): s is string => !!s))].sort(),
     [rows],
   )
 
+  const norm = (s: string | null | undefined) =>
+    (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim()
+
   const filtered = useMemo(() => {
-    const kw = keyword.trim().toLowerCase()
+    const kw = norm(keyword)
     return rows.filter((c) => {
-      if (kw && ![c.fullName, c.phone ?? '', c.email ?? ''].some((v) => v.toLowerCase().includes(kw))) return false
+      if (kw && ![c.fullName, c.phone ?? '', c.email ?? '', customerCode(c)].some((v) => norm(v).includes(kw))) return false
       if (demandType && c.demandType !== demandType) return false
       if (source && c.source !== source) return false
       if (status && c.status !== status) return false
@@ -184,7 +142,6 @@ export function CustomersPage() {
     setFormOpen(true)
   }
 
-  /** Ghi chú chăm sóc lúc tạo khách → POST /customers/{id}/cares (type NOTE), đúng mô tả màn 9.8 */
   const saveCareNote = async (customerId: string, content: string) => {
     try {
       await api.post(`/customers/${customerId}/cares`, { type: 'NOTE', content })
@@ -213,15 +170,6 @@ export function CustomersPage() {
     }
   }
 
-  const removeOne = (c: Customer) =>
-    modal.confirm({
-      title: `Xóa khách hàng ${c.fullName}?`,
-      content: 'Hành động này không hoàn tác được.',
-      okText: 'Xóa', okButtonProps: { danger: true }, cancelText: 'Hủy',
-      onOk: () => remove.mutateAsync(c.id),
-    })
-
-  /** Hàng loạt: gọi từng PATCH/DELETE (customer-service chưa có endpoint bulk) */
   const bulkRun = (fn: (id: string) => Promise<unknown>, doneMsg: string) => {
     const ids = [...selected]
     void Promise.allSettled(ids.map(fn)).then((res) => {
@@ -243,69 +191,162 @@ export function CustomersPage() {
 
   const columns: ColumnsType<Customer> = [
     {
-      title: 'Khách hàng', dataIndex: 'fullName', width: 240,
+      title: (
+        <span>
+          <UserOutlined style={{ marginRight: 5, color: '#059669' }} />
+          Khách hàng
+        </span>
+      ),
+      dataIndex: 'fullName',
+      width: 210,
+      fixed: 'left',
       render: (_v, row) => (
-        <button type="button" className="customer-table__identity" onClick={() => setDetailCustomerId(row.id)}>
-          <Avatar size={34} style={{ background: colorOf(row.fullName), fontWeight: 700 }}>{initials(row.fullName)}</Avatar>
-          <div style={{ lineHeight: 1.3 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{row.fullName}</div>
-            <div className="stitch-num" style={{ fontSize: 13, color: t.colorBrand, fontWeight: 600 }}>{customerCode(row)}</div>
+        <button
+          type="button"
+          onClick={() => setDetailCustomerId(row.id)}
+          style={{
+            background: 'transparent',
+            border: 0,
+            padding: 0,
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          <div style={{ fontWeight: 600, fontSize: 13, color: '#111c2d', lineHeight: '20px' }}>
+            {row.fullName}
+          </div>
+          <div className="stitch-num" style={{ fontSize: 12, color: t.colorBrand, fontWeight: 600, lineHeight: '18px' }}>
+            {customerCode(row)}
           </div>
         </button>
       ),
     },
     {
-      title: 'Thông tin liên hệ', width: 210,
+      title: (
+        <span>
+          <PhoneOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Thông tin liên hệ
+        </span>
+      ),
+      width: 200,
       render: (_v, row) => (
-        <div style={{ lineHeight: 1.35 }}>
-          <div className="stitch-num" style={{ fontSize: 14, fontWeight: 500 }}>{row.phone ?? '—'}</div>
-          <div style={{ fontSize: 13, color: t.colorTextMuted }}>{row.email ?? '—'}</div>
+        <div style={{ lineHeight: 1.4 }}>
+          <div className="stitch-num" style={{ fontSize: 13, fontWeight: 500, color: '#1e293b' }}>
+            {row.phone ?? '—'}
+          </div>
+          <div
+            title={row.email ?? ''}
+            style={{
+              fontSize: 12,
+              color: t.colorTextMuted,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: 190,
+            }}
+          >
+            {row.email ?? '—'}
+          </div>
         </div>
       ),
     },
     {
-      title: 'Nhu cầu', dataIndex: 'demandType', width: 150,
+      title: (
+        <span>
+          <CompassOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Nhu cầu
+        </span>
+      ),
+      dataIndex: 'demandType',
+      width: 110,
       render: (d: DemandType | null) => <Pill tone="teal">{demandLabel(d)}</Pill>,
     },
     {
-      title: 'Nguồn', dataIndex: 'source', width: 150,
+      title: (
+        <span>
+          <ShareAltOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Nguồn
+        </span>
+      ),
+      dataIndex: 'source',
+      width: 120,
+      ellipsis: true,
       render: (s: string | null) => s ?? <span style={{ color: t.colorTextMuted }}>—</span>,
     },
     {
-      title: 'Nhân viên phụ trách', dataIndex: 'ownerId', width: 200,
+      title: (
+        <span>
+          <TeamOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Nhân viên phụ trách
+        </span>
+      ),
+      dataIndex: 'ownerId',
+      width: 160,
+      ellipsis: true,
       render: (id: string) => {
         const u = staffById.get(id)
         if (!u) return <span style={{ color: t.colorTextMuted }}>Chưa phân công</span>
-        return (
-          <Space size={8}>
-            <Avatar size={26} style={{ background: colorOf(u.fullName), fontSize: 11 }}>{initials(u.fullName)}</Avatar>
-            {u.fullName}
-          </Space>
-        )
+        return <span style={{ fontSize: 13, color: '#1e293b' }}>{u.fullName}</span>
       },
     },
     {
-      title: 'Trạng thái', dataIndex: 'status', width: 150,
+      title: (
+        <span>
+          <CheckCircleOutlined style={{ marginRight: 5, color: '#059669' }} />
+          Trạng thái
+        </span>
+      ),
+      dataIndex: 'status',
+      width: 125,
       render: (s: CustomerStatus) => <Pill tone={STATUS_TONE[s] ?? 'gray'}>{statusLabel(s)}</Pill>,
     },
     {
-      title: 'Ngày tạo', dataIndex: 'createdAt', width: 110,
-      render: (v: string) => <span className="stitch-num">{fmtDate(v)}</span>,
+      title: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Ngày tạo
+        </span>
+      ),
+      dataIndex: 'createdAt',
+      width: 120,
+      render: (v: string) => <span className="stitch-num" style={{ whiteSpace: 'nowrap' }}>{fmtDate(v)}</span>,
     },
     {
-      title: 'Thao tác', key: 'action', width: 70, align: 'center',
+      title: 'Thao tác',
+      key: 'actions',
+      width: 110,
+      fixed: 'right',
       render: (_v, row) => (
-        <Dropdown
-          trigger={['click']}
-          menu={{
-            items: [
-              { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết', onClick: () => setDetailCustomerId(row.id) },
-              ...(canWrite ? [{ key: 'edit', icon: <EditOutlined />, label: 'Cập nhật', onClick: () => openEdit(row) }, { key: 'del', icon: <DeleteOutlined />, label: 'Xóa', danger: true, onClick: () => removeOne(row) }] : []),
-            ],
-          }}
-        >
-          <Button type="text" icon={<MoreOutlined />} aria-label="Thao tác" />
-        </Dropdown>
+        <Space size={2} onClick={(e) => e.stopPropagation()}>
+          {canSendEmail && row.email && (
+            <Tooltip title="Gửi email chăm sóc">
+              <Button
+                type="text"
+                size="small"
+                icon={<MailOutlined style={{ color: t.colorBrand }} />}
+                onClick={() => setEmailCustomer(row)}
+              />
+            </Tooltip>
+          )}
+          <Tooltip title="Xem chi tiết">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => navigate(paths.customer(row.id))}
+            />
+          </Tooltip>
+          {canWrite && (
+            <Tooltip title="Chỉnh sửa">
+              <Button
+                type="text"
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => openEdit(row)}
+              />
+            </Tooltip>
+          )}
+        </Space>
       ),
     },
   ]
@@ -315,6 +356,12 @@ export function CustomersPage() {
       <PageHeader
         title="Danh sách khách hàng"
         breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Khách hàng' }]}
+        status={
+          <span className="pipe-scope">
+            <span className="pipe-scope__dot" />
+            Phạm vi: {canWrite ? 'Toàn hệ thống' : 'Khách hàng của tôi'}
+          </span>
+        }
         meta="Quản lý toàn bộ khách hàng, theo dõi hoạt động và phân công nhân viên phụ trách."
         actions={
           <>
@@ -350,60 +397,151 @@ export function CustomersPage() {
         <Col xs={24} sm={12} xl={6}><KpiCard label="Chưa hoạt động" value={String(kpi.inactive)} sub="INACTIVE / Tạm ngưng" tone="amber" icon={<PauseCircleOutlined />} /></Col>
       </Row>
 
-
-      <Card className="stitch-card" variant="borderless" style={{ marginTop: 16 }} styles={{ body: { padding: 20 } }}>
-        <Space wrap size={12}>
+      <Card className="stitch-card crm-filter-card" variant="borderless" styles={{ body: { padding: '12px 16px' } }}>
+        <div className="crm-filter-bar">
           <Input
             allowClear
-            prefix={<SearchOutlined />}
-            placeholder="Tìm theo tên, số điện thoại hoặc email khách hàng..."
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+            placeholder="Tìm theo tên, SĐT, email, mã KH..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            style={{ width: 340 }}
-          />
-          <Select allowClear placeholder="Tất cả nhu cầu" options={DEMAND_TYPE} value={demandType} onChange={setDemandType} style={{ width: 170 }} />
-          <Select
-            allowClear placeholder="Tất cả nguồn" style={{ width: 180 }}
-            options={sources.map((s) => ({ value: s, label: s }))} value={source} onChange={setSource}
+            style={{ flex: '1.8 1 200px', minWidth: 180 }}
           />
           <Select
-            allowClear placeholder="Tất cả nhân viên" style={{ width: 190 }} value={ownerId} onChange={setOwnerId}
-            options={[...staff.map((u) => ({ value: u.id, label: u.fullName })), { value: '__none__', label: 'Chưa phân công' }]}
+            allowClear
+            placeholder="Tất cả nhu cầu"
+            options={DEMAND_TYPE}
+            value={demandType}
+            onChange={setDemandType}
+            style={{ flex: '1 1 130px', minWidth: 120 }}
           />
-          <Select allowClear placeholder="Tất cả trạng thái" options={CUSTOMER_STATUS} value={status} onChange={setStatus} style={{ width: 170 }} />
-        </Space>
+          <Select
+            allowClear
+            placeholder="Tất cả nguồn"
+            options={sources.map((s) => ({ value: s, label: s }))}
+            value={source}
+            onChange={setSource}
+            style={{ flex: '1 1 130px', minWidth: 120 }}
+          />
+          {canWrite && (
+            <Select
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Tất cả nhân viên"
+              value={ownerId}
+              onChange={setOwnerId}
+              options={[...staff.map((u) => ({ value: u.id, label: u.fullName })), { value: '__none__', label: 'Chưa phân công' }]}
+              style={{ flex: '1.2 1 150px', minWidth: 130 }}
+            />
+          )}
+          <Select
+            allowClear
+            placeholder="Tất cả trạng thái"
+            options={CUSTOMER_STATUS}
+            value={status}
+            onChange={setStatus}
+            style={{ flex: '1 1 130px', minWidth: 120 }}
+          />
+          {(keyword || demandType || source || ownerId || status) && (
+            <Button
+              className="crm-filter-clear-btn"
+              icon={<ReloadOutlined />}
+              onClick={() => {
+                setKeyword('')
+                setDemandType(undefined)
+                setSource(undefined)
+                setOwnerId(undefined)
+                setStatus(undefined)
+              }}
+            >
+              Xoá lọc
+            </Button>
+          )}
+        </div>
 
         {selected.length > 0 && (
           <div style={{
             marginTop: 14, padding: '10px 14px', borderRadius: t.radiusMd, background: t.colorSurfaceAlt,
-            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
           }}>
             <span style={{ fontWeight: 600 }}>Đã chọn {selected.length} khách hàng</span>
-            <Button icon={<UserSwitchOutlined />} onClick={() => setBulk({ mode: 'assign' })}>Phân công nhân viên</Button>
-            <Button icon={<StarOutlined />} onClick={() => setBulk({ mode: 'status' })}>Cập nhật trạng thái</Button>
-            <Button
-              danger icon={<DeleteOutlined />}
-              onClick={() => modal.confirm({
-                title: `Xóa ${selected.length} khách hàng đã chọn?`,
-                content: 'Khách hàng còn nhật ký chăm sóc hoặc lịch hẹn sẽ không xóa được.',
-                okText: 'Xóa', okButtonProps: { danger: true }, cancelText: 'Hủy',
-                onOk: () => bulkRun((id) => remove.mutateAsync(id), `Đã xóa ${selected.length} khách hàng`),
-              })}
-            >
-              Xóa
+            
+            <Tooltip title={selected.length > 1 ? 'Chỉ xem chi tiết khi chọn 1 khách hàng' : undefined}>
+              <span>
+                <Button
+                  icon={<EyeOutlined />}
+                  disabled={selected.length !== 1}
+                  style={{ opacity: selected.length !== 1 ? 0.45 : 1 }}
+                  onClick={() => {
+                    const row = filtered.find((c) => c.id === selected[0])
+                    if (row) setDetailCustomerId(row.id)
+                  }}
+                >
+                  Xem chi tiết
+                </Button>
+              </span>
+            </Tooltip>
+
+            <Tooltip title={selected.length > 1 ? 'Chỉ chỉnh sửa khi chọn 1 khách hàng' : undefined}>
+              <span>
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  disabled={selected.length !== 1}
+                  style={{ opacity: selected.length !== 1 ? 0.45 : 1 }}
+                  onClick={() => {
+                    const row = filtered.find((c) => c.id === selected[0])
+                    if (row) openEdit(row)
+                  }}
+                >
+                  Chỉnh sửa
+                </Button>
+              </span>
+            </Tooltip>
+
+            {canWrite && (
+              <Button icon={<UserSwitchOutlined />} onClick={() => setBulk({ mode: 'assign' })}>
+                Phân công ({selected.length})
+              </Button>
+            )}
+            <Button icon={<StarOutlined />} onClick={() => setBulk({ mode: 'status' })}>
+              Cập nhật trạng thái ({selected.length})
             </Button>
+            {role === 'ADMIN' && (
+              <Button
+                danger icon={<DeleteOutlined />}
+                onClick={() => modal.confirm({
+                  title: `Xóa ${selected.length} khách hàng đã chọn?`,
+                  content: 'Khách hàng còn nhật ký chăm sóc hoặc lịch hẹn sẽ không xóa được.',
+                  okText: 'Xóa', okButtonProps: { danger: true }, cancelText: 'Hủy',
+                  onOk: () => bulkRun((id) => remove.mutateAsync(id), `Đã xóa ${selected.length} khách hàng`),
+                })}
+              >
+                Xóa ({selected.length})
+              </Button>
+            )}
             <div style={{ flex: 1 }} />
             <Button type="text" onClick={() => setSelected([])}>Bỏ chọn</Button>
           </div>
         )}
 
         <Table<Customer>
+          size="middle"
           rowKey="id"
           style={{ marginTop: 14 }}
           columns={columns}
           dataSource={filtered}
           loading={isLoading}
-          scroll={{ x: 'max-content' }}
+          scroll={{ x: 1080 }}
+          onRow={(record) => ({
+            onClick: (e) => {
+              const target = e.target as HTMLElement
+              if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
+              setDetailCustomerId(record.id)
+            },
+            style: { cursor: 'pointer' },
+          })}
           locale={{
             emptyText: isError
               ? `Không tải được danh sách khách hàng: ${apiErrorMessage(error)}`
@@ -446,6 +584,8 @@ export function CustomersPage() {
         title={bulk?.mode === 'assign' ? 'Phân công nhân viên phụ trách' : 'Cập nhật trạng thái'}
         okText="Áp dụng"
         cancelText="Hủy"
+        centered
+        destroyOnHidden
         okButtonProps={{ disabled: !bulk?.value }}
         onCancel={() => setBulk(null)}
         onOk={() => {
@@ -470,6 +610,14 @@ export function CustomersPage() {
           options={bulk?.mode === 'assign' ? staff.map((u) => ({ value: u.id, label: u.fullName })) : CUSTOMER_STATUS}
         />
       </Modal>
+
+      {emailCustomer && (
+        <SendCustomerEmailModal
+          open={Boolean(emailCustomer)}
+          customer={emailCustomer}
+          onClose={() => setEmailCustomer(null)}
+        />
+      )}
     </>
   )
 }

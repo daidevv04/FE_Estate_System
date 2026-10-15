@@ -1,7 +1,6 @@
-import { PlusOutlined, ThunderboltOutlined } from '@ant-design/icons'
-import { App, Button, Space, Table } from 'antd'
-import dayjs from 'dayjs'
-import { useMemo, useState } from 'react'
+import { PlusOutlined } from '@ant-design/icons'
+import { App, Button, Table } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { paths } from '@/routes/paths'
 import { useAuthStore } from '@/store/authStore'
@@ -17,11 +16,17 @@ import './NotificationPage.css'
 export function NotificationPage() {
   const { message } = App.useApp()
   const currentUser = useAuthStore((s) => s.user)
+  const canSend = currentUser?.role === 'ADMIN'
   const notifications = useNotificationStore((s) => s.notifications)
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications)
   const sendNotification = useNotificationStore((s) => s.sendNotification)
   const markAsRead = useNotificationStore((s) => s.markAsRead)
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead)
   const deleteNotification = useNotificationStore((s) => s.deleteNotification)
+
+  useEffect(() => {
+    void fetchNotifications()
+  }, [fetchNotifications])
 
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('ALL')
@@ -51,32 +56,11 @@ export function NotificationPage() {
     urgent: notifications.filter((n) => n.priority === 'HIGH' || n.priority === 'URGENT').length,
   }), [notifications])
 
-  const handleSend = (values: CreateNotificationInput) => {
+  const handleSend = async (values: CreateNotificationInput) => {
     const sender = currentUser?.fullName || currentUser?.username || 'Ban Quản Trị'
-    sendNotification(values, sender)
+    await sendNotification(values, sender)
     message.success('Đã phát thông báo thành công!')
     setCreateModalOpen(false)
-  }
-
-  const handleQuickTest = () => {
-    const sample = [
-      'Giao dịch cọc mới phát sinh tại Regal Victoria',
-      'Cập nhật tiến độ giải ngân đợt 2',
-      'Khách hàng VIP yêu cầu tư vấn gấp căn Shophouse',
-    ]
-    const title = sample[Math.floor(Math.random() * sample.length)]
-    sendNotification(
-      {
-        title,
-        content: `Thông báo lúc ${dayjs().format('HH:mm:ss')}. Popup trượt ra góc phải và tự thụt vào sau 2-3 giây.`,
-        type: 'DEAL',
-        priority: 'HIGH',
-        target: 'ALL',
-        link: '/deals',
-      },
-      currentUser?.fullName || currentUser?.username || 'Hệ thống tự động',
-    )
-    message.info('Đã bắn thông báo! Quan sát góc trên bên phải.')
   }
 
   const columns = useMemo(
@@ -99,14 +83,11 @@ export function NotificationPage() {
         breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Quản lý thông báo' }]}
         meta="Hệ thống thông báo tức thời, phát thông điệp và quản lý bản tin cho toàn doanh nghiệp"
         actions={
-          <Space>
-            <Button icon={<ThunderboltOutlined />} onClick={handleQuickTest}>
-              Test gửi nhanh
-            </Button>
+          canSend ? (
             <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
               Gửi thông báo mới
             </Button>
-          </Space>
+          ) : undefined
         }
       />
 
@@ -121,6 +102,13 @@ export function NotificationPage() {
         onPriorityChange={setFilterPriority}
         filterRead={filterRead}
         onReadChange={setFilterRead}
+        hasFilters={Boolean(search || filterType !== 'ALL' || filterPriority !== 'ALL' || filterRead !== 'ALL')}
+        onResetFilters={() => {
+          setSearch('')
+          setFilterType('ALL')
+          setFilterPriority('ALL')
+          setFilterRead('ALL')
+        }}
         unreadCount={stats.unread}
         onMarkAllAsRead={markAllAsRead}
       />

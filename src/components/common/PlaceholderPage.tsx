@@ -2,7 +2,6 @@ import { Alert } from 'antd'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { paths } from '@/routes/paths'
 
-/** Chỗ dựng tạm cho các màn chưa code — xoá dần khi làm từng màn theo mục 27 của bản đặc tả */
 export function PlaceholderPage({ title, spec }: { title: string; spec: string }) {
   return (
     <>

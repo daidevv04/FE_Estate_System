@@ -8,7 +8,6 @@ const highlights = [
   { icon: <FileTextOutlined />, title: 'Quản lý giao dịch', desc: 'Theo dõi cơ hội, đặt cọc và hợp đồng.' },
 ]
 
-/** Markup/class CSS giống panel trái LoginPage. Dùng chung cho các trang auth khác. */
 export function LoginBrandPanel() {
   return (
     <section className="login-brand-panel" aria-label="Giới thiệu Đất Xanh Miền Trung">

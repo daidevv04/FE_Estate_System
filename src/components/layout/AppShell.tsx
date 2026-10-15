@@ -12,7 +12,6 @@ import { useUiStore } from '@/store/uiStore'
 
 const { Sider, Content } = Layout
 
-/** Khung chung mọi trang sau đăng nhập: Sider 264/80 + Header 64 + Content (mục 5.1) */
 export function AppShell() {
   const { token } = theme.useToken()
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
@@ -22,11 +21,6 @@ export function AppShell() {
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
 
-  /**
-   * F5: access token trong RAM mất, chỉ còn refresh token ở storage. Đổi token
-   * TRƯỚC khi render trang con — nếu để trang con tự gọi API rồi nhận 401 thì
-   * vừa tốn 1 vòng request, vừa đầy lỗi 401 trong console.
-   */
   const [sessionReady, setSessionReady] = useState(() => Boolean(accessToken))
   useEffect(() => {
     if (accessToken || !refreshToken) {
@@ -35,9 +29,7 @@ export function AppShell() {
     }
     let alive = true
     refreshSession()
-      .catch(() => {
-        /* hết phiên: interceptor đã đẩy về /login */
-      })
+      .catch(() => {})
       .finally(() => {
         if (alive) setSessionReady(true)
       })
@@ -46,21 +38,14 @@ export function AppShell() {
     }
   }, [accessToken, refreshToken])
 
-  /** Hồ sơ cũng nằm trong RAM nên mất sau F5; Sidebar và nút theo quyền đọc user.role. */
   useEffect(() => {
     if (!sessionReady || user || !refreshToken) return
     api
       .get('/users/me')
       .then((res) => setUser(res.data))
-      .catch(() => {
-        /* 401 đã được interceptor xử lý (refresh hoặc đẩy về /login) */
-      })
+      .catch(() => {})
   }, [sessionReady, user, refreshToken, setUser])
 
-  /**
-   * Màn hẹp (mobile): tự thu gọn sidebar để nội dung không bị bóp về ~110px.
-   * Chỉ tự thu gọn, KHÔNG tự mở lại — tôn trọng lựa chọn bấm tay của người dùng.
-   */
   useEffect(() => {
     const apply = () => {
       if (window.innerWidth < 768) setSidebarCollapsed(true)

@@ -9,11 +9,6 @@ interface FloorPlan {
   area: number | null
 }
 
-/**
- * 9.17 — thumbnails mặt bằng. Backend chưa có entity bản vẽ (ProductResponse không có field mặt bằng)
- * nên danh sách luôn rỗng và hiện empty state; không dựng bản vẽ giả.
- * Khi backend có endpoint, chỉ cần truyền `plans` vào — giao diện không đổi.
- */
 export function ProductFloorPlans({ plans }: { plans: FloorPlan[] }) {
   const { message } = App.useApp()
 

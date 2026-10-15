@@ -1,8 +1,6 @@
 const GID = 'dxmt-logo-g'
 const FID = 'dxmt-logo-shadow'
 
-/** Mark "Pure Symbol" lấy từ Stitch (screen c756896130004516b38371a2ad61e434, art 240×240, scale 1/6):
- *  tile gradient + 2 chevron mái + khối kim cương, lõi kim cương khoét lại nền gradient. */
 function Mark({ size = 40 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
@@ -25,7 +23,6 @@ function Mark({ size = 40 }: { size?: number }) {
   )
 }
 
-/** Logo ĐẤT XANH MIỀN TRUNG — 3 biến thể: ngang / thu gọn (chỉ mark) / trắng cho nền tối (mục 1.1) */
 export function BrandLogo({ collapsed = false, inverse = false }: { collapsed?: boolean; inverse?: boolean }) {
   if (collapsed) return <Mark size={32} />
   return (

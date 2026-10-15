@@ -1,5 +1,5 @@
-import { ClearOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Card, Col, Empty, Input, Pagination, Row, Select, Space, Typography } from 'antd'
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { App, Button, Card, Empty, Input, Pagination, Select, Space, Tooltip, Typography } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import {
   EMAIL_TEMPLATE_CATEGORY, EMAIL_TEMPLATE_STATUS, apiErrorMessage,
-  useEmailTemplate, useEmailTemplateTotals, useEmailTemplates,
+  useEmailTemplate, useEmailTemplateMutations, useEmailTemplateTotals, useEmailTemplates,
   type EmailTemplate, type EmailTemplateCategory, type EmailTemplateFilters, type EmailTemplateStatus,
 } from '../api'
 import { EmailTemplatePreviewModal } from '../components/EmailTemplatePreviewModal'
@@ -17,16 +17,18 @@ import { EmailTemplateTable } from '../components/EmailTemplateTable'
 
 const PAGE_SIZE = [{ value: 10, label: '10' }, { value: 20, label: '20' }, { value: 50, label: '50' }]
 
-/** 9.12: kho mẫu email chăm sóc khách hàng — KPI + lọc + bảng + modal xem trước, dữ liệu 100% từ API. */
 export function EmailTemplatesPage() {
+  const { message, modal } = App.useApp()
   const navigate = useNavigate()
-  const canWrite = useAuthStore((s) => s.user?.role === 'ADMIN' || s.user?.role === 'MANAGER')
+  const canManage = useAuthStore((s) => s.user?.role === 'ADMIN')
   const [filters, setFilters] = useState<EmailTemplateFilters>({ page: 0, size: 10 })
   const [previewId, setPreviewId] = useState<string | undefined>(undefined)
+  const [selected, setSelected] = useState<string[]>([])
 
   const list = useEmailTemplates(filters)
   const totals = useEmailTemplateTotals()
   const detail = useEmailTemplate(previewId)
+  const { remove } = useEmailTemplateMutations()
 
   const rows = list.data?.content ?? []
   const total = list.data?.totalElements ?? 0
@@ -43,7 +45,7 @@ export function EmailTemplatesPage() {
         breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Mẫu email' }]}
         meta="Quản lý các mẫu email được sử dụng trong quá trình chăm sóc khách hàng."
         actions={
-          canWrite && (
+          canManage && (
             <Button type="primary" size="large" icon={<PlusOutlined />} onClick={() => navigate(paths.emailTemplateNew)}>
               Tạo mẫu email
             </Button>
@@ -55,47 +57,116 @@ export function EmailTemplatesPage() {
         <EmailTemplateSummary total={totals.all} active={totals.active} inactive={totals.inactive} loading={totals.isLoading} />
       </div>
 
-      <Card className="stitch-card" variant="borderless" styles={{ body: { padding: 16 } }}>
-        <Row gutter={[12, 12]} align="middle">
-          <Col xs={24} lg={10} xl={8}>
-            <Input
-              size="large"
-              allowClear
-              prefix={<SearchOutlined />}
-              placeholder="Tìm tên mẫu, subject, nội dung..."
-              onChange={(e) => set({ keyword: e.target.value || undefined })}
-            />
-          </Col>
-          <Col xs={12} md={8} lg={4}>
-            <Select
-              size="large"
-              allowClear
-              style={{ width: '100%' }}
-              placeholder="Tất cả danh mục"
-              onChange={(v) => set({ category: v as EmailTemplateCategory })}
-              options={EMAIL_TEMPLATE_CATEGORY}
-            />
-          </Col>
-          <Col xs={12} md={8} lg={4}>
-            <Select
-              size="large"
-              allowClear
-              style={{ width: '100%' }}
-              placeholder="Tất cả trạng thái"
-              onChange={(v) => set({ status: v as EmailTemplateStatus })}
-              options={EMAIL_TEMPLATE_STATUS}
-            />
-          </Col>
-          <Col xs={12} md={8} lg={2}>
-            <Button size="large" block danger icon={<ClearOutlined />} aria-label="Xóa lọc" onClick={() => setFilters({ page: 0, size: 10 })} />
-          </Col>
-        </Row>
+      <Card className="stitch-card crm-filter-card" variant="borderless" styles={{ body: { padding: '12px 16px' } }}>
+        <div className="crm-filter-bar">
+          <Input
+            allowClear
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+            placeholder="Tìm tên mẫu, tiêu đề, nội dung..."
+            value={filters.keyword}
+            onChange={(e) => set({ keyword: e.target.value || undefined })}
+            style={{ flex: '2 1 240px', minWidth: 200 }}
+          />
+          <Select
+            allowClear
+            placeholder="Tất cả danh mục"
+            value={filters.category}
+            onChange={(v) => set({ category: v as EmailTemplateCategory })}
+            options={EMAIL_TEMPLATE_CATEGORY}
+            style={{ flex: '1 1 160px', minWidth: 130 }}
+          />
+          <Select
+            allowClear
+            placeholder="Tất cả trạng thái"
+            value={filters.status}
+            onChange={(v) => set({ status: v as EmailTemplateStatus })}
+            options={EMAIL_TEMPLATE_STATUS}
+            style={{ flex: '1 1 150px', minWidth: 130 }}
+          />
+          {(filters.keyword || filters.category || filters.status) && (
+            <Button
+              className="crm-filter-clear-btn"
+              icon={<ReloadOutlined />}
+              onClick={() => setFilters({ page: 0, size: 10 })}
+            >
+              Xoá lọc
+            </Button>
+          )}
+        </div>
       </Card>
 
       <Card className="stitch-card" variant="borderless" style={{ marginTop: 16 }} styles={{ body: { padding: 20 } }}>
+        {selected.length > 0 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 14,
+            padding: '10px 14px', borderRadius: t.radiusMd, background: t.colorSurfaceAlt,
+          }}>
+            <span style={{ fontWeight: 600 }}>Đã chọn {selected.length} mẫu email</span>
+
+            <Tooltip title={selected.length > 1 ? 'Chỉ xem trước khi chọn 1 mẫu' : undefined}>
+              <span>
+                <Button
+                  icon={<EyeOutlined />}
+                  disabled={selected.length !== 1}
+                  style={{ opacity: selected.length !== 1 ? 0.45 : 1 }}
+                  onClick={() => setPreviewId(selected[0])}
+                >
+                  Xem trước
+                </Button>
+              </span>
+            </Tooltip>
+
+            {canManage && (
+              <Tooltip title={selected.length > 1 ? 'Chỉ chỉnh sửa khi chọn 1 mẫu' : undefined}>
+                <span>
+                  <Button
+                    type="primary"
+                    icon={<EditOutlined />}
+                    disabled={selected.length !== 1}
+                    style={{ opacity: selected.length !== 1 ? 0.45 : 1 }}
+                    onClick={() => navigate(paths.emailTemplateEdit(selected[0]))}
+                  >
+                    Chỉnh sửa
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
+
+            {canManage && (
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => {
+                  modal.confirm({
+                    title: `Xác nhận xóa ${selected.length} mẫu email đã chọn?`,
+                    content: 'Hành động này không thể hoàn tác.',
+                    okText: 'Xóa',
+                    okButtonProps: { danger: true },
+                    cancelText: 'Hủy',
+                    onOk: async () => {
+                      for (const id of selected) {
+                        await remove.mutateAsync(id)
+                      }
+                      setSelected([])
+                      message.success(`Đã xóa ${selected.length} mẫu email`)
+                    },
+                  })
+                }}
+              >
+                Xóa ({selected.length})
+              </Button>
+            )}
+
+            <div style={{ flex: 1 }} />
+            <Button type="text" onClick={() => setSelected([])}>Bỏ chọn</Button>
+          </div>
+        )}
+
         <EmailTemplateTable
           rows={rows}
           loading={list.isLoading}
+          selectedRowKeys={selected}
+          onSelect={setSelected}
           onPreview={(row: EmailTemplate) => setPreviewId(row.id)}
           emptyText={
             list.isError ? (
@@ -111,7 +182,7 @@ export function EmailTemplatesPage() {
               </Empty>
             ) : (
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có mẫu email">
-                {canWrite && (
+                {canManage && (
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(paths.emailTemplateNew)}>
                     Tạo mẫu email
                   </Button>
@@ -146,7 +217,7 @@ export function EmailTemplatesPage() {
         loading={detail.isLoading}
         error={detail.isError ? detail.error : null}
         template={detail.data}
-        canEdit={canWrite}
+        canEdit={canManage}
         onRetry={() => void detail.refetch()}
         onClose={closePreview}
       />

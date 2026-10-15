@@ -17,7 +17,6 @@ const date = (value: string | null) => value ? dayjs(value).format('DD/MM/YYYY �
 
 function Loading() { return <><Card className="stitch-card" variant="borderless"><Skeleton active avatar paragraph={{ rows: 2 }} /></Card><Row gutter={[16, 16]} style={{ marginTop: 16 }}><Col xs={24} lg={14}><Card className="stitch-card" variant="borderless"><Skeleton active paragraph={{ rows: 8 }} /></Card></Col><Col xs={24} lg={10}><Card className="stitch-card" variant="borderless"><Skeleton active paragraph={{ rows: 6 }} /></Card></Col></Row></> }
 
-/** 9.27 — read-first screen. Quyền là view theo role backend, không checkbox giả chỉnh quyền. */
 export function UserDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()

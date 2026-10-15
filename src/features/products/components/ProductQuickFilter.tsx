@@ -9,7 +9,6 @@ interface Props {
   onPick: (status?: ProductStatus) => void
 }
 
-/** 9.16: hàng "Lọc nhanh" — số đếm lấy từ API, bấm là đổi filter trạng thái. */
 export function ProductQuickFilter({ total, counts, active, onPick }: Props) {
   const chips: { key: string; label: string; value: number; bg: string; fg: string; dot?: string; status?: ProductStatus }[] = [
     { key: 'all', label: 'Tất cả', value: total, bg: active ? '#006B2C' : '#E0F2FE', fg: active ? '#fff' : '#0369A1' },

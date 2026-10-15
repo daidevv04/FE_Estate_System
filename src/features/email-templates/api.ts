@@ -2,13 +2,6 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import { api } from '@/api/client'
 import type { Page, UUID } from '@/types/api'
 
-/**
- * Mẫu email — shape THẬT của customer-service (EmailTemplateResponse.java).
- * Endpoint: GET /email-templates (Page, lọc category|status|keyword), GET /email-templates/{id},
- * POST (CreateEmailTemplateRequest), PATCH (UpdateEmailTemplateRequest: field null = giữ nguyên),
- * DELETE. Read: mọi vai trò. Ghi: ADMIN/MANAGER (chặn ở service).
- * Backend KHÔNG có endpoint lịch sử gửi/analytics → module không dựng màn hiệu suất.
- */
 export type EmailTemplateCategory = 'WELCOME' | 'FOLLOW_UP' | 'PROMOTION' | 'CONTRACT'
 export type EmailTemplateStatus = 'ACTIVE' | 'INACTIVE'
 
@@ -16,11 +9,26 @@ export interface EmailTemplate {
   id: UUID
   name: string
   subject: string
-  /** HTML của email — render trong iframe sandbox ở modal xem trước. */
   body: string
   category: EmailTemplateCategory
   status: EmailTemplateStatus
   createdBy: UUID | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type EmailCareStatus = 'SENT' | 'FAILED' | 'OPENED' | 'CLICKED'
+
+export interface EmailCare {
+  id: UUID
+  customerCareId: UUID
+  templateId: UUID | null
+  toEmail: string
+  subject: string
+  body: string
+  status: EmailCareStatus
+  sentAt: string | null
+  openedAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -33,7 +41,6 @@ export interface EmailTemplateFilters {
   size?: number
 }
 
-/** Thân request ghi (Create/Update DTO). PATCH: field bỏ trống = giữ nguyên giá trị cũ. */
 export interface EmailTemplateInput {
   name?: string
   subject?: string
@@ -66,7 +73,6 @@ export function useEmailTemplates(params: EmailTemplateFilters = {}) {
   })
 }
 
-/** 9.12: chi tiết 1 mẫu — nguồn chuẩn cho modal xem trước (không đọc body từ row của bảng). */
 export function useEmailTemplate(id?: UUID) {
   return useQuery({
     queryKey: [...KEY, id],
@@ -76,8 +82,6 @@ export function useEmailTemplate(id?: UUID) {
   })
 }
 
-/** 9.12 KPI: backend chưa có endpoint tổng hợp nên đếm bằng totalElements của chính
- *  GET /email-templates (size=1 để không tải nội dung). Số liệu luôn từ API, không hardcode. */
 export function useEmailTemplateTotals() {
   const scopes: (EmailTemplateFilters | Record<string, never>)[] = [{}, { status: 'ACTIVE' }, { status: 'INACTIVE' }]
   const results = useQueries({
@@ -97,7 +101,6 @@ export function useEmailTemplateTotals() {
   }
 }
 
-/** Ghi mẫu email: POST tạo, PATCH cập nhật (field bỏ trống giữ nguyên), DELETE xóa. */
 export function useEmailTemplateMutations() {
   const qc = useQueryClient()
   const done = () => void qc.invalidateQueries({ queryKey: KEY })
@@ -113,7 +116,6 @@ export function useEmailTemplateMutations() {
     }),
     remove: useMutation({
       mutationFn: (id: UUID) => api.delete(`/email-templates/${id}`),
-      // Xoá hẳn cache của mẫu vừa xoá: invalidate sẽ khiến trang chi tiết gọi lại id đã chết → 404.
       onSuccess: (_data, id) => {
         qc.removeQueries({ queryKey: [...KEY, id] })
         done()
@@ -122,7 +124,6 @@ export function useEmailTemplateMutations() {
   }
 }
 
-/** Câu lỗi tiếng Việt từ ApiExceptionHandler của customer-service */
 export function apiErrorMessage(e: unknown) {
   const err = e as { response?: { status?: number; data?: { detail?: string; message?: string } } }
   const detail = err.response?.data?.detail ?? err.response?.data?.message

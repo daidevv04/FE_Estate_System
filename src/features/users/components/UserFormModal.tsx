@@ -4,11 +4,10 @@ import { USER_ROLES, USER_STATUSES, type ManagedUser, type UserInput } from '../
 
 interface Props { open: boolean; user: ManagedUser; submitting: boolean; onCancel: () => void; onSubmit: (body: UserInput) => void }
 
-/** Sửa data hồ sơ + role/status. Không có field bảo mật nhạy cảm trong form. */
 export function UserFormModal({ open, user, submitting, onCancel, onSubmit }: Props) {
   const [form] = Form.useForm<UserInput>()
   useEffect(() => { if (open) form.setFieldsValue(user) }, [open, user, form])
-  return <Modal open={open} title={`Chỉnh sửa ${user.fullName}`} width={680} destroyOnHidden maskClosable={false} okText="Lưu thay đổi" cancelText="Hủy" confirmLoading={submitting} onCancel={onCancel} onOk={() => void form.validateFields().then(onSubmit)}>
+  return <Modal open={open} title={`Chỉnh sửa ${user.fullName}`} width={680} centered destroyOnHidden maskClosable={false} okText="Lưu thay đổi" cancelText="Hủy" confirmLoading={submitting} onCancel={onCancel} onOk={() => void form.validateFields().then(onSubmit)}>
     <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
       <div className="user-form-grid">
         <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true, message: 'Nhập họ và tên' }, { max: 120 }]}><Input autoFocus /></Form.Item>

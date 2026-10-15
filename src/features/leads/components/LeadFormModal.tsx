@@ -28,7 +28,6 @@ interface Props {
   onSubmit: (body: LeadInput) => void
 }
 
-/** "+ Thêm lead" → POST /leads (CreateLeadRequest): khách + căn là bắt buộc, phần còn lại tùy chọn */
 export function LeadFormModal({
   open, customers, products, projects, staff, canAssign, submitting, onCancel, onSubmit,
 }: Props) {
@@ -63,7 +62,8 @@ export function LeadFormModal({
       open={open}
       title="Thêm lead mới"
       width={620}
-      destroyOnClose
+      centered
+      destroyOnHidden
       okText="Tạo lead"
       cancelText="Hủy"
       confirmLoading={submitting}

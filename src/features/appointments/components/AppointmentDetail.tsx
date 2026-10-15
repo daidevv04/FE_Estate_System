@@ -13,7 +13,6 @@ interface Props {
   salesName: string
 }
 
-/** Nội dung chi tiết lịch hẹn (mục 9.11) — dùng chung cho modal trong danh sách và trang deep link */
 export function AppointmentDetail({ appointment: a, customerName, salesName }: Props) {
   const start = dayjs(a.startTime)
   const end = dayjs(a.endTime)

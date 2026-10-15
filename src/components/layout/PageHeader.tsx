@@ -9,7 +9,6 @@ interface PageHeaderProps {
   actions?: ReactNode
 }
 
-/** Khối tiêu đề dùng chung: h1 + tag → dòng meta → nút bên phải */
 export function PageHeader({ title, status, meta, actions }: PageHeaderProps) {
   return (
     <div className="page-header">
@@ -28,5 +27,4 @@ export function PageHeader({ title, status, meta, actions }: PageHeaderProps) {
     </div>
   )
 }
-
 

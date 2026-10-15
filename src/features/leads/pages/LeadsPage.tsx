@@ -1,9 +1,11 @@
 import {
   DownOutlined, PlusOutlined, ProjectOutlined, ReloadOutlined, SearchOutlined, SwapOutlined, TableOutlined,
 } from '@ant-design/icons'
-import { App, Button, Descriptions, Modal, Space, Table, Tag, Typography } from 'antd'
+import { App, Button, Descriptions, Modal, Space, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useMemo, useState } from 'react'
+import { StatusPill, type Tone } from '@/components/common/StatusPill'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCustomers, useStaff } from '@/features/customers/api'
 import { paths } from '@/routes/paths'
@@ -23,7 +25,17 @@ const emptyStage = (): Record<LeadStage, Lead[]> => ({
   NEW: [], CONTACTED: [], INTERESTED: [], PROPOSAL_SENT: [], NEGOTIATION: [], INTERNAL_REVIEW: [], WON: [], LOST: [],
 })
 
-/** Số liệu 3 thẻ KPI đầu trang — tính từ chính dữ liệu lead đang tải (backend chưa có /dashboard/overview) */
+const STAGE_TONE: Record<LeadStage, Tone> = {
+  NEW: 'blue',
+  CONTACTED: 'teal',
+  INTERESTED: 'purple',
+  PROPOSAL_SENT: 'amber',
+  NEGOTIATION: 'amber',
+  INTERNAL_REVIEW: 'purple',
+  WON: 'green',
+  LOST: 'red',
+}
+
 function useSummary(leads: Lead[]) {
   return useMemo(() => {
     const open = leads.filter((l) => OPEN_STAGES.includes(l.stage))
@@ -48,14 +60,12 @@ function useSummary(leads: Lead[]) {
   }, [leads])
 }
 
-/** Pipeline lead (mục 9.18) — ADMIN/MANAGER thấy toàn công ty, SALES chỉ thấy lead được gán (backend ép quyền) */
 export function LeadsPage() {
   const { message, modal } = App.useApp()
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const canViewAll = user?.role === 'ADMIN' || user?.role === 'MANAGER'
 
-  // Chế độ xem lưu ở ?view= để F5/back giữ nguyên
   const [searchParams, setSearchParams] = useSearchParams()
   const view: 'kanban' | 'table' = searchParams.get('view') === 'table' ? 'table' : 'kanban'
 
@@ -109,7 +119,13 @@ export function LeadsPage() {
 
   const groups = useMemo(() => {
     const out = emptyStage()
-    for (const l of filtered) out[l.stage].push(l)
+    for (const l of filtered) {
+      if (out[l.stage]) {
+        out[l.stage].push(l)
+      } else if (out['NEW']) {
+        out['NEW'].push(l)
+      }
+    }
     return out
   }, [filtered])
 
@@ -119,23 +135,34 @@ export function LeadsPage() {
     setKeyword(''); setStage('all'); setSalesId('all'); setProjectId('all'); setValue('all'); setCloseWin('30d')
   }
 
-  const onError = (e: unknown) => message.error(apiErrorMessage(e))
-  const doMove = (lead: Lead, to: LeadStage) =>
-    move.mutate({ id: lead.id, stage: to }, {
-      onSuccess: () => {
+  const onError = useCallback((e: unknown) => message.error(apiErrorMessage(e)), [message])
+
+  const doMove = useCallback((lead: Lead, to: LeadStage) => {
+    if (lead.stage === to) return Promise.resolve()
+    return move.mutateAsync({ id: lead.id, stage: to })
+      .then(() => {
         message.success(`Đã chuyển «${customerById.get(lead.customerId)?.fullName ?? 'Lead'}» sang ${STAGE_LABEL[to]}`)
         setDetail(null)
-      },
-      onError,
-    })
+      })
+      .catch((e) => {
+        onError(e)
+      })
+  }, [customerById, message, move, onError])
 
-  const onLose = (lead: Lead) =>
+  const onLose = useCallback((lead: Lead) =>
     modal.confirm({
       title: `Chuyển «${customerById.get(lead.customerId)?.fullName ?? 'lead'}» sang Mất?`,
       content: 'Lead vẫn được giữ trong pipeline ở cột Mất (Lost) để xem lại lịch sử.',
       okText: 'Chuyển sang «Mất»', okButtonProps: { danger: true }, cancelText: 'Đóng',
       onOk: () => doMove(lead, 'LOST'),
-    })
+    }), [customerById, doMove, modal])
+
+  useEffect(() => {
+    if (!detail && !formOpen) {
+      if (document.body.style.overflow === 'hidden') document.body.style.overflow = ''
+      if (document.body.style.pointerEvents === 'none') document.body.style.pointerEvents = ''
+    }
+  }, [detail, formOpen])
 
   const submitForm = (body: LeadInput) =>
     create.mutate(body, {
@@ -159,70 +186,66 @@ export function LeadsPage() {
 
   const columns: ColumnsType<Lead> = [
     {
-      title: 'Khách hàng', dataIndex: 'customerId', width: 200, fixed: 'left',
+      title: 'Khách hàng', dataIndex: 'customerId', width: 180, fixed: 'left',
       render: (id: string) => {
         const c = customerById.get(id)
         return (
-          <div style={{ lineHeight: 1.3 }}>
+          <div style={{ lineHeight: 1.35 }}>
             <div style={{ fontWeight: 600 }}>{c?.fullName ?? `Khách #${id.slice(0, 8)}`}</div>
             <div className="stitch-num" style={{ fontSize: 12, color: t.colorTextMuted }}>{c?.phone ?? '—'}</div>
           </div>
         )
       },
     },
-    { title: 'Căn / sản phẩm', dataIndex: 'productId', width: 250, render: (_v, row) => productLabel(row) },
+    { title: 'Căn / sản phẩm', dataIndex: 'productId', width: 190, ellipsis: true, render: (_v, row) => productLabel(row) },
     {
-      title: 'Giai đoạn', dataIndex: 'stage', width: 160,
+      title: 'Giai đoạn', dataIndex: 'stage', width: 130,
       render: (s: LeadStage) => (
-        <Tag style={{ color: t.statusColors.LeadStage[s], borderColor: t.colorBorder, background: '#fff' }}>
+        <StatusPill tone={STAGE_TONE[s]} size="sm">
           {STAGE_LABEL[s]}
-        </Tag>
+        </StatusPill>
       ),
     },
     {
-      title: 'Giá trị kỳ vọng', dataIndex: 'expectedValue', width: 170, align: 'right',
+      title: 'Giá trị kỳ vọng', dataIndex: 'expectedValue', width: 130, align: 'right',
       render: (v: number | null) => <span className="stitch-num">{fullVnd(v)}</span>,
     },
     {
-      title: 'Hạn chốt', dataIndex: 'closeDate', width: 150,
+      title: 'Hạn chốt', dataIndex: 'closeDate', width: 120,
       render: (d: string | null, row) => {
         const late = overdueDays(row)
         return (
-          <div style={{ lineHeight: 1.3 }}>
+          <div style={{ lineHeight: 1.35 }}>
             <div className="stitch-num">{shortDate(d)}</div>
             {late > 0 && <div style={{ fontSize: 12, color: t.colorErrorText }}>Quá hạn {late} ngày</div>}
           </div>
         )
       },
     },
-    { title: 'Phụ trách', dataIndex: 'assignedTo', width: 160, render: (id: string) => ownerName(id) },
+    { title: 'Phụ trách', dataIndex: 'assignedTo', width: 130, ellipsis: true, render: (id: string) => ownerName(id) },
     {
-      title: 'Nguồn', dataIndex: 'customerId', key: 'source', width: 130,
+      title: 'Nguồn', dataIndex: 'customerId', key: 'source', width: 110,
       render: (id: string) => {
         const s = customerById.get(id)?.source
-        return s ? <Tag>{s}</Tag> : <span style={{ color: t.colorTextMuted }}>—</span>
+        return s ? <StatusPill tone="gray" dot={false} size="sm">{s}</StatusPill> : <span style={{ color: t.colorTextMuted }}>—</span>
       },
     },
   ]
 
   return (
     <>
-      <div className="pipe">
-        {/* Tiêu đề + phạm vi + chuyển chế độ xem + thêm lead */}
-        <div className="pipe-head">
-          <div>
-            <div className="pipe-head__title">
-              <h1 className="pipe-title">Pipeline Lead</h1>
-              <span className="pipe-scope">
-                <span className="pipe-scope__dot" />
-                Phạm vi: {canViewAll ? 'Toàn hệ thống' : 'Lead của tôi'}
-              </span>
-            </div>
-            <p className="pipe-desc">
-              Quản lý lộ trình chuyển đổi giao dịch dự án cao cấp Đất Xanh Miền Trung toàn hệ thống (Phạm vi Admin)
-            </p>
-          </div>
-          <div className="pipe-actions">
+      <PageHeader
+        title="Pipeline Lead"
+        breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Lead' }]}
+        status={
+          <span className="pipe-scope">
+            <span className="pipe-scope__dot" />
+            Phạm vi: {canViewAll ? 'Toàn hệ thống' : 'Lead của tôi'}
+          </span>
+        }
+        meta="Quản lý lộ trình chuyển đổi giao dịch dự án cao cấp Đất Xanh Miền Trung toàn hệ thống."
+        actions={
+          <>
             <div className="pipe-switch">
               <button
                 type="button"
@@ -241,11 +264,17 @@ export function LeadsPage() {
                 <TableOutlined /> <span>Bảng</span>
               </button>
             </div>
-            <button type="button" className="pipe-btn-primary" onClick={() => setFormOpen(true)}>
-              <PlusOutlined /> <span>Thêm lead</span>
-            </button>
-          </div>
-        </div>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setFormOpen(true)}
+            >
+              Thêm lead
+            </Button>
+          </>
+        }
+      />
+      <div className="pipe">
 
         <PipelineSummary data={summary} canViewAll={canViewAll} />
 
@@ -258,7 +287,7 @@ export function LeadsPage() {
                 className="pipe-input"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="Tìm theo tên khách hàng, SĐT, mã lead, dự án..."
+                placeholder="Tìm theo tên KH, SĐT, mã lead, dự án..."
                 aria-label="Tìm kiếm lead"
               />
             </div>
@@ -270,9 +299,9 @@ export function LeadsPage() {
                 aria-label="Lọc theo giai đoạn"
                 onChange={(e) => setStage(e.target.value as LeadStage | 'all')}
               >
-                <option value="all">Tất cả 8 giai đoạn</option>
+                <option value="all">Tất cả giai đoạn</option>
                 {LEAD_STAGES.map((s) => (
-                  <option key={s} value={s}>{`${LEAD_STAGES.indexOf(s) + 1}. ${STAGE_LABEL[s]}`}</option>
+                  <option key={s} value={s}>{STAGE_LABEL[s]}</option>
                 ))}
               </select>
               <DownOutlined className="pipe-select__caret" />
@@ -285,9 +314,9 @@ export function LeadsPage() {
                 aria-label="Lọc theo nhân viên phụ trách"
                 onChange={(e) => setSalesId(e.target.value)}
               >
-                <option value="all">{canViewAll ? 'Phụ trách: Toàn công ty' : 'Phụ trách: Tôi'}</option>
+                <option value="all">{canViewAll ? 'Tất cả nhân viên' : 'Phụ trách: Tôi'}</option>
                 {staff.filter((u) => u.status !== 'INACTIVE').map((u) => (
-                  <option key={u.id} value={u.id}>{`${u.fullName} (${u.role})`}</option>
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
                 ))}
               </select>
               <DownOutlined className="pipe-select__caret" />
@@ -300,7 +329,7 @@ export function LeadsPage() {
                 aria-label="Lọc theo dự án"
                 onChange={(e) => setProjectId(e.target.value)}
               >
-                <option value="all">Dự án: Tất cả</option>
+                <option value="all">Tất cả dự án</option>
                 {projectList.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <DownOutlined className="pipe-select__caret" />
@@ -367,7 +396,7 @@ export function LeadsPage() {
             productById={productById}
             projectById={projectById}
             ownerName={ownerName}
-            canDrag
+            canDrag={!move.isPending}
             onOpen={setDetail}
             onMove={doMove}
             onAdvance={(lead) => doMove(lead, nextStage(lead.stage))}
@@ -379,9 +408,10 @@ export function LeadsPage() {
         {!isLoading && !isError && view === 'table' && (
           <Table<Lead>
             rowKey="id"
+            size="middle"
             columns={columns}
             dataSource={filtered}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1000 }}
             onRow={(row) => ({ onClick: () => setDetail(row), style: { cursor: 'pointer' } })}
             locale={{
               emptyText: hasFilters
@@ -401,6 +431,8 @@ export function LeadsPage() {
       {/* Xem nhanh lead ngay trên kanban (thiết kế: modal preview + đổi bước) */}
       <Modal
         open={Boolean(detail)}
+        centered
+        destroyOnHidden
         onCancel={() => setDetail(null)}
         width={620}
         title="Chi tiết lead"
@@ -409,14 +441,18 @@ export function LeadsPage() {
             <Space wrap>
               <Button onClick={() => setDetail(null)}>Đóng</Button>
               {nextStage(detail.stage) !== detail.stage && (
-                <Button onClick={() => doMove(detail, nextStage(detail.stage))}>
+                <Button
+                  type="primary"
+                  loading={move.isPending}
+                  onClick={() => void doMove(detail, nextStage(detail.stage))}
+                >
                   Chuyển sang «{STAGE_LABEL[nextStage(detail.stage)]}»
                 </Button>
               )}
               {detail.stage !== 'LOST' && (
-                <Button danger onClick={() => onLose(detail)}>Chuyển sang «Mất»</Button>
+                <Button danger disabled={move.isPending} onClick={() => onLose(detail)}>Chuyển sang «Mất»</Button>
               )}
-              <Button type="primary" onClick={() => navigate(paths.lead(detail.id))}>Mở trang chi tiết</Button>
+              <Button disabled={move.isPending} onClick={() => navigate(paths.lead(detail.id))}>Mở trang chi tiết</Button>
             </Space>
           )
         }
@@ -424,9 +460,9 @@ export function LeadsPage() {
         {detail && (
           <>
             <Space align="center" style={{ marginBottom: 12 }} wrap>
-              <Tag style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#15803d' }}>
+              <StatusPill tone={STAGE_TONE[detail.stage]}>
                 {LEAD_STAGES.indexOf(detail.stage) + 1}. {STAGE_LABEL[detail.stage]}
-              </Tag>
+              </StatusPill>
               {overdueDays(detail) > 0 && (
                 <Typography.Text type="danger" style={{ fontSize: 12 }}>
                   Quá hạn {overdueDays(detail)} ngày (hạn chốt {shortDate(detail.closeDate)})

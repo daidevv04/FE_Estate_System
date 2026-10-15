@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { DownloadOutlined, FundOutlined, InboxOutlined, PieChartOutlined, ReloadOutlined, RiseOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Empty, Pagination, Select, Skeleton, Space, Table, Tag, Tooltip } from 'antd'
+import { Alert, Button, Card, Empty, Pagination, Select, Skeleton, Space, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { StatusPill } from '@/components/common/StatusPill'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip as ChartTooltip } from 'recharts'
 import { formatMoney, formatMoneyShort, formatNumber } from '@/lib/format'
 import { tokens as t } from '@/theme/tokens'
@@ -28,7 +29,6 @@ function exportCsv(rows: PerformanceRow[]) {
   URL.revokeObjectURL(href)
 }
 
-/** Hấp thụ từ Product.status; doanh thu từ deal → lead → product. Không có API target hoặc delivery velocity. */
 export function ProjectPerformanceReportPage() {
   const [projectId, setProjectId] = useState('all')
   const [progressPage, setProgressPage] = useState(1)
@@ -80,7 +80,7 @@ export function ProjectPerformanceReportPage() {
     { title: 'CÒN TRỐNG', dataIndex: 'available', align: 'center', width: 98, render: formatNumber },
     { title: 'TỶ LỆ HẤP THỤ', dataIndex: 'absorption', width: 165, render: (value: number) => <div className="project-performance-progress"><i><b style={{ width: `${value}%` }} /></i><strong>{pct(value)}</strong></div> },
     { title: 'DOANH THU HỢP ĐỒNG', dataIndex: 'revenue', align: 'right', width: 185, render: (value: number) => <strong className="project-performance-money">{formatMoney(value)}</strong> },
-    { title: 'TRẠNG THÁI', width: 115, render: (_value, row) => <Tag color={row.available ? 'green' : 'blue'}>{row.available ? 'Còn hàng' : 'Hết hàng'}</Tag> },
+    { title: 'TRẠNG THÁI', width: 115, render: (_value, row) => <StatusPill tone={row.available ? 'green' : 'gray'}>{row.available ? 'Còn hàng' : 'Hết hàng'}</StatusPill> },
   ]
 
   if (data.isLoading) return <div className="project-performance"><Skeleton active paragraph={{ rows: 14 }} /></div>

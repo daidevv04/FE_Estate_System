@@ -1,7 +1,7 @@
 import { Alert, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect } from 'react'
-import { formatMoney } from '@/lib/format'
+import { formatMoney, toUtcString } from '@/lib/format'
 import { PAYMENT_METHOD_OPTIONS, type Deal, type DealPaymentInput, type PaymentMethod } from '../api'
 
 interface FormValues {
@@ -15,17 +15,12 @@ interface FormValues {
 interface Props {
   open: boolean
   deal: Deal | null
-  /** Số còn lại = giá trị hợp đồng − tổng các đợt thanh toán đã ghi */
   remaining: number
   submitting: boolean
   onCancel: () => void
   onSubmit: (body: DealPaymentInput) => void
 }
 
-/**
- * Ghi nhận 1 đợt thanh toán — POST /deals/{id}/payments (append-only, backend tự đổi paymentStatus
- * và chặn tổng vượt contractValue). Tiền đặt cọc là field riêng của hợp đồng, KHÔNG cộng vào đây.
- */
 export function PaymentModal({ open, deal, remaining, submitting, onCancel, onSubmit }: Props) {
   const [form] = Form.useForm<FormValues>()
   const amount = Form.useWatch('amount', form) as number | undefined
@@ -45,7 +40,8 @@ export function PaymentModal({ open, deal, remaining, submitting, onCancel, onSu
       open={open}
       title={`Ghi nhận thanh toán · ${deal?.contractCode ?? ''}`}
       width={560}
-      destroyOnClose
+      centered
+      destroyOnHidden
       okText="Ghi nhận"
       cancelText="Hủy"
       confirmLoading={submitting}
@@ -54,8 +50,7 @@ export function PaymentModal({ open, deal, remaining, submitting, onCancel, onSu
         void form.validateFields().then((v) => {
           onSubmit({
             amount: v.amount,
-            // Backend nhận LocalDateTime không kèm offset (docs mục 20) → gửi chuỗi giờ local
-            paidAt: v.paidAt.format('YYYY-MM-DDTHH:mm:ss'),
+            paidAt: toUtcString(v.paidAt),
             method: v.method,
             receiptUrl: v.receiptUrl?.trim() || undefined,
             note: v.note?.trim() || undefined,
@@ -68,7 +63,7 @@ export function PaymentModal({ open, deal, remaining, submitting, onCancel, onSu
         showIcon
         style={{ marginBottom: 12 }}
         message={`Còn phải thu: ${formatMoney(remaining)}`}
-        description="Không ghi vượt quá số còn lại — backend chặn tổng thanh toán lớn hơn giá trị hợp đồng."
+        description="Số tiền thanh toán mỗi đợt không được vượt quá số tiền còn phải thu."
       />
       <Form<FormValues> form={form} layout="vertical">
         <div style={{ display: 'flex', gap: 12 }}>
@@ -126,7 +121,7 @@ export function PaymentModal({ open, deal, remaining, submitting, onCancel, onSu
             type="warning"
             showIcon
             style={{ marginBottom: 12 }}
-            message={`Vượt ${formatMoney(amount - remaining)} so với số còn lại — backend sẽ từ chối.`}
+            message={`Vượt ${formatMoney(amount - remaining)} so với số còn lại cần thanh toán.`}
           />
         )}
 

@@ -15,10 +15,6 @@ interface Props {
   loading: boolean
 }
 
-/**
- * 9.17 — cột phải "Khách hàng & Lead": danh sách lead đang gắn với căn (GET /leads?productId=)
- * kèm khách hàng và sales phụ trách. Chỉ hiện lead có thật; không có thì empty state.
- */
 export function ProductCustomerPanel({ leads, customerById, ownerName, loading }: Props) {
   const { message } = App.useApp()
   const navigate = useNavigate()

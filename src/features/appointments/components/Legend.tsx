@@ -1,4 +1,3 @@
-/** Chú giải dưới lịch tuần — chấm màu + nhãn chữ + số lượng tính theo tuần đang xem */
 export function Legend({ color, label, count }: { color: string; label: string; count: number }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#3e4a3d' }}>

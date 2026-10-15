@@ -11,19 +11,17 @@ import {
 } from '../api'
 import { EmailPreviewFrame } from '../components/EmailPreviewFrame'
 
-/** Chỉ dùng cho biên soạn: các trường bắt buộc của Create/Update DTO. */
 type FormValues = Required<Pick<EmailTemplateInput, 'name' | 'subject' | 'body' | 'category' | 'status'>>
 
 const BODY_MAX = 20000
 
-/** 9.13 — `/email-templates/new` (tạo) và `/email-templates/:id/edit` (sửa) dùng chung màn này. */
 export function EmailTemplateEditorPage() {
   const { id } = useParams<{ id: string }>()
   const isCreate = !id
   const navigate = useNavigate()
   const { message, modal } = App.useApp()
   const [form] = Form.useForm<FormValues>()
-  const canWrite = useAuthStore((s) => s.user?.role === 'ADMIN' || s.user?.role === 'MANAGER')
+  const canManage = useAuthStore((s) => s.user?.role === 'ADMIN')
 
   const { data: template, isLoading, isError, error } = useEmailTemplate(id)
   const { create, update } = useEmailTemplateMutations()
@@ -32,7 +30,6 @@ export function EmailTemplateEditorPage() {
   const [dirty, setDirty] = useState(false)
   const body = Form.useWatch('body', form) ?? ''
   const subjectLive = Form.useWatch('subject', form) ?? ''
-  // Gõ liên tục mà dựng lại iframe mỗi ký tự thì lag; hoãn sang mức ưu tiên thấp hơn.
   const previewBody = useDeferredValue(body)
 
   useEffect(() => {
@@ -47,8 +44,6 @@ export function EmailTemplateEditorPage() {
     setDirty(false)
   }, [template, form])
 
-  // Rời trang khi còn sửa dở → hỏi lại (kể cả khi bấm nút Hủy, vì cũng đi qua router).
-  // savedRef: sau khi lưu xong, việc điều hướng do chính luồng lưu phát ra không được chặn lại.
   const savedRef = useRef(false)
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
@@ -101,10 +96,10 @@ export function EmailTemplateEditorPage() {
     onSave().catch((e) => message.error(apiErrorMessage(e)))
   }
 
-  if (!canWrite) {
+  if (!canManage) {
     return (
       <Card className="stitch-card" variant="borderless">
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Bạn không có quyền biên soạn mẫu email." />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chỉ Quản trị viên (ADMIN) mới có quyền tạo và chỉnh sửa mẫu email." />
       </Card>
     )
   }

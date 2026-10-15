@@ -13,7 +13,6 @@ import {
 import { CategoryPill, StatusPill } from '../components/EmailTemplatePills'
 import { EmailTemplatePreviewModal } from '../components/EmailTemplatePreviewModal'
 
-/** Rút HTML thành text thuần để hiển thị TÓM TẮT — màn chi tiết không render toàn bộ body. */
 export const htmlToText = (html: string) =>
   html
     .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
@@ -23,12 +22,11 @@ export const htmlToText = (html: string) =>
     .replace(/\s+/g, ' ')
     .trim()
 
-/** 9.13 (nhánh chỉ-đọc): thông tin mẫu + tóm tắt nội dung; toàn bộ email xem ở modal. */
 export function EmailTemplateDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { message, modal } = App.useApp()
-  const canWrite = useAuthStore((s) => s.user?.role === 'ADMIN' || s.user?.role === 'MANAGER')
+  const canManage = useAuthStore((s) => s.user?.role === 'ADMIN')
   const [previewOpen, setPreviewOpen] = useState(false)
 
   const { data: template, isLoading, isError, error, refetch } = useEmailTemplate(id)
@@ -73,7 +71,7 @@ export function EmailTemplateDetailPage() {
             <Button type="primary" icon={<EyeOutlined />} disabled={!template} onClick={() => setPreviewOpen(true)}>
               Xem trước
             </Button>
-            {canWrite && template && (
+            {canManage && template && (
               <>
                 <Button icon={<EditOutlined />} onClick={() => navigate(paths.emailTemplateEdit(template.id))}>
                   Biên soạn
@@ -146,7 +144,7 @@ export function EmailTemplateDetailPage() {
         loading={isLoading}
         error={isError ? error : null}
         template={template}
-        canEdit={canWrite}
+        canEdit={canManage}
         onRetry={() => void refetch()}
         onClose={() => setPreviewOpen(false)}
       />

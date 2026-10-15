@@ -5,7 +5,6 @@ import { ProductSection } from './ProductSection'
 
 interface Props { product: Product; projectName: string | null }
 
-/** 9.17 — lưới 2 cột nhãn/giá trị. Chỉ hiện field backend THỰC SỰ có, không bịa dữ liệu pháp lý. */
 export function ProductSpecs({ product, projectName }: Props) {
   const rows: { label: string; value: string }[] = [
     { label: 'Mã căn hộ', value: product.code },

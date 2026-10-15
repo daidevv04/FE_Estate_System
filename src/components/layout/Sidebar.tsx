@@ -6,7 +6,6 @@ import { buildNav, flatNav } from '@/components/layout/nav'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
 
-/** Menu theo nhóm ở mục 5.2 — mục không có quyền thì ẨN HẲN, không hiện xám */
 export function Sidebar() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -14,7 +13,6 @@ export function Sidebar() {
   const collapsed = useUiStore((s) => s.sidebarCollapsed)
 
   const items = useMemo<MenuProps['items']>(
-    // cast 1 lần: union ItemType của antd không nhận type suy ra từ NavGroup
     () =>
       buildNav(role).map((g) => ({
         key: g.key,

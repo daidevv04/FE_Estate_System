@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons'
 
 export interface SessionDevice {
+  id?: string
   name: string
   browser: string
   ip: string
@@ -21,9 +22,11 @@ interface ProfileSecurityPanelProps {
   emailVerified?: boolean
   hasEmail?: boolean
   passwordChangedText: string
-  session: SessionDevice
+  session?: SessionDevice
+  sessions?: SessionDevice[]
   onChangePassword: () => void
-  onRevokeSession: () => void
+  onRevokeSession: (id?: string) => void
+  onRevokeOtherSessions?: () => void
   onVerifyEmail?: () => void
   onToggle2fa?: () => void
 }
@@ -34,11 +37,15 @@ export function ProfileSecurityPanel({
   hasEmail = false,
   passwordChangedText,
   session,
+  sessions,
   onChangePassword,
   onRevokeSession,
+  onRevokeOtherSessions,
   onVerifyEmail,
   onToggle2fa,
 }: ProfileSecurityPanelProps) {
+  const sessionsList = sessions && sessions.length > 0 ? sessions : session ? [session] : []
+  const hasOtherSessions = sessionsList.some((s) => !s.isCurrent)
   const emailStatus = !hasEmail
     ? 'Chưa có email'
     : emailVerified
@@ -117,45 +124,58 @@ export function ProfileSecurityPanel({
         </div>
       </div>
 
-      {/* Phiên đăng nhập thực tế của thiết bị */}
+      {/* Phiên đăng nhập thực tế của các thiết bị */}
       <div className="profile-sessions-section">
         <div className="profile-sessions-header">
-          <span className="profile-sessions-label">PHIÊN ĐĂNG NHẬP HIỆN TẠI</span>
+          <span className="profile-sessions-label">
+            THIẾT BỊ ĐANG ĐĂNG NHẬP ({sessionsList.length})
+          </span>
+          {hasOtherSessions && onRevokeOtherSessions && (
+            <button
+              type="button"
+              className="profile-revoke-all-btn"
+              onClick={onRevokeOtherSessions}
+            >
+              Đăng xuất các thiết bị khác
+            </button>
+          )}
         </div>
 
         <div className="profile-sessions-list">
-          <div className="profile-session-item">
-            <div className="profile-session-item__left">
-              <div className="profile-session-item__device-icon">
-                {session.type === 'desktop' ? <LaptopOutlined /> : <MobileOutlined />}
+          {sessionsList.map((s, idx) => (
+            <div className="profile-session-item" key={s.id ?? idx}>
+              <div className="profile-session-item__left">
+                <div className="profile-session-item__device-icon">
+                  {s.type === 'desktop' ? <LaptopOutlined /> : <MobileOutlined />}
+                </div>
+                <div className="profile-session-item__info">
+                  <div className="profile-session-item__title">
+                    <span className="profile-session-item__name">
+                      {s.name} • {s.browser}
+                    </span>
+                    {s.isCurrent && (
+                      <span className="profile-current-badge">Hiện tại</span>
+                    )}
+                  </div>
+                  <div className="profile-session-item__meta">
+                    IP: {s.ip} • {s.location}
+                  </div>
+                </div>
               </div>
-              <div className="profile-session-item__info">
-                <div className="profile-session-item__title">
-                  <span className="profile-session-item__name">
-                    {session.name} • {session.browser}
-                  </span>
-                  {session.isCurrent && (
-                    <span className="profile-current-badge">Hiện tại</span>
-                  )}
-                </div>
-                <div className="profile-session-item__meta">
-                  Host: {session.ip} • {session.location}
-                </div>
+              <div className="profile-session-item__right">
+                <button
+                  type="button"
+                  className="profile-revoke-single-btn"
+                  onClick={() => onRevokeSession(s.id)}
+                >
+                  {s.isCurrent ? 'Đăng xuất' : 'Xóa thiết bị'}
+                </button>
               </div>
             </div>
-            <div className="profile-session-item__right">
-              <button
-                type="button"
-                className="profile-revoke-single-btn"
-                onClick={onRevokeSession}
-              >
-                Đăng xuất
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
         <p className="profile-session-footer-hint">
-          Phiên làm việc gắn liền với token xác thực của trình duyệt hiện tại.
+          Khi xóa thiết bị, phiên làm việc trên thiết bị đó sẽ bị hủy và bị đăng xuất ngay lập tức.
         </p>
       </div>
     </div>

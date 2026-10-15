@@ -8,15 +8,9 @@ export interface PaymentTerm {
   percent: number
   amount: number | null
   note: string | null
-  /** false = chưa tới hạn, true = đã thanh toán. */
   paid: boolean
 }
 
-/**
- * 9.17 — "Chính sách thanh toán ưu đãi". Backend CHƯA có endpoint chính sách thanh toán theo sản phẩm
- * (Deal chỉ có depositAmount/paymentStatus, không có lịch mốc trả) nên danh sách luôn rỗng.
- * UI dựng sẵn đúng như Stitch; khi backend có API chỉ cần truyền `terms` vào.
- */
 export function ProductPaymentPolicy({ terms }: { terms: PaymentTerm[] }) {
   return (
     <ProductSection title="Chính sách thanh toán ưu đãi">
@@ -41,7 +35,7 @@ export function ProductPaymentPolicy({ terms }: { terms: PaymentTerm[] }) {
           </ul>
           <div className="pd-policy-gift">
             <GiftOutlined />
-            <span>Quà tặng sẽ hiển thị khi backend bổ sung dữ liệu chương trình.</span>
+            <span>Chưa có thông tin chương trình quà tặng kèm theo.</span>
           </div>
         </>
       )}

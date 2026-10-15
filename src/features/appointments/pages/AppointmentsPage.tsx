@@ -1,6 +1,7 @@
 import {
-  CalendarOutlined, CheckOutlined, DeleteOutlined, EditOutlined, LeftOutlined, MoreOutlined,
-  PlusOutlined, RightOutlined, SearchOutlined, StopOutlined, UnorderedListOutlined,
+  BellOutlined, CalendarOutlined, CheckOutlined, ClockCircleOutlined, DeleteOutlined, EditOutlined,
+  LeftOutlined, MoreOutlined, PlusOutlined, ReloadOutlined, RightOutlined, SearchOutlined, StopOutlined,
+  TeamOutlined, UnorderedListOutlined, UserOutlined,
 } from '@ant-design/icons'
 import {
   App, Button, Card, DatePicker, Dropdown, Empty, Input, Modal, Segmented, Select, Space, Table, Tooltip, Typography,
@@ -22,6 +23,7 @@ import {
 } from '../api'
 import { AppointmentDetail } from '../components/AppointmentDetail'
 import { StatusPill, isOverdue } from '../components/AppointmentStatusPill'
+import { StatusPill as CommonStatusPill } from '@/components/common/StatusPill'
 import { AppointmentFormModal } from '../components/AppointmentFormModal'
 import { Legend } from '../components/Legend'
 import { WeekCalendar } from '../components/WeekCalendar'
@@ -30,13 +32,11 @@ import './AppointmentDetailModal.css'
 const DATE = 'DD/MM/YYYY'
 const hhmm = (v: string) => dayjs(v).format('HH:mm')
 
-/** Lịch hẹn (mục 9.10) — ADMIN/MANAGER thấy toàn công ty, SALES thấy lịch của mình (backend ép) */
 export function AppointmentsPage() {
   const { message, modal } = App.useApp()
   const user = useAuthStore((s) => s.user)
   const canViewAll = user?.role === 'ADMIN' || user?.role === 'MANAGER'
 
-  // Chế độ xem lưu ở ?view= (mục 9.10) — mặc định Lịch tuần
   const [searchParams, setSearchParams] = useSearchParams()
   const view: 'calendar' | 'list' = searchParams.get('view') === 'list' ? 'list' : 'calendar'
 
@@ -59,7 +59,6 @@ export function AppointmentsPage() {
 
   const customers = useMemo(() => customerPage?.content ?? [], [customerPage])
   const customerById = useMemo(() => new Map(customers.map((c) => [c.id, c])), [customers])
-  /** Ẩn nhân viên đã ngừng hoạt động khỏi mọi lựa chọn, nhưng tên trên lịch cũ vẫn hiển thị được */
   const activeStaff = useMemo(() => staff.filter((u) => u.status !== 'INACTIVE'), [staff])
   const staffById = useMemo(() => new Map(staff.map((u) => [u.id, u])), [staff])
 
@@ -71,7 +70,6 @@ export function AppointmentsPage() {
       : (staffById.get(id)?.fullName ?? `Nhân viên #${id.slice(0, 8)}`)
 
   const rows = data?.content ?? []
-  /** Backend không có tham số keyword → tìm theo tên khách / SĐT / tiêu đề trên tuần đang tải */
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase()
     if (!kw) return rows
@@ -81,7 +79,6 @@ export function AppointmentsPage() {
     )
   }, [rows, keyword, customerById])
 
-  /** Số liệu chỉ tính trong khoảng đang xem + bộ lọc hiện tại (không bịa số toàn hệ thống) */
   const stats = useMemo(() => {
     const now = dayjs()
     const todayKey = now.format('YYYY-MM-DD')
@@ -124,10 +121,6 @@ export function AppointmentsPage() {
     setFormOpen(true)
   }
 
-  /**
-   * Tạo/sửa lịch: chỉ đóng modal khi API báo thành công — lỗi 409 (trùng giờ) phải sửa
-   * ngay trên form, không để người dùng tưởng đã đặt được.
-   */
   const submitForm = (body: AppointmentInput) => {
     if (editing) {
       update.mutate(
@@ -140,7 +133,6 @@ export function AppointmentsPage() {
       onSuccess: () => {
         message.success('Đã tạo lịch hẹn mới')
         closeForm()
-        // Lịch có thể được chọn ở tuần khác → nhảy tới đúng tuần đó để thấy ngay kết quả
         setWeekStart(startOfWeek(dayjs(body.startTime)))
       },
       onError,
@@ -169,45 +161,95 @@ export function AppointmentsPage() {
       onOk: () => remove.mutateAsync(a.id).then(() => setDetail(null)),
     })
 
-
   const columns: ColumnsType<Appointment> = [
     {
-      title: 'Ngày & giờ', dataIndex: 'startTime', width: 150,
+      title: (
+        <span>
+          <ClockCircleOutlined style={{ marginRight: 5, color: '#059669' }} />
+          Ngày & giờ
+        </span>
+      ),
+      dataIndex: 'startTime',
+      width: 140,
       render: (_v, row) => (
-        <div style={{ lineHeight: 1.3 }}>
+        <div style={{ lineHeight: 1.35 }}>
           <div className="stitch-num" style={{ fontWeight: 600 }}>{dayjs(row.startTime).format(DATE)}</div>
-          <div className="stitch-num" style={{ fontSize: 12.5, color: t.colorTextMuted }}>
+          <div className="stitch-num" style={{ fontSize: 12, color: t.colorTextMuted }}>
             {hhmm(row.startTime)} – {hhmm(row.endTime)}
           </div>
         </div>
       ),
     },
     {
-      title: 'Tiêu đề lịch hẹn', dataIndex: 'title', width: 216,
+      title: (
+        <span>
+          <CalendarOutlined style={{ marginRight: 5, color: '#059669' }} />
+          Tiêu đề lịch hẹn
+        </span>
+      ),
+      dataIndex: 'title',
+      width: 190,
+      ellipsis: true,
       render: (title: string, row) => (
-        <div style={{ lineHeight: 1.3 }}>
-          <div style={{ fontWeight: 600 }}>{title}</div>
+        <div style={{ lineHeight: 1.35 }}>
+          <div style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
           <div className="stitch-num" style={{ fontSize: 12, color: t.colorTextMuted }}>{appointmentCode(row)}</div>
         </div>
       ),
     },
     {
-      title: 'Khách hàng', dataIndex: 'customerId', width: 170,
+      title: (
+        <span>
+          <UserOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Khách hàng
+        </span>
+      ),
+      dataIndex: 'customerId',
+      width: 150,
+      ellipsis: true,
       render: (id: UUID) => (
-        <div style={{ lineHeight: 1.3 }}>
-          <div>{customerName(id)}</div>
+        <div style={{ lineHeight: 1.35 }}>
+          <div style={{ fontWeight: 500 }}>{customerName(id)}</div>
           <div className="stitch-num" style={{ fontSize: 12, color: t.colorTextMuted }}>{customerPhone(id) || '—'}</div>
         </div>
       ),
     },
-    { title: 'Nhân viên phụ trách', dataIndex: 'salesId', width: 150, render: (id: UUID) => salesName(id) },
     {
-      title: 'Trạng thái', dataIndex: 'status', width: 130,
+      title: (
+        <span>
+          <TeamOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Nhân viên phụ trách
+        </span>
+      ),
+      dataIndex: 'salesId',
+      width: 150,
+      ellipsis: true,
+      render: (id: UUID) => salesName(id),
+    },
+    {
+      title: (
+        <span>
+          <CheckOutlined style={{ marginRight: 5, color: '#059669' }} />
+          Trạng thái
+        </span>
+      ),
+      dataIndex: 'status',
+      width: 120,
       render: (s: AppointmentStatus, row) => <StatusPill status={s} overdue={isOverdue(s, row.endTime)} />,
     },
-    { title: 'Nhắc trước', dataIndex: 'reminderMinutes', width: 110, render: (m: number | null) => reminderLabel(m) },
     {
-      title: 'Thao tác', key: 'action', width: 84, align: 'center',
+      title: (
+        <span>
+          <BellOutlined style={{ marginRight: 5, color: '#64748b' }} />
+          Nhắc trước
+        </span>
+      ),
+      dataIndex: 'reminderMinutes',
+      width: 110,
+      render: (m: number | null) => reminderLabel(m),
+    },
+    {
+      title: '', key: 'action', width: 44, fixed: 'right', align: 'center',
       render: (_v, row) => (
         <Dropdown
           trigger={['click']}
@@ -245,16 +287,14 @@ export function AppointmentsPage() {
         status={
           <Space size={8} wrap>
             <Tooltip title="Số lịch hẹn trong hôm nay (theo bộ lọc hiện tại)">
-              <span className="stitch-pill" style={{ background: t.colorBrandBg, color: t.colorBrandActive }}>
-                <span className="stitch-pill__dot" style={{ background: t.colorSuccess }} />
+              <CommonStatusPill tone="green">
                 Hôm nay: {stats.today}
-              </span>
+              </CommonStatusPill>
             </Tooltip>
             <Tooltip title="Lịch chưa tới giờ trong tuần đang xem">
-              <span className="stitch-pill" style={{ background: t.colorInfoBg, color: t.colorInfoText }}>
-                <span className="stitch-pill__dot" style={{ background: t.colorInfo }} />
+              <CommonStatusPill tone="blue">
                 Sắp diễn ra: {stats.upcoming}
-              </span>
+              </CommonStatusPill>
             </Tooltip>
           </Space>
         }
@@ -299,41 +339,59 @@ export function AppointmentsPage() {
           />
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 14 }}>
+        <div className="crm-filter-bar" style={{ marginTop: 12 }}>
           <Input
             allowClear
-            prefix={<SearchOutlined />}
-            placeholder="Tìm theo tên khách, số điện thoại hoặc tiêu đề lịch hẹn..."
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+            placeholder="Tìm theo khách hàng, SĐT, tiêu đề..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            style={{ flex: '1 1 220px', minWidth: 0, maxWidth: 340 }}
+            style={{ flex: '1.8 1 200px', minWidth: 170 }}
           />
           <Select
-            allowClear placeholder="Tất cả trạng thái"
-            value={status} onChange={setStatus} options={APPOINTMENT_STATUS}
-            style={{ flex: '1 1 150px', minWidth: 0, maxWidth: 180 }}
+            allowClear
+            placeholder="Tất cả trạng thái"
+            value={status}
+            onChange={setStatus}
+            options={APPOINTMENT_STATUS}
+            style={{ flex: '1 1 130px', minWidth: 120 }}
           />
           {canViewAll && (
             <Select
-              allowClear showSearch optionFilterProp="label" placeholder="Tất cả Sales"
-              value={salesId} onChange={setSalesId}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Tất cả Sales"
+              value={salesId}
+              onChange={setSalesId}
               options={activeStaff.map((u) => ({ value: u.id, label: u.fullName }))}
-              style={{ flex: '1 1 170px', minWidth: 0, maxWidth: 200 }}
+              style={{ flex: '1.2 1 140px', minWidth: 130 }}
             />
           )}
           <Select
-            allowClear showSearch optionFilterProp="label" placeholder="Tất cả khách hàng"
-            value={customerId} onChange={setCustomerId}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Tất cả khách hàng"
+            value={customerId}
+            onChange={setCustomerId}
             options={customers.map((c) => ({ value: c.id, label: `${c.fullName}${c.phone ? ` · ${c.phone}` : ''}` }))}
-            style={{ flex: '1 1 190px', minWidth: 0, maxWidth: 230 }}
+            style={{ flex: '1.3 1 160px', minWidth: 140 }}
           />
-          <Button onClick={resetFilters} disabled={!hasFilters}>Xóa lọc</Button>
+          {hasFilters && (
+            <Button
+              className="crm-filter-clear-btn"
+              icon={<ReloadOutlined />}
+              onClick={resetFilters}
+            >
+              Xoá lọc
+            </Button>
+          )}
           {isFetching && !isLoading && (
             <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>Đang tải...</Typography.Text>
           )}
         </div>
       </Card>
-
 
       <Card className="stitch-card" variant="borderless" styles={{ body: { padding: view === 'calendar' ? 16 : 20 } }}>
         {isError && (
@@ -369,10 +427,11 @@ export function AppointmentsPage() {
         {!isError && view === 'list' && (
           <Table<Appointment>
             rowKey="id"
+            size="middle"
             columns={columns}
             dataSource={filtered}
             loading={isLoading}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 890 }}
             onRow={(row) => ({ onClick: () => setDetail(row), style: { cursor: 'pointer' } })}
             locale={{
               emptyText: hasFilters
@@ -389,12 +448,12 @@ export function AppointmentsPage() {
         )}
       </Card>
 
-
       <Modal
         open={Boolean(detail)}
         onCancel={() => setDetail(null)}
         width={880}
         className="appointment-detail-modal"
+        centered
         destroyOnHidden
         title="Chi tiết lịch hẹn"
         footer={
@@ -438,5 +497,4 @@ export function AppointmentsPage() {
     </>
   )
 }
-
 

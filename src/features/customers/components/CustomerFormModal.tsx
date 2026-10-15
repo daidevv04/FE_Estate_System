@@ -4,6 +4,7 @@ import {
 } from '@ant-design/icons'
 import { AutoComplete, Avatar, Button, Form, Grid, Input, Modal, Radio, Select, Tag } from 'antd'
 import { useEffect, useMemo, type ReactNode } from 'react'
+import { StatusPill } from '@/components/common/StatusPill'
 import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import {
@@ -11,10 +12,8 @@ import {
   type Customer, type CustomerInput, type StaffUser,
 } from '../api'
 
-/** Nguồn khách hàng là chuỗi tự do ở DB → gợi ý theo giá trị đang có thật + nhãn màn 9.8 */
 const SOURCE_SUGGEST = ['Website', 'Facebook', 'Zalo OA', 'Referral', 'Direct / Trực tiếp']
 
-/** Tạo mới chỉ 2 trạng thái chuẩn CRM (đúng ghi chú design); khi sửa mở đủ 4 */
 const CREATE_STATUS = CUSTOMER_STATUS.filter((s) => s.value === 'NEW' || s.value === 'POTENTIAL')
 
 const AVATAR_COLORS = ['#16A34A', '#0D9488', '#7C3AED', '#0EA5E9', '#F59E0B', '#EF4444']
@@ -25,7 +24,6 @@ const initials = (name: string) => {
   return ((w[0]?.[0] ?? '') + (w.length > 1 ? w[w.length - 1][0] : '')).toUpperCase()
 }
 
-/** Tiêu đề nhóm trong modal: THÔNG TIN LIÊN HỆ / ĐỊNH HƯỚNG & NHU CẦU */
 function SectionTitle({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0 14px' }}>
@@ -44,21 +42,17 @@ interface Props {
   open: boolean
   editing: Customer | null
   staff: StaffUser[]
-  /** Toàn bộ khách đang có — để báo trùng số điện thoại/email ngay trên form */
   existing: Customer[]
   submitting: boolean
   onCancel: () => void
   onSubmit: (values: CustomerInput, careNote: string) => void
 }
 
-/** Form Thêm/Sửa khách hàng — layout 2 cột theo màn Stitch 9.8, validate khớp CreateCustomerRequest.java */
 export function CustomerFormModal({ open, editing, staff, existing, submitting, onCancel, onSubmit }: Props) {
   const [form] = Form.useForm<CustomerInput & { careNote?: string }>()
   const screens = Grid.useBreakpoint()
-  // Dưới lg xếp 1 cột cho khỏi bóp form
   const twoCol = screens.lg !== false
   const role = useAuthStore((s) => s.user?.role)
-  // ownerId chỉ có tác dụng với ADMIN/MANAGER (CustomerService.update bỏ qua nếu không privileged)
   const canAssign = role === 'ADMIN' || role === 'MANAGER'
   const isEdit = !!editing
 
@@ -73,7 +67,6 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
     else form.resetFields()
   }, [open, editing, form])
 
-  /** Trùng số điện thoại / email so với danh sách đang có (bỏ qua chính khách đang sửa) */
   const duplicateRule = (field: 'phone' | 'email') => ({
     validator: (_: unknown, value?: string) => {
       const v = value?.trim()
@@ -98,7 +91,6 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
     onSubmit(values as CustomerInput, (careNote ?? '').toString().trim())
   }
 
-  /** Option nhân viên: avatar + tên + vai trò + badge ACTIVE (giống dropdown trong design) */
   const renderStaff = (data: { label?: string; role?: string; status?: string }) => {
     const name = data.label ?? ''
     return (
@@ -108,7 +100,7 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
           <div style={{ fontWeight: 600 }}>{name}</div>
           <div style={{ fontSize: 12, color: t.colorTextMuted }}>{data.role ?? 'SALES'}</div>
         </div>
-        {(data.status ?? 'ACTIVE') === 'ACTIVE' && <Tag color="green" style={{ marginInlineEnd: 0 }}>ACTIVE</Tag>}
+        {(data.status ?? 'ACTIVE') === 'ACTIVE' && <StatusPill tone="green" size="sm">ACTIVE</StatusPill>}
       </div>
     )
   }
@@ -116,10 +108,14 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
   return (
     <Modal
       open={open}
-      width={twoCol ? 920 : 560}
+      width={twoCol ? 900 : 560}
       centered
+      destroyOnHidden
       maskClosable={false}
       onCancel={onCancel}
+      styles={{
+        body: { padding: '12px 18px 20px', maxHeight: 'calc(88vh - 120px)', overflowY: 'auto' },
+      }}
       title={
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
           <span style={{
@@ -193,34 +189,19 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
             <Form.Item
               name="source"
               label="Nguồn khách hàng"
-              extra="Chọn từ danh sách hoặc nhập nguồn mới"
+              extra="Chọn từ danh sách gợi ý hoặc nhập nguồn mới"
               rules={[{ max: 50 }]}
             >
               <AutoComplete
                 options={sourceOptions}
-                placeholder="Chọn hoặc nhập nguồn"
                 filterOption={(input, option) => (option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
               >
-                <Input prefix={<ThunderboltOutlined style={{ color: t.colorTextMuted }} />} />
+                <Input
+                  placeholder="Chọn hoặc nhập nguồn"
+                  prefix={<ThunderboltOutlined style={{ color: t.colorTextMuted }} />}
+                />
               </AutoComplete>
             </Form.Item>
-
-            {canAssign && (
-              <Form.Item
-                name="ownerId"
-                label="Nhân viên phụ trách"
-                extra="Bỏ trống thì hệ thống phân bổ tự động cho bạn"
-              >
-                <Select
-                  showSearch
-                  allowClear
-                  placeholder="Tìm kiếm theo tên, mã nhân viên..."
-                  optionFilterProp="label"
-                  options={staff.map((u) => ({ value: u.id, label: u.fullName, role: u.role, status: u.status }))}
-                  optionRender={(option) => renderStaff(option.data as { label?: string; role?: string; status?: string })}
-                />
-              </Form.Item>
-            )}
           </div>
           <div>
             <SectionTitle icon={<ThunderboltOutlined />}>Định hướng &amp; nhu cầu</SectionTitle>
@@ -247,14 +228,31 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
               />
             </Form.Item>
 
+            {canAssign && (
+              <Form.Item
+                name="ownerId"
+                label="Nhân viên phụ trách"
+                extra="Mặc định phân bổ tự động cho bạn nếu để trống"
+              >
+                <Select
+                  showSearch
+                  allowClear
+                  placeholder="Tìm kiếm theo tên, mã nhân viên..."
+                  optionFilterProp="label"
+                  options={staff.map((u) => ({ value: u.id, label: u.fullName, role: u.role, status: u.status }))}
+                  optionRender={(option) => renderStaff(option.data as { label?: string; role?: string; status?: string })}
+                />
+              </Form.Item>
+            )}
+
             {!isEdit && (
               <Form.Item
                 name="careNote"
                 label={<span>Ghi chú chăm sóc <Tag style={{ marginInlineStart: 6 }}>Nội bộ CRM</Tag></span>}
-                extra="Tự động lưu vào Nhật ký hoạt động & chăm sóc (Activity Log / NOTE) của khách hàng ngay sau khi khởi tạo."
+                extra="Tự động lưu vào Nhật ký hoạt động & chăm sóc ngay sau khi khởi tạo"
               >
                 <Input.TextArea
-                  rows={5}
+                  rows={3}
                   maxLength={5000}
                   placeholder="Khách quan tâm phân khu nào, ngân sách, thời điểm dự kiến xuống tiền..."
                 />

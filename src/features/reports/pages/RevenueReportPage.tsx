@@ -28,7 +28,6 @@ function exportCsv(rows: MonthRow[]) {
   URL.revokeObjectURL(href)
 }
 
-/** Báo cáo dòng tiền từ hợp đồng và phiếu thu append-only. Không suy diễn hạn thanh toán chưa có API. */
 export function RevenueReportPage() {
   const [year, setYear] = useState(dayjs().year())
   const d = useDashboardData('30d' as RangeKey)

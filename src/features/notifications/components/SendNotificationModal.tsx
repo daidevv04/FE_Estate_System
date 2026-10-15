@@ -16,9 +16,7 @@ export function SendNotificationModal({ open, onCancel, onSubmit }: Props) {
       const values = await form.validateFields()
       onSubmit(values)
       form.resetFields()
-    } catch {
-      /* form validation error */
-    }
+    } catch {}
   }
 
   return (
@@ -35,7 +33,8 @@ export function SendNotificationModal({ open, onCancel, onSubmit }: Props) {
       okText="Phát thông báo ngay"
       cancelText="Hủy"
       width={560}
-      destroyOnClose
+      centered
+      destroyOnHidden
     >
       <Form
         form={form}

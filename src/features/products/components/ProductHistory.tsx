@@ -10,7 +10,6 @@ import { ProductSection } from './ProductSection'
 
 interface Props {
   product: Product
-  /** Lead gắn với căn — nguồn sự kiện "đăng ký / quan tâm" có thật từ API. */
   leads: Lead[]
   customerName: (id: string) => string
   onRefresh: () => void
@@ -18,10 +17,6 @@ interface Props {
 
 interface Entry { key: string; title: string; desc: string; at: string; tone: 'brand' | 'amber' | 'teal' }
 
-/**
- * 9.17 — "Lịch sử biến động sản phẩm". Backend KHÔNG có bảng audit log nên timeline dựng từ
- * dữ liệu thật đang có: createdAt/updatedAt của product + các lead đăng ký. Không bịa mốc thời gian.
- */
 export function ProductHistory({ product, leads, customerName, onRefresh }: Props) {
   const { message } = App.useApp()
   const navigate = useNavigate()

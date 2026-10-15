@@ -8,24 +8,25 @@ import {
   InfoCircleOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Button, Popconfirm, Space, Tag, Tooltip } from 'antd'
+import { Button, Popconfirm, Space, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
+import { StatusPill, type Tone } from '@/components/common/StatusPill'
 import type { AppNotification, NotificationPriority, NotificationType } from '@/types/notification'
 
-export const TYPE_CONFIG: Record<NotificationType, { label: string; color: string; icon: React.ReactNode }> = {
-  SYSTEM: { label: 'Hệ thống', color: 'blue', icon: <InfoCircleOutlined /> },
-  DEAL: { label: 'Hợp đồng', color: 'green', icon: <FileTextOutlined /> },
-  CUSTOMER: { label: 'Khách hàng', color: 'cyan', icon: <UserOutlined /> },
-  APPOINTMENT: { label: 'Lịch hẹn', color: 'gold', icon: <CalendarOutlined /> },
-  ALERT: { label: 'Khẩn cấp', color: 'red', icon: <ExclamationCircleOutlined /> },
+export const TYPE_CONFIG: Record<NotificationType, { label: string; tone: Tone; icon: React.ReactNode }> = {
+  SYSTEM: { label: 'Hệ thống', tone: 'blue', icon: <InfoCircleOutlined /> },
+  DEAL: { label: 'Hợp đồng', tone: 'green', icon: <FileTextOutlined /> },
+  CUSTOMER: { label: 'Khách hàng', tone: 'teal', icon: <UserOutlined /> },
+  APPOINTMENT: { label: 'Lịch hẹn', tone: 'purple', icon: <CalendarOutlined /> },
+  ALERT: { label: 'Khẩn cấp', tone: 'red', icon: <ExclamationCircleOutlined /> },
 }
 
-export const PRIORITY_CONFIG: Record<NotificationPriority, { label: string; color: string }> = {
-  LOW: { label: 'Thấp', color: 'default' },
-  NORMAL: { label: 'Thông thường', color: 'processing' },
-  HIGH: { label: 'Quan trọng', color: 'warning' },
-  URGENT: { label: 'Khẩn cấp', color: 'error' },
+export const PRIORITY_CONFIG: Record<NotificationPriority, { label: string; tone: Tone }> = {
+  LOW: { label: 'Thấp', tone: 'gray' },
+  NORMAL: { label: 'Thông thường', tone: 'blue' },
+  HIGH: { label: 'Quan trọng', tone: 'amber' },
+  URGENT: { label: 'Khẩn cấp', tone: 'red' },
 }
 
 interface ColumnProps {
@@ -42,7 +43,7 @@ export function buildNotificationColumns({ onSelect, onToggleRead, onDelete }: C
       width: 130,
       render: (t: NotificationType) => {
         const c = TYPE_CONFIG[t] ?? TYPE_CONFIG.SYSTEM
-        return <Tag color={c.color} icon={c.icon}>{c.label}</Tag>
+        return <StatusPill tone={c.tone} icon={c.icon} size="sm">{c.label}</StatusPill>
       },
     },
     {
@@ -64,7 +65,7 @@ export function buildNotificationColumns({ onSelect, onToggleRead, onDelete }: C
       width: 120,
       render: (p: NotificationPriority) => {
         const c = PRIORITY_CONFIG[p] ?? PRIORITY_CONFIG.NORMAL
-        return <Tag color={c.color}>{c.label}</Tag>
+        return <StatusPill tone={c.tone} size="sm">{c.label}</StatusPill>
       },
     },
     { title: 'Người gửi', dataIndex: 'senderName', width: 160 },
@@ -78,7 +79,7 @@ export function buildNotificationColumns({ onSelect, onToggleRead, onDelete }: C
       title: 'Trạng thái',
       dataIndex: 'read',
       width: 110,
-      render: (read: boolean) => read ? <Tag color="default">Đã đọc</Tag> : <Tag color="blue">Chưa đọc</Tag>,
+      render: (read: boolean) => read ? <StatusPill tone="gray" size="sm">Đã đọc</StatusPill> : <StatusPill tone="blue" size="sm">Chưa đọc</StatusPill>,
     },
     {
       title: 'Thao tác',

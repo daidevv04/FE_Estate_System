@@ -10,7 +10,6 @@ export interface PipelineSummaryData {
   year: number
 }
 
-/** 3 thẻ chỉ số đầu trang 9.18 — con số lớn, label nhỏ, icon nền tint bên phải */
 export function PipelineSummary({ data, canViewAll }: { data: PipelineSummaryData; canViewAll: boolean }) {
   return (
     <div className="pipe-kpis">

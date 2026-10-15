@@ -5,7 +5,6 @@ import type { UserRole } from '@/store/authStore'
 
 export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'LOCKED'
 
-/** API user-service. Tuyệt đối không khai báo password, token, OTP, hoặc twoFactorSecret vào UI state. */
 export interface ManagedUser {
   id: UUID
   username: string
@@ -33,7 +32,6 @@ export interface UserInput {
   status: UserStatus
 }
 
-/** Chỉ gửi trong request tạo user; không persist password vào store hay query cache. */
 export interface CreateUserInput {
   username: string
   password: string
@@ -61,7 +59,6 @@ type UserWire = Omit<ManagedUser, 'fullName' | 'is2faEnabled' | 'emailVerifiedAt
   updated_by?: UUID | null
 }
 
-/** Gateway cũ trả camelCase, user-service mới có thể trả snake_case. Chuẩn hóa ngay ở boundary. */
 const normalize = (user: UserWire): ManagedUser => ({
   ...user,
   fullName: user.fullName ?? user.full_name ?? user.username,

@@ -23,13 +23,10 @@ interface Values {
 interface Props {
   open: boolean
   editing: Appointment | null
-  /** Giờ đã chọn khi bấm ô trống trên lịch tuần */
   defaultStart?: Dayjs | null
   customers: Customer[]
   staff: StaffUser[]
-  /** ADMIN/MANAGER được chọn Sales phụ trách; SALES bị backend ép về chính mình */
   canAssign: boolean
-  /** Lịch đang có trong tuần đang xem — chỉ để CẢNH BÁO trùng giờ trước khi gửi */
   existing: Appointment[]
   submitting: boolean
   onCancel: () => void
@@ -37,13 +34,8 @@ interface Props {
 }
 
 const fmt = 'DD/MM/YYYY HH:mm'
-/** Khung cuộn của modal: panel lịch/select gắn vào đây để antd đo được chỗ trống và tự lật lên */
 const popInModal = (node?: HTMLElement) => (node?.closest('.ant-modal-body') as HTMLElement) ?? document.body
 
-/**
- * Modal có thể cao hơn viewport (màn thấp) → panel chọn ngày/giờ bị cắt ở đáy.
- * Khi mở panel, kéo ô đang chọn lên sát đỉnh khung cuộn để panel còn chỗ hiển thị.
- */
 const revealOpenField = () => {
   const input = document.activeElement as HTMLElement | null
   const scroller = input?.closest<HTMLElement>('.ant-modal-body')
@@ -52,7 +44,6 @@ const revealOpenField = () => {
   scroller.scrollTo({ top: Math.max(0, scroller.scrollTop + offset - 12), behavior: 'smooth' })
 }
 
-/** Form Thêm/Sửa lịch hẹn — chỉ field có thật trong CreateAppointmentRequest/UpdateAppointmentRequest */
 export function AppointmentFormModal({
   open, editing, defaultStart, customers, staff, canAssign, existing, submitting, onCancel, onSubmit,
 }: Props) {
@@ -88,7 +79,6 @@ export function AppointmentFormModal({
     )
   }, [open, editing, defaultStart, canAssign, form])
 
-  /** Trùng giờ với lịch đã có của cùng sales trong tuần đang xem (backend chặn bằng 409) */
   const clash = useMemo(() => {
     if (!startTime || !endTime || !endTime.isAfter(startTime)) return null
     const key = (salesId ?? editing?.salesId) as string | undefined
@@ -118,12 +108,13 @@ export function AppointmentFormModal({
     onSubmit(body)
   }
 
-
   return (
     <Modal
       open={open}
       title={editing ? `Cập nhật lịch hẹn ${editing.title}` : 'Thêm lịch hẹn mới'}
       width={720}
+      centered
+      destroyOnHidden
       okText={editing ? 'Lưu thay đổi' : 'Đặt lịch hẹn'}
       cancelText="Hủy"
       confirmLoading={submitting}
@@ -142,7 +133,6 @@ export function AppointmentFormModal({
               rules={[{ required: !editing, message: 'Vui lòng chọn khách hàng' }]}
             >
               {editing ? (
-                // UpdateAppointmentRequest không có customerId → chỉ hiển thị, muốn đổi khách thì tạo lịch mới
                 <Input disabled value={customers.find((c) => c.id === editing.customerId)?.fullName ?? editing.customerId} />
               ) : (
                 <Select
@@ -162,7 +152,7 @@ export function AppointmentFormModal({
             <Form.Item
               name="salesId"
               label="Nhân viên phụ trách"
-              extra={canAssign ? undefined : 'Tài khoản SALES: backend luôn xếp lịch cho chính bạn'}
+              extra={canAssign ? undefined : 'Tài khoản nhân viên: lịch hẹn mặc định được gán cho chính bạn'}
             >
               <Select
                 allowClear
@@ -181,7 +171,7 @@ export function AppointmentFormModal({
           label="Tiêu đề lịch hẹn"
           rules={[
             { required: true, message: 'Vui lòng nhập tiêu đề lịch hẹn' },
-            { max: 200, message: 'Tiêu đề tối đa 200 ký tự (giới hạn của backend)' },
+            { max: 200, message: 'Tiêu đề tối đa 200 ký tự' },
           ]}
         >
           <Input maxLength={200} showCount placeholder="Gặp khách xem nhà mẫu" />

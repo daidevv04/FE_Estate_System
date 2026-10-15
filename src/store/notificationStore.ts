@@ -1,7 +1,48 @@
 import { create } from 'zustand'
+import { api } from '@/api/client'
+import { paths } from '@/routes/paths'
 import type { AppNotification, CreateNotificationInput } from '@/types/notification'
 
 const STORAGE_KEY = 'dxmt.notifications'
+
+export interface BackendNotification {
+  id: string
+  userId: string
+  type: 'APPOINTMENT_REMINDER' | 'LEAD_DUE' | 'DEAL_APPROVAL' | 'EMAIL_FAILED'
+  title: string
+  body: string | null
+  refType: 'APPOINTMENT' | 'LEAD' | 'DEAL' | 'CUSTOMER' | null
+  refId: string | null
+  readAt: string | null
+  createdAt: string
+}
+
+function toAppNotification(b: BackendNotification): AppNotification {
+  const typeMap: Record<string, AppNotification['type']> = {
+    APPOINTMENT_REMINDER: 'APPOINTMENT',
+    LEAD_DUE: 'CUSTOMER',
+    DEAL_APPROVAL: 'DEAL',
+    EMAIL_FAILED: 'ALERT',
+  }
+  const linkMap: Record<string, string> = {
+    APPOINTMENT: paths.appointments,
+    CUSTOMER: paths.customers,
+    DEAL: paths.deals,
+    LEAD: paths.leads,
+  }
+  return {
+    id: b.id,
+    title: b.title,
+    content: b.body ?? '',
+    type: typeMap[b.type] ?? 'SYSTEM',
+    priority: b.type === 'EMAIL_FAILED' ? 'HIGH' : 'NORMAL',
+    target: 'ALL',
+    senderName: 'Hệ thống CRM',
+    createdAt: b.createdAt,
+    read: Boolean(b.readAt),
+    link: b.refType ? (b.refId ? `${linkMap[b.refType] ?? ''}/${b.refId}` : linkMap[b.refType]) : undefined,
+  }
+}
 
 const DEFAULT_NOTIFS: AppNotification[] = [
   {
@@ -75,7 +116,8 @@ export interface ToastItem {
 interface NotificationState {
   notifications: AppNotification[]
   activeToasts: ToastItem[]
-  sendNotification: (input: CreateNotificationInput, senderName?: string) => AppNotification
+  fetchNotifications: () => Promise<void>
+  sendNotification: (input: CreateNotificationInput, senderName?: string) => Promise<AppNotification>
   markAsRead: (id: string) => void
   markAllAsRead: () => void
   deleteNotification: (id: string) => void
@@ -88,9 +130,7 @@ let channel: BroadcastChannel | null = null
 if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   try {
     channel = new BroadcastChannel('dxmt_notifications_sync')
-  } catch {
-    /* fallback */
-  }
+  } catch {}
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => {
@@ -112,9 +152,38 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
     notifications: loadStored(),
     activeToasts: [],
 
-    sendNotification: (input, senderName = 'Ban Quản Trị') => {
+    fetchNotifications: async () => {
+      try {
+        const res = await api.get<{ content: BackendNotification[] }>('/notifications', { params: { size: 50, sort: 'createdAt,desc' } })
+        if (res.data?.content && Array.isArray(res.data.content)) {
+          const list = res.data.content.map(toAppNotification)
+          set({ notifications: list })
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+        }
+      } catch {}
+    },
+
+    sendNotification: async (input, senderName = 'Ban Quản Trị') => {
+      const typeToBackend: Record<string, string> = {
+        APPOINTMENT: 'APPOINTMENT_REMINDER',
+        DEAL: 'DEAL_APPROVAL',
+        CUSTOMER: 'LEAD_DUE',
+        ALERT: 'EMAIL_FAILED',
+        SYSTEM: 'APPOINTMENT_REMINDER',
+      }
+
+      let createdId = `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+      try {
+        const res = await api.post<BackendNotification>('/notifications', {
+          type: typeToBackend[input.type] ?? 'APPOINTMENT_REMINDER',
+          title: input.title,
+          body: input.content,
+        })
+        if (res.data?.id) createdId = res.data.id
+      } catch {}
+
       const newNotif: AppNotification = {
-        id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        id: createdId,
         title: input.title,
         content: input.content,
         type: input.type,
@@ -161,6 +230,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
         return { notifications: updated }
       })
+      api.patch(`/notifications/${id}/read`).catch(() => {})
       channel?.postMessage({ type: 'MARK_READ', id })
     },
 
@@ -170,6 +240,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
         return { notifications: updated }
       })
+      api.post('/notifications/read-all').catch(() => {})
       channel?.postMessage({ type: 'MARK_ALL_READ' })
     },
 
@@ -179,6 +250,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
         return { notifications: updated }
       })
+      api.delete(`/notifications/${id}`).catch(() => {})
     },
 
     clearAll: () => {

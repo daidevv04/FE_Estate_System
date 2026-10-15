@@ -1,4 +1,4 @@
-/* Preview modal: isolated from page stylesheet so lazy-loaded modal never loses its layout. */
+
 .etp-modal-root .ant-modal-mask { background: rgba(15, 23, 42, .54); backdrop-filter: blur(2px); }
 .etp-modal-root .ant-modal-content { box-shadow: 0 28px 72px rgba(15, 23, 42, .24); }
 .etp-modal-root .ant-modal-close { top: 20px; right: 20px; color: #667085; }
@@ -20,7 +20,8 @@
 .etp-tag--off { background: #f5f7f8; border-color: #e1e7e4; color: #667085; }
 .etp-tag__dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
 
-.etp-modal-root .etp-scroll { height: 100%; max-height: none; overflow: auto; overscroll-behavior: contain; background: #f4f7f6; padding: 28px; }
+.etp-modal-root .etp-scroll { height: 100%; max-height: none; overflow: auto; overscroll-behavior: contain; background: #f4f7f6; padding: 28px; scrollbar-width: none; -ms-overflow-style: none; }
+.etp-modal-root .etp-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .etp-mail-meta { max-width: 980px; margin: 0 auto 20px; padding: 20px 22px; background: #fff; border: 1px solid #e0e8e3; border-radius: 12px; box-shadow: 0 2px 5px rgba(21, 48, 35, .025); }
 .etp-meta__line { margin: 0 0 8px; color: #253342; font: 400 15px/23px Inter, sans-serif; }
 .etp-meta__line:last-of-type { margin-bottom: 0; }

@@ -2,11 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type { Page, UUID } from '@/types/api'
 
-/**
- * Khách hàng — shape THẬT của customer-service (CustomerResponse.java).
- * Endpoint: GET /customers (Page, lọc ownerId|status|demandType|source|keyword, sort),
- * GET /customers/{id}, POST /customers, PATCH /customers/{id} (partial), DELETE /customers/{id}.
- */
 export type CustomerStatus = 'NEW' | 'POTENTIAL' | 'CUSTOMER' | 'INACTIVE'
 export type DemandType = 'BUY' | 'SELL' | 'RENT' | 'INVEST'
 
@@ -23,7 +18,6 @@ export interface Customer {
   updatedAt: string
 }
 
-/** GET /api/users trả MẢNG TRẦN; chỉ ADMIN đọc được (SALES/MANAGER → 403). */
 export interface StaffUser { id: UUID; fullName: string; role: string; status?: string }
 
 export interface CustomerInput {
@@ -36,7 +30,6 @@ export interface CustomerInput {
   status?: CustomerStatus | null
 }
 
-/** Nhãn theo đúng enum backend + chữ dùng trong màn Stitch 9.8 */
 export const CUSTOMER_STATUS: { value: CustomerStatus; label: string }[] = [
   { value: 'NEW', label: 'Mới' },
   { value: 'POTENTIAL', label: 'Tiềm năng' },
@@ -52,17 +45,11 @@ export const DEMAND_TYPE: { value: DemandType; label: string }[] = [
 export const statusLabel = (s: string) => CUSTOMER_STATUS.find((x) => x.value === s)?.label ?? s
 export const demandLabel = (d: string | null) => DEMAND_TYPE.find((x) => x.value === d)?.label ?? '—'
 
-/** Backend CHƯA có cột mã khách hàng → sinh mã hiển thị KH-<năm tạo>-<4 ký tự id> */
 export const customerCode = (c: Pick<Customer, 'id' | 'createdAt'>) =>
   `KH-${(c.createdAt ?? '').slice(0, 4)}-${c.id.replace(/-/g, '').slice(0, 4).toUpperCase()}`
 
 const KEY = ['customers']
 
-/**
- * 1 request duy nhất (size 500 + sort mới nhất trước) rồi lọc/phân trang phía client —
- * đủ cho dữ liệu hiện tại và cho 4 thẻ KPI + bảng cùng lúc.
- * ponytail: trần 500 dòng; khi vượt thì đổi sang phân trang server (backend đã hỗ trợ page/size).
- */
 export function useCustomers() {
   return useQuery({
     queryKey: [...KEY, 'list'],
@@ -72,7 +59,6 @@ export function useCustomers() {
   })
 }
 
-/** Lấy bản ghi mới cho popup chi tiết, không dùng dữ liệu có thể đã cũ trong bảng. */
 export function useCustomer(id?: UUID) {
   return useQuery({
     queryKey: [...KEY, id],
@@ -82,7 +68,6 @@ export function useCustomer(id?: UUID) {
   })
 }
 
-/** Danh sách nhân viên để hiện tên + chọn người phụ trách; lỗi 403 thì coi như rỗng */
 export function useStaff() {
   return useQuery({
     queryKey: ['staff'],
@@ -111,7 +96,6 @@ export function useCustomerMutations() {
   }
 }
 
-/** Câu lỗi tiếng Việt từ ApiExceptionHandler của customer-service */
 export function apiErrorMessage(e: unknown) {
   const err = e as { response?: { status?: number; data?: { detail?: string; message?: string } } }
   const detail = err.response?.data?.detail ?? err.response?.data?.message
@@ -119,4 +103,65 @@ export function apiErrorMessage(e: unknown) {
   if (err.response?.status === 403) return 'Bạn không có quyền với khách hàng này'
   if (err.response?.status === 404) return 'Không tìm thấy khách hàng'
   return detail ?? 'Có lỗi xảy ra, vui lòng thử lại'
+}
+
+export type CareType = 'CALL' | 'MEETING' | 'EMAIL' | 'NOTE'
+
+export const CARE_TYPE_LABEL: Record<CareType, string> = {
+  CALL: 'Cuộc gọi',
+  MEETING: 'Gặp mặt',
+  EMAIL: 'Email',
+  NOTE: 'Ghi chú',
+}
+
+export interface CustomerCare {
+  id: UUID
+  customerId: UUID
+  type: CareType
+  content: string
+  createdBy: UUID
+  createdAt: string
+}
+
+export function useCustomerCares(customerId?: string) {
+  return useQuery({
+    queryKey: ['customer-cares', customerId],
+    queryFn: () => api.get<Page<CustomerCare>>(`/customers/${customerId}/cares`, { params: { size: 50, sort: 'createdAt,desc' } }).then((r) => r.data),
+    enabled: Boolean(customerId),
+  })
+}
+
+export function useCareMutations(customerId?: string) {
+  const qc = useQueryClient()
+  const done = () => { void qc.invalidateQueries({ queryKey: ['customer-cares', customerId] }) }
+  return {
+    create: useMutation({
+      mutationFn: (body: { type: CareType; content: string }) => api.post<CustomerCare>(`/customers/${customerId}/cares`, body).then((r) => r.data),
+      onSuccess: done,
+    }),
+    remove: useMutation({
+      mutationFn: (careId: string) => api.delete(`/customers/${customerId}/cares/${careId}`),
+      onSuccess: done,
+    }),
+  }
+}
+
+export interface SendCustomerEmailInput {
+  templateId?: UUID
+  toEmail?: string
+  subject?: string
+  body?: string
+  note?: string
+}
+
+export function useSendCustomerEmail(customerId?: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: SendCustomerEmailInput) =>
+      api.post(`/customers/${customerId}/emails`, body).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['customer-cares', customerId] })
+      void qc.invalidateQueries({ queryKey: ['customers'] })
+    },
+  })
 }

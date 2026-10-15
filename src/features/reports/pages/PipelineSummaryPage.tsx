@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import dayjs from 'dayjs'
 import { useQuery } from '@tanstack/react-query'
 import { DownloadOutlined, FilterOutlined, ReloadOutlined, RiseOutlined, TeamOutlined, TrophyOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Empty, Select, Skeleton, Space, Table, Tag, Tooltip } from 'antd'
+import { Alert, Button, Card, Empty, Select, Skeleton, Space, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { formatMoney, formatMoneyShort, formatNumber } from '@/lib/format'
+import { StatusPill } from '@/components/common/StatusPill'
 import { tokens as t } from '@/theme/tokens'
 import { api } from '@/api/client'
 import { LEAD_STAGES, STAGE_LABEL, dealsIn, useDashboardData, type LeadStage, type RangeKey } from '@/features/dashboard/api'
@@ -46,7 +47,6 @@ function exportCsv(rows: StageRow[]) {
   URL.revokeObjectURL(href)
 }
 
-/** Snapshot + transition event thật từ GET /leads/pipeline-summary. */
 export function PipelineSummaryPage() {
   const [range, setRange] = useState<RangeKey>('30d')
   const [salesId, setSalesId] = useState('all')
@@ -104,7 +104,7 @@ export function PipelineSummaryPage() {
     { title: 'GIÁ TRỊ KỲ VỌNG', dataIndex: 'expected', align: 'right', width: 185, render: (value: number) => <Tooltip title={formatMoney(value)}><strong className="pipeline-money">{formatMoneyShort(value)}</strong></Tooltip> },
     { title: 'VÀO STAGE TRONG KỲ', dataIndex: 'entered', align: 'center', width: 150, render: (value: number | null) => value == null ? 'Chưa tải' : formatNumber(value) },
     { title: 'TỪ BƯỚC TRƯỚC', dataIndex: 'transitioned', align: 'center', width: 135, render: (value: number | null) => value == null ? '—' : formatNumber(value) },
-    { title: 'DEAL KÝ TRONG KỲ', dataIndex: 'deals', align: 'center', width: 145, render: (value: number) => <Tag color="green">{value} deal</Tag> },
+    { title: 'DEAL KÝ TRONG KỲ', dataIndex: 'deals', align: 'center', width: 145, render: (value: number) => <StatusPill tone="green" size="sm" dot={false}>{value} deal</StatusPill> },
     { title: 'DOANH THU KÝ TRONG KỲ', dataIndex: 'revenue', align: 'right', width: 205, render: (value: number) => <strong className="pipeline-money">{formatMoney(value)}</strong> },
     { title: 'TỶ TRỌNG PIPELINE', dataIndex: 'share', align: 'center', width: 145, render: (value: number) => pct(value) },
     { title: 'TỶ LỆ CHUYỂN TIẾP', dataIndex: 'comparedToPrevious', align: 'center', width: 165, render: (value: number | null) => value == null ? 'Chưa có event' : pct(value) },

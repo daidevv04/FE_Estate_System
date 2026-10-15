@@ -7,7 +7,9 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip as ChartTool
 import { useAppointments } from '@/features/appointments/api'
 import { formatDateTime, formatMoney, formatMoneyShort } from '@/lib/format'
 import { paths } from '@/routes/paths'
+import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
+import { StatusPill } from '@/components/common/StatusPill'
 import { APPROVAL_STATUS_LABEL, contractValueIn, dealsIn, openLeads, paidTotal, PAYMENT_STATUS_LABEL, revenueByMonth, useDashboardData, type RangeKey } from '../api'
 
 const rangeOptions = [
@@ -15,10 +17,10 @@ const rangeOptions = [
   { label: '30 ngày', value: '30d' }, { label: 'Quý này', value: 'quarter' },
 ]
 
-/** Tổng quan admin: doanh thu, hàng, công việc cần xử lý. Chi tiết nằm ở các màn nghiệp vụ. */
 export function DashboardPage() {
   const [range, setRange] = useState<RangeKey>('30d')
   const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user)
   const data = useDashboardData(range)
   const today = dayjs()
   const appointments = useAppointments({ from: today.startOf('day').format('YYYY-MM-DDTHH:mm:ss'), to: today.endOf('day').format('YYYY-MM-DDTHH:mm:ss') })
@@ -64,7 +66,15 @@ export function DashboardPage() {
 
   return <div className="overview-dashboard">
     <section className="overview-dashboard__head">
-      <div><div className="overview-dashboard__eyebrow">TỔNG QUAN QUẢN TRỊ</div><h1>Toàn cảnh vận hành</h1><p>Doanh thu, giỏ hàng và việc cần xử lý trong ngày.</p></div>
+      <div>
+        <div className="overview-dashboard__eyebrow">
+          {user?.role === 'ADMIN' ? 'TỔNG QUAN QUẢN TRỊ' : user?.role === 'MANAGER' ? 'TỔNG QUAN ĐỘI NGŨ' : 'TỔNG QUAN KINH DOANH'}
+        </div>
+        <h1>Toàn cảnh vận hành</h1>
+        <p>
+          {user?.role === 'SALES' ? 'Hiệu suất cá nhân, giỏ hàng và công việc cần xử lý hôm nay.' : 'Doanh thu, giỏ hàng và việc cần xử lý trong ngày.'}
+        </p>
+      </div>
       <div className="overview-dashboard__actions"><Segmented value={range} options={rangeOptions} onChange={(value) => setRange(value as RangeKey)} /><Tooltip title="Tải lại số liệu"><Button aria-label="Tải lại số liệu" icon={<ReloadOutlined />} onClick={reload} /></Tooltip></div>
     </section>
     {(data.error || appointments.error) && <Alert type="error" showIcon message="Một phần dữ liệu tổng quan chưa tải được." action={<Button size="small" onClick={reload}>Thử lại</Button>} />}
@@ -76,7 +86,7 @@ export function DashboardPage() {
       </section>
       <section className="overview-dashboard__content">
         <Card className="stitch-card overview-dashboard__chart" variant="borderless"><div className="overview-dashboard__section-head"><div><h2>Doanh thu đã ký</h2><p>12 tháng gần nhất</p></div><strong>{formatMoneyShort(overview.signedValue)}</strong></div>{overview.chart.some((m) => m.value > 0) ? <div className="overview-dashboard__chart-area"><ResponsiveContainer width="100%" height="100%"><BarChart data={overview.chart} margin={{ top: 6, right: 0, left: -14, bottom: 0 }}><CartesianGrid vertical={false} stroke="#e8eee9" /><XAxis dataKey="period" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: t.colorTextMuted }} /><YAxis axisLine={false} tickLine={false} width={62} tickFormatter={(value) => formatMoneyShort(value)} tick={{ fontSize: 12, fill: t.colorTextMuted }} /><ChartTooltip formatter={(value: number) => [formatMoney(value), 'Đã ký']} cursor={{ fill: 'rgba(0, 107, 44, .05)' }} /><Bar dataKey="value" name="Đã ký" fill={t.colorBrand} radius={[6, 6, 0, 0]} maxBarSize={36} /></BarChart></ResponsiveContainer></div> : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có dữ liệu doanh thu." style={{ marginTop: 40 }} />}</Card>
-        <Card className="stitch-card overview-dashboard__deals" variant="borderless"><div className="overview-dashboard__section-head"><div><h2>Hợp đồng mới nhất</h2><p>5 hợp đồng vừa ghi nhận</p></div><Button type="link" onClick={() => navigate(paths.deals)}>Xem tất cả</Button></div><Table size="small" rowKey="id" pagination={false} dataSource={overview.recentDeals} locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có hợp đồng." /> }} columns={[{ title: 'Mã hợp đồng', dataIndex: 'contractCode', ellipsis: true, render: (value: string) => <strong>{value}</strong> }, { title: 'Giá trị', dataIndex: 'contractValue', align: 'right', render: (value: number | null) => formatMoneyShort(value) }, { title: 'Duyệt', dataIndex: 'approvalStatus', align: 'right', render: (value: string) => <span className={`overview-status overview-status--${value === 'PENDING' ? 'warning' : 'ok'}`}>{APPROVAL_STATUS_LABEL[value] ?? value}</span> }]} /></Card>
+        <Card className="stitch-card overview-dashboard__deals" variant="borderless"><div className="overview-dashboard__section-head"><div><h2>Hợp đồng mới nhất</h2><p>5 hợp đồng vừa ghi nhận</p></div><Button type="link" onClick={() => navigate(paths.deals)}>Xem tất cả</Button></div><Table size="small" rowKey="id" pagination={false} dataSource={overview.recentDeals} locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có hợp đồng." /> }} columns={[{ title: 'Mã hợp đồng', dataIndex: 'contractCode', ellipsis: true, render: (value: string) => <strong>{value}</strong> }, { title: 'Giá trị', dataIndex: 'contractValue', align: 'right', render: (value: number | null) => formatMoneyShort(value) }, { title: 'Duyệt', dataIndex: 'approvalStatus', align: 'right', render: (value: string) => <StatusPill tone={value === 'PENDING' ? 'amber' : 'green'} size="sm">{APPROVAL_STATUS_LABEL[value] ?? value}</StatusPill> }]} /></Card>
       </section>
     </>}
   </div>

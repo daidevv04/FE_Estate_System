@@ -86,13 +86,14 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={['ADMIN']}><ProjectPerformanceReportPage /></ProtectedRoute>,
       },
 
+      { path: '/users', element: <Navigate to={paths.users} replace /> },
       {
         path: paths.users,
-        element: <ProtectedRoute allowedRoles={['ADMIN']}><UsersPage /></ProtectedRoute>,
+        element: <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><UsersPage /></ProtectedRoute>,
       },
       {
         path: paths.user(),
-        element: <ProtectedRoute allowedRoles={['ADMIN']}><UserDetailPage /></ProtectedRoute>,
+        element: <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><UserDetailPage /></ProtectedRoute>,
       },
       { path: paths.profile, element: <ProfilePage /> },
       { path: paths.security, element: ph('Bảo mật 2FA', '9.6') },

@@ -12,6 +12,7 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { SelectableTableContainer } from '@/components/common/SelectableTableContainer'
 import { formatDate, formatMoney, formatMoneyShort } from '@/lib/format'
 import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
@@ -27,6 +28,7 @@ import { DealFormModal } from '../components/DealFormModal'
 import { PaymentModal } from '../components/PaymentModal'
 import { StatusPill as Pill, type StatusTone as Tone } from '@/components/common/StatusPill'
 import { KpiCard } from '@/components/common/KpiCard'
+import { notifyDealCreated, notifyDealStatusChanged } from '@/api/notificationEventHelper'
 
 const DEAL_TONE: Record<string, Tone> = {
   IN_PROGRESS: 'blue', ACTIVE: 'purple', COMPLETED: 'green', CANCELLED: 'gray',
@@ -139,7 +141,17 @@ export function DealsPage() {
     content: 'Hợp đồng sẽ chuyển sang trạng thái "Đã duyệt" và hệ thống sẽ lưu thông tin người duyệt cùng thời điểm phê duyệt.',
     okText: 'Xác nhận phê duyệt', cancelText: 'Huỷ',
     onOk: () => update.mutateAsync({ id: deal.id, body: { approvalStatus: 'APPROVED' } })
-      .then(() => { message.success(`Đã phê duyệt ${deal.contractCode}`) })
+      .then((updatedDeal) => {
+        notifyDealStatusChanged({
+          dealId: deal.id,
+          contractCode: deal.contractCode,
+          updaterName: user?.fullName,
+          status: 'COMPLETED',
+          salesId: updatedDeal?.salesId ?? deal.salesId,
+          value: updatedDeal?.contractValue ?? deal.contractValue,
+        })
+        message.success(`Đã phê duyệt ${deal.contractCode}`)
+      })
       .catch((e: unknown) => { message.error(`Phê duyệt thất bại: ${apiErrorMessage(e)}`); throw e }),
   })
 
@@ -148,7 +160,17 @@ export function DealsPage() {
     content: 'Hợp đồng sẽ chuyển sang trạng thái "Từ chối". Hành động này không thể hoàn tác.',
     okText: 'Từ chối', okButtonProps: { danger: true }, cancelText: 'Huỷ',
     onOk: () => update.mutateAsync({ id: deal.id, body: { approvalStatus: 'REJECTED' } })
-      .then(() => { message.success(`Đã từ chối ${deal.contractCode}`) })
+      .then((updatedDeal) => {
+        notifyDealStatusChanged({
+          dealId: deal.id,
+          contractCode: deal.contractCode,
+          updaterName: user?.fullName,
+          status: 'CANCELLED',
+          salesId: updatedDeal?.salesId ?? deal.salesId,
+          value: updatedDeal?.contractValue ?? deal.contractValue,
+        })
+        message.success(`Đã từ chối ${deal.contractCode}`)
+      })
       .catch((e: unknown) => { message.error(`Từ chối thất bại: ${apiErrorMessage(e)}`); throw e }),
   })
 
@@ -673,38 +695,43 @@ export function DealsPage() {
           </div>
         )}
 
-        <Table<Deal>
-          size="middle"
-          rowKey="id"
-          columns={columns}
-          dataSource={rows}
-          loading={deals.isLoading || payments.isFetching}
-          scroll={{ x: 1360 }}
-          onRow={(record) => ({
-            onClick: (e) => {
-              const target = e.target as HTMLElement
-              if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
-              setDetail(record)
-            },
-            style: { cursor: 'pointer' },
-          })}
-          locale={{
-            emptyText: deals.isError
-              ? `Không tải được danh sách hợp đồng: ${apiErrorMessage(deals.error)}`
-              : 'Không có hợp đồng phù hợp bộ lọc',
-          }}
-          rowSelection={{
-            selectedRowKeys: selected,
-            onChange: (keys) => setSelected(keys.map(String)),
-            preserveSelectedRowKeys: true,
-          }}
-          pagination={{
-            defaultPageSize: 10,
-            pageSizeOptions: [10, 20, 50],
-            showSizeChanger: true,
-            showTotal: (total, range) => `Hiển thị ${range[0]} - ${range[1]} trong tổng số ${total} hợp đồng`,
-          }}
-        />
+        <SelectableTableContainer
+          selectedKeys={selected}
+          onSelectChange={setSelected}
+        >
+          <Table<Deal>
+            size="middle"
+            rowKey="id"
+            columns={columns}
+            dataSource={rows}
+            loading={deals.isLoading || payments.isFetching}
+            scroll={{ x: 1360 }}
+            onRow={(record) => ({
+              onClick: (e) => {
+                const target = e.target as HTMLElement
+                if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
+                setDetail(record)
+              },
+              style: { cursor: 'pointer' },
+            })}
+            locale={{
+              emptyText: deals.isError
+                ? `Không tải được danh sách hợp đồng: ${apiErrorMessage(deals.error)}`
+                : 'Không có hợp đồng phù hợp bộ lọc',
+            }}
+            rowSelection={{
+              selectedRowKeys: selected,
+              onChange: (keys) => setSelected(keys.map(String)),
+              preserveSelectedRowKeys: true,
+            }}
+            pagination={{
+              defaultPageSize: 10,
+              pageSizeOptions: [10, 20, 50],
+              showSizeChanger: true,
+              showTotal: (total, range) => `Hiển thị ${range[0]} - ${range[1]} trong tổng số ${total} hợp đồng`,
+            }}
+          />
+        </SelectableTableContainer>
 
         {/* Tổng kết: ghi rõ phạm vi là TOÀN BỘ kết quả lọc, không phải chỉ trang đang xem */}
         <div
@@ -741,9 +768,31 @@ export function DealsPage() {
         onSubmit={(body) => {
           const done = editing
             ? update.mutateAsync({ id: editing.id, body })
-              .then(() => message.success(`Đã cập nhật ${body.contractCode ?? editing.contractCode}`))
+              .then((updatedDeal) => {
+                if (body.status && body.status !== editing.status) {
+                  notifyDealStatusChanged({
+                    dealId: editing.id,
+                    contractCode: updatedDeal.contractCode,
+                    updaterName: user?.fullName,
+                    status: body.status,
+                    salesId: updatedDeal.salesId,
+                    value: updatedDeal.contractValue,
+                  })
+                }
+                message.success(`Đã cập nhật ${body.contractCode ?? editing.contractCode}`)
+              })
             : create.mutateAsync(body)
-              .then(() => message.success(`Đã tạo hợp đồng ${body.contractCode}`))
+              .then((createdDeal) => {
+                notifyDealCreated({
+                  dealId: createdDeal.id,
+                  contractCode: createdDeal.contractCode,
+                  customerName: refs(createdDeal).customerName,
+                  creatorName: user?.fullName,
+                  salesId: createdDeal.salesId,
+                  value: createdDeal.contractValue,
+                })
+                message.success(`Đã tạo hợp đồng ${body.contractCode}`)
+              })
           void done
             .then(() => setFormOpen(false))
             .catch((e: unknown) => message.error(`${apiErrorMessage(e)}`))

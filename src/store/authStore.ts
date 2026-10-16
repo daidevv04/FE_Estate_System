@@ -27,8 +27,10 @@ interface AuthState {
 }
 
 const REFRESH_KEY = 'dxmt.refresh'
+const ACCESS_KEY = 'dxmt.access'
 const USER_KEY = 'dxmt.user'
 
+export const readAccessToken = () => sessionStorage.getItem(ACCESS_KEY) ?? localStorage.getItem(ACCESS_KEY)
 export const readRefreshToken = () => sessionStorage.getItem(REFRESH_KEY) ?? localStorage.getItem(REFRESH_KEY)
 export const readUser = (): AuthUser | null => {
   const raw = sessionStorage.getItem(USER_KEY) ?? localStorage.getItem(USER_KEY)
@@ -43,14 +45,17 @@ export const readUser = (): AuthUser | null => {
 export const isPersistentSession = () => localStorage.getItem(REFRESH_KEY) !== null
 
 export const useAuthStore = create<AuthState>((set) => ({
-  accessToken: null,
+  accessToken: readAccessToken(),
   refreshToken: readRefreshToken(),
   user: readUser(),
   setTokens: (t, persist = true) => {
     sessionStorage.removeItem(REFRESH_KEY)
     localStorage.removeItem(REFRESH_KEY)
+    sessionStorage.removeItem(ACCESS_KEY)
+    localStorage.removeItem(ACCESS_KEY)
     const storage = persist ? localStorage : sessionStorage
     storage.setItem(REFRESH_KEY, t.refreshToken)
+    storage.setItem(ACCESS_KEY, t.accessToken)
     set({ accessToken: t.accessToken, refreshToken: t.refreshToken })
   },
   setUser: (user) => {

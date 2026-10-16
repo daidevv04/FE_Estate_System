@@ -2,7 +2,7 @@ import {
   CheckOutlined, IdcardOutlined, MailOutlined, PhoneOutlined, ThunderboltOutlined,
   UserAddOutlined, UserOutlined,
 } from '@ant-design/icons'
-import { AutoComplete, Avatar, Button, Form, Grid, Input, Modal, Radio, Select, Tag } from 'antd'
+import { AutoComplete, Avatar, Button, Col, Form, Grid, Input, Modal, Row, Select, Tag } from 'antd'
 import { useEffect, useMemo, type ReactNode } from 'react'
 import { StatusPill } from '@/components/common/StatusPill'
 import { useAuthStore } from '@/store/authStore'
@@ -26,14 +26,14 @@ const initials = (name: string) => {
 
 function SectionTitle({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '2px 0 14px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 10px' }}>
       <span style={{
-        width: 26, height: 26, borderRadius: 8, display: 'grid', placeItems: 'center',
-        background: t.colorBrandBg, color: t.colorBrand, fontSize: 14,
+        width: 24, height: 24, borderRadius: 6, display: 'grid', placeItems: 'center',
+        background: t.colorBrandBg, color: t.colorBrand, fontSize: 13,
       }}>
         {icon}
       </span>
-      <span className="stitch-label" style={{ color: t.colorTextSub }}>{children}</span>
+      <span className="stitch-label" style={{ color: t.colorTextSub, fontSize: 12.5, fontWeight: 700 }}>{children}</span>
     </div>
   )
 }
@@ -114,7 +114,7 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
       maskClosable={false}
       onCancel={onCancel}
       styles={{
-        body: { padding: '12px 18px 20px', maxHeight: 'calc(88vh - 120px)', overflowY: 'auto' },
+        body: { padding: '10px 22px 14px', maxHeight: 'calc(92vh - 60px)', overflowY: 'auto' },
       }}
       title={
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -150,20 +150,22 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
         </div>
       }
     >
-      <Form form={form} layout="vertical" onFinish={submit} style={{ marginTop: 8 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: twoCol ? '1fr 1fr' : '1fr', gap: twoCol ? 28 : 0 }}>
-          <div>
-            <SectionTitle icon={<IdcardOutlined />}>Thông tin liên hệ</SectionTitle>
-
+      <Form form={form} layout="vertical" onFinish={submit} style={{ marginTop: 4 }}>
+        <SectionTitle icon={<IdcardOutlined />}>Thông tin liên hệ</SectionTitle>
+        <Row gutter={[24, 0]}>
+          <Col xs={24} md={12}>
             <Form.Item
               name="fullName"
               label="Họ và tên khách hàng"
               required
               rules={[{ required: true, message: 'Nhập họ tên khách hàng' }, { max: 100 }]}
+              style={{ marginBottom: 14 }}
             >
               <Input placeholder="Nhập họ tên khách, ví dụ: Nguyễn Văn An" prefix={<UserOutlined style={{ color: t.colorTextMuted }} />} />
             </Form.Item>
+          </Col>
 
+          <Col xs={24} md={12}>
             <Form.Item
               name="phone"
               label="Số điện thoại"
@@ -174,82 +176,125 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
                 { pattern: /^\+?[0-9]{8,15}$/, message: 'Số điện thoại 8–15 chữ số, có thể bắt đầu bằng +' },
                 duplicateRule('phone'),
               ]}
+              style={{ marginBottom: 14 }}
             >
               <Input placeholder="0901 234 567" prefix={<PhoneOutlined style={{ color: t.colorTextMuted }} />} />
             </Form.Item>
+          </Col>
 
+          <Col xs={24} md={12}>
             <Form.Item
               name="email"
               label={<span>Địa chỉ email <Tag style={{ marginInlineStart: 6 }}>Không bắt buộc</Tag></span>}
               rules={[{ type: 'email', message: 'Email không hợp lệ' }, { max: 100 }, duplicateRule('email')]}
+              style={{ marginBottom: 14 }}
             >
               <Input placeholder="khachhang@congty.vn" prefix={<MailOutlined style={{ color: t.colorTextMuted }} />} />
             </Form.Item>
+          </Col>
 
+          <Col xs={24} md={12}>
             <Form.Item
               name="source"
               label="Nguồn khách hàng"
               extra="Chọn từ danh sách gợi ý hoặc nhập nguồn mới"
               rules={[{ max: 50 }]}
+              style={{ marginBottom: 14 }}
             >
               <AutoComplete
+                style={{ width: '100%' }}
                 options={sourceOptions}
                 filterOption={(input, option) => (option?.value ?? '').toLowerCase().includes(input.toLowerCase())}
               >
                 <Input
-                  placeholder="Chọn hoặc nhập nguồn"
+                  placeholder="Chọn hoặc nhập nguồn (VD: Facebook, Hotline...)"
                   prefix={<ThunderboltOutlined style={{ color: t.colorTextMuted }} />}
                 />
               </AutoComplete>
             </Form.Item>
-          </div>
-          <div>
-            <SectionTitle icon={<ThunderboltOutlined />}>Định hướng &amp; nhu cầu</SectionTitle>
+          </Col>
+        </Row>
 
-            <Form.Item name="demandType" label="Nhu cầu bất động sản" initialValue="BUY">
+        <SectionTitle icon={<ThunderboltOutlined />}>Định hướng &amp; nhu cầu</SectionTitle>
+        <Row gutter={[24, 0]}>
+          <Col xs={24} md={12}>
+            <Form.Item name="demandType" label="Nhu cầu bất động sản" initialValue="BUY" style={{ marginBottom: 14 }}>
               <Select
                 showSearch
+                style={{ width: '100%' }}
                 optionFilterProp="label"
                 placeholder="Mua ở / Đầu tư / Thuê / Chuyển nhượng"
                 options={DEMAND_TYPE}
               />
             </Form.Item>
+          </Col>
 
+          <Col xs={24} md={12}>
             <Form.Item
               name="status"
               label="Trạng thái khách hàng"
               initialValue="NEW"
               extra={isEdit ? 'Trạng thái chuẩn CRM' : '2 trạng thái chuẩn CRM'}
+              style={{ marginBottom: 14 }}
             >
-              <Radio.Group
-                optionType="button"
-                buttonStyle="solid"
-                options={isEdit ? CUSTOMER_STATUS : CREATE_STATUS}
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Chọn trạng thái"
+                options={(isEdit ? CUSTOMER_STATUS : CREATE_STATUS).map((s) => ({
+                  value: s.value,
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background:
+                            s.value === 'NEW'
+                              ? '#1677ff'
+                              : s.value === 'POTENTIAL'
+                              ? '#faad14'
+                              : s.value === 'CUSTOMER'
+                              ? '#52c41a'
+                              : '#8c8c8c',
+                        }}
+                      />
+                      <span>{s.label}</span>
+                    </div>
+                  ),
+                }))}
               />
             </Form.Item>
+          </Col>
 
-            {canAssign && (
+          {canAssign && (
+            <Col xs={24} md={12}>
               <Form.Item
                 name="ownerId"
                 label="Nhân viên phụ trách"
                 extra="Mặc định phân bổ tự động cho bạn nếu để trống"
+                style={{ marginBottom: 14 }}
               >
                 <Select
                   showSearch
                   allowClear
+                  style={{ width: '100%' }}
                   placeholder="Tìm kiếm theo tên, mã nhân viên..."
                   optionFilterProp="label"
                   options={staff.map((u) => ({ value: u.id, label: u.fullName, role: u.role, status: u.status }))}
                   optionRender={(option) => renderStaff(option.data as { label?: string; role?: string; status?: string })}
                 />
               </Form.Item>
-            )}
+            </Col>
+          )}
 
-            {!isEdit && (
+          {!isEdit && (
+            <Col xs={24} md={canAssign ? 12 : 24}>
               <Form.Item
                 name="careNote"
                 label={<span>Ghi chú chăm sóc <Tag style={{ marginInlineStart: 6 }}>Nội bộ CRM</Tag></span>}
                 extra="Tự động lưu vào Nhật ký hoạt động & chăm sóc ngay sau khi khởi tạo"
+                style={{ marginBottom: 14 }}
               >
                 <Input.TextArea
                   rows={3}
@@ -257,9 +302,9 @@ export function CustomerFormModal({ open, editing, staff, existing, submitting, 
                   placeholder="Khách quan tâm phân khu nào, ngân sách, thời điểm dự kiến xuống tiền..."
                 />
               </Form.Item>
-            )}
-          </div>
-        </div>
+            </Col>
+          )}
+        </Row>
       </Form>
     </Modal>
   )

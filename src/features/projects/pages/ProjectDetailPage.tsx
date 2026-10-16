@@ -12,6 +12,7 @@ import { ProductFormModal } from '../components/ProductFormModal'
 import { ProjectHero } from '../components/ProjectHero'
 import { ProjectProductsTable } from '../components/ProjectProductsTable'
 import { ProjectFormModal } from '../components/ProjectFormModal'
+import { ProjectMembersTab } from '../components/ProjectMembersTab'
 
 export function ProjectDetailPage() {
   const { id } = useParams()
@@ -138,6 +139,7 @@ export function ProjectDetailPage() {
     <Tabs className="project-detail-tabs" activeKey={tab} onChange={setTab} items={[
       { key: 'overview', label: 'Tổng quan', children: <Card className="stitch-card project-detail-overview" variant="borderless"><Descriptions title="Thông tin dự án" column={{ xs: 1, md: 2 }}><Descriptions.Item label="Trạng thái">{labelOf(PROJECT_STATUS, item.status)}</Descriptions.Item><Descriptions.Item label="Ngày tạo">{formatDate(item.createdAt)}</Descriptions.Item><Descriptions.Item label="Địa điểm">{item.location || 'Chưa cập nhật'}</Descriptions.Item><Descriptions.Item label="Chủ đầu tư">{item.investor || 'Chưa cập nhật'}</Descriptions.Item><Descriptions.Item label="Mô tả" span={2}><div className="project-detail-overview__description">{item.description || 'Chưa có mô tả dự án.'}</div></Descriptions.Item></Descriptions></Card> },
       { key: 'products', label: `Danh sách sản phẩm (${products.data?.totalElements ?? 0})`, children: <ProjectProductsTable data={products.data} error={products.error} loading={products.isLoading} filters={filters} onFiltersChange={setFilters} onEdit={setEditing} onDelete={removeProduct} onPreview={setLightbox} /> },
+      { key: 'members', label: 'Nhân sự phụ trách', children: <ProjectMembersTab projectId={item.id} projectName={item.name} isAdmin={user?.role === 'ADMIN'} /> },
     ]} />
     <Modal open={Boolean(lightbox)} footer={null} onCancel={() => setLightbox(null)} centered keyboard destroyOnHidden width="min(92vw, 1120px)" className="project-image-lightbox">{lightbox && <img src={lightbox} alt={`Ảnh lớn ${item.name}`} />}</Modal>
     <ProjectFormModal open={projectEdit} editing={item} submitting={mutations.update.isPending || mutations.uploadProjectImage.isPending} onCancel={() => setProjectEdit(false)} onSubmit={saveProject} />

@@ -20,6 +20,7 @@ import {
 import { LeadFormModal } from '../components/LeadFormModal'
 import { PipelineBoard } from '../components/PipelineBoard'
 import { PipelineSummary } from '../components/PipelineSummary'
+import { notifyLeadCreated, notifyLeadStageChanged } from '@/api/notificationEventHelper'
 
 const emptyStage = (): Record<LeadStage, Lead[]> => ({
   NEW: [], CONTACTED: [], INTERESTED: [], PROPOSAL_SENT: [], NEGOTIATION: [], INTERNAL_REVIEW: [], WON: [], LOST: [],
@@ -140,14 +141,24 @@ export function LeadsPage() {
   const doMove = useCallback((lead: Lead, to: LeadStage) => {
     if (lead.stage === to) return Promise.resolve()
     return move.mutateAsync({ id: lead.id, stage: to })
-      .then(() => {
-        message.success(`Đã chuyển «${customerById.get(lead.customerId)?.fullName ?? 'Lead'}» sang ${STAGE_LABEL[to]}`)
+      .then((updatedLead) => {
+        const customer = customerById.get(lead.customerId)
+        notifyLeadStageChanged({
+          leadId: lead.id,
+          customerName: customer?.fullName,
+          updaterName: user?.fullName,
+          oldStage: lead.stage,
+          newStage: to,
+          assignedTo: updatedLead?.assignedTo ?? lead.assignedTo,
+          expectedValue: updatedLead?.expectedValue ?? lead.expectedValue,
+        })
+        message.success(`Đã chuyển «${customer?.fullName ?? 'Lead'}» sang ${STAGE_LABEL[to]}`)
         setDetail(null)
       })
       .catch((e) => {
         onError(e)
       })
-  }, [customerById, message, move, onError])
+  }, [customerById, message, move, onError, user?.fullName])
 
   const onLose = useCallback((lead: Lead) =>
     modal.confirm({
@@ -166,7 +177,18 @@ export function LeadsPage() {
 
   const submitForm = (body: LeadInput) =>
     create.mutate(body, {
-      onSuccess: () => { message.success('Đã tạo lead mới'); setFormOpen(false) },
+      onSuccess: (createdLead) => {
+        message.success('Đã tạo lead mới')
+        setFormOpen(false)
+        const customer = customerById.get(body.customerId ?? createdLead.customerId)
+        notifyLeadCreated({
+          leadId: createdLead.id,
+          customerName: customer?.fullName,
+          creatorName: user?.fullName,
+          assignedTo: createdLead.assignedTo,
+          expectedValue: createdLead.expectedValue,
+        })
+      },
       onError,
     })
 

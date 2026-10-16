@@ -9,6 +9,7 @@ import { NotificationToastContainer } from '@/components/notification/Notificati
 
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
+import { useNotificationSse } from '@/hooks/useNotificationSse'
 
 const { Sider, Content } = Layout
 
@@ -20,6 +21,8 @@ export function AppShell() {
   const refreshToken = useAuthStore((s) => s.refreshToken)
   const user = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
+
+  useNotificationSse()
 
   const [sessionReady, setSessionReady] = useState(() => Boolean(accessToken))
   useEffect(() => {

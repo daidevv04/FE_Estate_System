@@ -13,6 +13,7 @@ import {
 } from 'antd'
 import {
   CheckCircleOutlined,
+  EyeOutlined,
   FileTextOutlined,
   MailOutlined,
   SendOutlined,
@@ -60,30 +61,7 @@ export function SendCustomerEmailModal({
 
   const sendEmail = useSendCustomerEmail(customer?.id)
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
-
-  useEffect(() => {
-    if (!open) {
-      form.resetFields()
-      setSelectedTemplate(null)
-      return
-    }
-
-    if (customer) {
-      form.setFieldsValue({
-        toEmail: customer.email ?? '',
-        subject: '',
-        body: '',
-        note: '',
-      })
-    }
-
-    if (initialTemplateId && templates.length > 0) {
-      const tmpl = templates.find((t) => t.id === initialTemplateId)
-      if (tmpl) {
-        applyTemplate(tmpl)
-      }
-    }
-  }, [open, customer, initialTemplateId, templates])
+  const [showHtmlPreview, setShowHtmlPreview] = useState(false)
 
   const replaceVariables = (text: string) => {
     if (!text) return ''
@@ -103,6 +81,27 @@ export function SendCustomerEmailModal({
     })
   }
 
+  useEffect(() => {
+    if (!open) {
+      form.resetFields()
+      setSelectedTemplate(null)
+      setShowHtmlPreview(false)
+      return
+    }
+
+    form.setFieldsValue({
+      toEmail: customer?.email ?? '',
+      subject: '',
+      body: '',
+      note: '',
+    })
+
+    if (initialTemplateId && templates.length > 0) {
+      const tmpl = templates.find((t) => t.id === initialTemplateId)
+      if (tmpl) applyTemplate(tmpl)
+    }
+  }, [open, customer?.id])
+
   const handleSelectTemplate = (templateId: string) => {
     if (!templateId) {
       setSelectedTemplate(null)
@@ -117,14 +116,20 @@ export function SendCustomerEmailModal({
   const handleSubmit = async (values: FormValues) => {
     if (!customer) return
     try {
-      await sendEmail.mutateAsync({
+      const result = await sendEmail.mutateAsync({
         templateId: values.templateId,
         toEmail: values.toEmail.trim(),
         subject: values.subject.trim(),
         body: values.body.trim(),
         note: values.note?.trim(),
+        senderEmail: currentUser?.email,
+        senderName: currentUser?.fullName,
       })
-      message.success(`Đã gửi email chăm sóc thành công tới ${customer.fullName}`)
+      if (result?.status === 'FAILED') {
+        message.warning(`Đã tạo bản ghi chăm sóc nhưng máy chủ mail chưa gửi được tới ${values.toEmail.trim()}`)
+      } else {
+        message.success(`Đã gửi email chăm sóc thành công tới ${customer.fullName} (${values.toEmail.trim()})`)
+      }
       form.resetFields()
       onSuccess?.()
       onClose()
@@ -146,6 +151,9 @@ export function SendCustomerEmailModal({
       </Modal>
     )
   }
+
+  const bodyValue = Form.useWatch('body', form) || ''
+  const isBodyHtml = bodyValue.includes('<p') || bodyValue.includes('<div') || bodyValue.includes('<br') || bodyValue.includes('<table')
 
   return (
     <Modal
@@ -232,6 +240,16 @@ export function SendCustomerEmailModal({
         </Typography.Text>
       </div>
 
+      {!customer?.email && (
+        <Alert
+          type="info"
+          showIcon
+          message="Khách hàng chưa có địa chỉ email trong hồ sơ"
+          description="Vui lòng nhập email của khách hàng vào ô bên dưới để hệ thống chuyển thư chăm sóc."
+          style={{ marginBottom: 14 }}
+        />
+      )}
+
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item
           name="templateId"
@@ -281,24 +299,51 @@ export function SendCustomerEmailModal({
         <Form.Item
           name="body"
           label={
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <span style={{ fontWeight: 600 }}>Nội dung email</span>
-              {selectedTemplate && (
-                <Tag color="blue" icon={<ThunderboltOutlined />}>
-                  Đang dùng mẫu: {selectedTemplate.name}
-                </Tag>
-              )}
+              <Space size={6}>
+                {selectedTemplate && (
+                  <Tag color="blue" icon={<ThunderboltOutlined />}>
+                    Đang dùng mẫu: {selectedTemplate.name}
+                  </Tag>
+                )}
+                {isBodyHtml && (
+                  <Button
+                    size="small"
+                    type="link"
+                    icon={<EyeOutlined />}
+                    onClick={() => setShowHtmlPreview(!showHtmlPreview)}
+                  >
+                    {showHtmlPreview ? 'Ẩn xem trước' : 'Xem trước HTML'}
+                  </Button>
+                )}
+              </Space>
             </div>
           }
           required
           rules={[{ required: true, message: 'Vui lòng nhập nội dung email' }]}
         >
-          <Input.TextArea
-            rows={7}
-            placeholder="Nhập nội dung email chăm sóc khách hàng..."
-            showCount
-            maxLength={10000}
-          />
+          {showHtmlPreview ? (
+            <div
+              style={{
+                border: '1px solid #d9d9d9',
+                borderRadius: 8,
+                padding: '12px 16px',
+                minHeight: 180,
+                maxHeight: 300,
+                overflowY: 'auto',
+                background: '#ffffff',
+              }}
+              dangerouslySetInnerHTML={{ __html: bodyValue }}
+            />
+          ) : (
+            <Input.TextArea
+              rows={7}
+              placeholder="Nhập nội dung email chăm sóc khách hàng..."
+              showCount
+              maxLength={20000}
+            />
+          )}
         </Form.Item>
 
         <Form.Item

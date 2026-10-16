@@ -8,7 +8,18 @@ const STORAGE_KEY = 'dxmt.notifications'
 export interface BackendNotification {
   id: string
   userId: string
-  type: 'APPOINTMENT_REMINDER' | 'LEAD_DUE' | 'DEAL_APPROVAL' | 'EMAIL_FAILED'
+  type:
+    | 'APPOINTMENT_REMINDER'
+    | 'LEAD_DUE'
+    | 'DEAL_APPROVAL'
+    | 'EMAIL_FAILED'
+    | 'LEAD_CREATED'
+    | 'LEAD_STAGE_CHANGED'
+    | 'CUSTOMER_CREATED'
+    | 'DEAL_CREATED'
+    | 'DEAL_WON'
+    | 'DEAL_LOST'
+    | 'SYSTEM_ANNOUNCEMENT'
   title: string
   body: string | null
   refType: 'APPOINTMENT' | 'LEAD' | 'DEAL' | 'CUSTOMER' | null
@@ -23,6 +34,13 @@ function toAppNotification(b: BackendNotification): AppNotification {
     LEAD_DUE: 'CUSTOMER',
     DEAL_APPROVAL: 'DEAL',
     EMAIL_FAILED: 'ALERT',
+    LEAD_CREATED: 'CUSTOMER',
+    LEAD_STAGE_CHANGED: 'CUSTOMER',
+    CUSTOMER_CREATED: 'CUSTOMER',
+    DEAL_CREATED: 'DEAL',
+    DEAL_WON: 'DEAL',
+    DEAL_LOST: 'ALERT',
+    SYSTEM_ANNOUNCEMENT: 'SYSTEM',
   }
   const linkMap: Record<string, string> = {
     APPOINTMENT: paths.appointments,
@@ -30,12 +48,13 @@ function toAppNotification(b: BackendNotification): AppNotification {
     DEAL: paths.deals,
     LEAD: paths.leads,
   }
+  const isHighPriority = b.type === 'EMAIL_FAILED' || b.type === 'DEAL_WON' || b.type === 'DEAL_LOST'
   return {
     id: b.id,
     title: b.title,
     content: b.body ?? '',
     type: typeMap[b.type] ?? 'SYSTEM',
-    priority: b.type === 'EMAIL_FAILED' ? 'HIGH' : 'NORMAL',
+    priority: isHighPriority ? 'HIGH' : 'NORMAL',
     target: 'ALL',
     senderName: 'Hệ thống CRM',
     createdAt: b.createdAt,
@@ -113,11 +132,25 @@ export interface ToastItem {
   isLeaving?: boolean
 }
 
+export interface PublishEventInput {
+  type: BackendNotification['type']
+  title: string
+  body?: string
+  refType?: 'APPOINTMENT' | 'LEAD' | 'DEAL' | 'CUSTOMER'
+  refId?: string
+  targetUserId?: string
+  broadcastToManagersAndAdmins?: boolean
+  targetScope?: 'ALL' | 'SALES' | 'MANAGER' | 'ADMIN' | string
+  excludeActor?: boolean
+}
+
 interface NotificationState {
   notifications: AppNotification[]
   activeToasts: ToastItem[]
   fetchNotifications: () => Promise<void>
+  handleIncomingNotification: (backendNotif: BackendNotification) => void
   sendNotification: (input: CreateNotificationInput, senderName?: string) => Promise<AppNotification>
+  publishEvent: (input: PublishEventInput) => Promise<void>
   markAsRead: (id: string) => void
   markAllAsRead: () => void
   deleteNotification: (id: string) => void
@@ -163,24 +196,42 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
       } catch {}
     },
 
+    handleIncomingNotification: (backendNotif: BackendNotification) => {
+      const notif = toAppNotification(backendNotif)
+      set((s) => {
+        if (s.notifications.some((n) => n.id === notif.id)) return s
+        const updated = [notif, ...s.notifications]
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+        return { notifications: updated }
+      })
+      channel?.postMessage({ type: 'NEW_NOTIFICATION', notification: notif })
+      get().triggerToast(notif)
+    },
+
     sendNotification: async (input, senderName = 'Ban Quản Trị') => {
-      const typeToBackend: Record<string, string> = {
+      const typeToBackend: Record<string, BackendNotification['type']> = {
         APPOINTMENT: 'APPOINTMENT_REMINDER',
         DEAL: 'DEAL_APPROVAL',
         CUSTOMER: 'LEAD_DUE',
         ALERT: 'EMAIL_FAILED',
-        SYSTEM: 'APPOINTMENT_REMINDER',
+        SYSTEM: 'SYSTEM_ANNOUNCEMENT',
       }
 
       let createdId = `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
       try {
-        const res = await api.post<BackendNotification>('/notifications', {
-          type: typeToBackend[input.type] ?? 'APPOINTMENT_REMINDER',
+        const res = await api.post<BackendNotification[]>('/notifications/events', {
+          type: typeToBackend[input.type] ?? 'SYSTEM_ANNOUNCEMENT',
           title: input.title,
           body: input.content,
+          targetScope: input.target ?? 'ALL',
+          excludeActor: true,
         })
-        if (res.data?.id) createdId = res.data.id
-      } catch {}
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          createdId = res.data[0].id
+        }
+      } catch (err) {
+        console.warn('Lỗi khi phát thông báo:', err)
+      }
 
       const newNotif: AppNotification = {
         id: createdId,
@@ -192,7 +243,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         link: input.link,
         senderName,
         createdAt: new Date().toISOString(),
-        read: false,
+        read: true,
       }
 
       set((s) => {
@@ -201,9 +252,16 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
         return { notifications: updated }
       })
 
-      channel?.postMessage({ type: 'NEW_NOTIFICATION', notification: newNotif })
-      get().triggerToast(newNotif)
       return newNotif
+    },
+
+    publishEvent: async (input: PublishEventInput) => {
+      try {
+        await api.post('/notifications/events', input)
+        // Backend phát SSE realtime cho Admin, Manager và Sale liên quan (loại trừ người thao tác hiện tại)
+      } catch (err) {
+        console.warn('Lỗi khi phát sự kiện thông báo:', err)
+      }
     },
 
     triggerToast: (notification) => {
@@ -212,7 +270,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => {
 
       setTimeout(() => {
         get().dismissToast(toastId)
-      }, 2600)
+      }, 4500)
     },
 
     dismissToast: (toastId) => {

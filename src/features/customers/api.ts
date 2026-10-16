@@ -76,6 +76,14 @@ export function useStaff() {
   })
 }
 
+export function useMyManagedUserIds() {
+  return useQuery({
+    queryKey: ['my-managed-user-ids'],
+    queryFn: () => api.get<UUID[]>('/projects/my-managed-user-ids').then((r) => r.data),
+    retry: false,
+  })
+}
+
 export function useCustomerMutations() {
   const qc = useQueryClient()
   const done = () => void qc.invalidateQueries({ queryKey: KEY })
@@ -152,6 +160,8 @@ export interface SendCustomerEmailInput {
   subject?: string
   body?: string
   note?: string
+  senderEmail?: string
+  senderName?: string
 }
 
 export function useSendCustomerEmail(customerId?: string) {

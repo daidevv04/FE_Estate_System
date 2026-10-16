@@ -280,8 +280,10 @@ export function AppointmentsPage() {
         title="Lịch hẹn"
         breadcrumb={[{ title: 'Trang chủ', href: paths.dashboard }, { title: 'Lịch hẹn' }]}
         meta={
-          canViewAll
+          user?.role === 'ADMIN'
             ? `Quản lý lịch hẹn khách hàng trên toàn hệ thống · Tuần ${weekStart.format(DATE)} – ${weekStart.add(6, 'day').format(DATE)}`
+            : user?.role === 'MANAGER'
+            ? `Quản lý lịch hẹn khách hàng thuộc các dự án phụ trách · Tuần ${weekStart.format(DATE)} – ${weekStart.add(6, 'day').format(DATE)}`
             : `Lịch hẹn của bạn · Tuần ${weekStart.format(DATE)} – ${weekStart.add(6, 'day').format(DATE)}`
         }
         status={

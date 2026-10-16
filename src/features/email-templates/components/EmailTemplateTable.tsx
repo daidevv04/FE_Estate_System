@@ -8,6 +8,7 @@ import {
 import { Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ReactNode } from 'react'
+import { SelectableTableContainer } from '@/components/common/SelectableTableContainer'
 import { formatDateTime } from '@/lib/format'
 import type { EmailTemplate } from '../api'
 import { CategoryPill, StatusPill } from './EmailTemplatePills'
@@ -81,7 +82,7 @@ export function EmailTemplateTable({ rows, loading, emptyText, onPreview, select
     },
   ]
 
-  return (
+  const tableElement = (
     <Table<EmailTemplate>
       className="product-table crm-compact-table"
       rowKey="id"
@@ -106,5 +107,16 @@ export function EmailTemplateTable({ rows, loading, emptyText, onPreview, select
         style: { cursor: 'pointer' },
       })}
     />
+  )
+
+  if (!onSelect) return tableElement
+
+  return (
+    <SelectableTableContainer
+      selectedKeys={selectedRowKeys ?? []}
+      onSelectChange={onSelect}
+    >
+      {tableElement}
+    </SelectableTableContainer>
   )
 }

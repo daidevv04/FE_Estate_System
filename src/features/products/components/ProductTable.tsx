@@ -14,6 +14,7 @@ import {
 import { Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ReactNode } from 'react'
+import { SelectableTableContainer } from '@/components/common/SelectableTableContainer'
 import { formatMoney } from '@/lib/format'
 import { tokens as t } from '@/theme/tokens'
 import { DIRECTION, PRODUCT_STATUS, PRODUCT_TYPE, labelOf, type Direction, type Product, type ProductStatus, type ProductType } from '@/features/projects/api'
@@ -166,24 +167,29 @@ export function ProductTable({ rows, loading, emptyText, selected, projectNames,
   ]
 
   return (
-    <Table<Product>
-      className="product-table crm-compact-table"
-      rowKey="id"
-      size="small"
-      loading={loading}
-      columns={columns}
-      dataSource={rows}
-      pagination={false}
-      scroll={{ x: 920 }}
-      locale={{ emptyText }}
-      onRow={(row) => ({
-        onClick: (e) => {
-          if ((e.target as HTMLElement).closest('.ant-checkbox-wrapper')) return
-          onView(row)
-        },
-        style: { cursor: 'pointer' },
-      })}
-      rowSelection={{ selectedRowKeys: selected, onChange: (keys) => onSelect(keys.map(String)), preserveSelectedRowKeys: true }}
-    />
+    <SelectableTableContainer
+      selectedKeys={selected}
+      onSelectChange={onSelect}
+    >
+      <Table<Product>
+        className="product-table crm-compact-table"
+        rowKey="id"
+        size="small"
+        loading={loading}
+        columns={columns}
+        dataSource={rows}
+        pagination={false}
+        scroll={{ x: 920 }}
+        locale={{ emptyText }}
+        onRow={(row) => ({
+          onClick: (e) => {
+            if ((e.target as HTMLElement).closest('.ant-checkbox-wrapper')) return
+            onView(row)
+          },
+          style: { cursor: 'pointer' },
+        })}
+        rowSelection={{ selectedRowKeys: selected, onChange: (keys) => onSelect(keys.map(String)), preserveSelectedRowKeys: true }}
+      />
+    </SelectableTableContainer>
   )
 }

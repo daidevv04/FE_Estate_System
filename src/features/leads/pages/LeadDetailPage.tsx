@@ -13,6 +13,7 @@ import {
   LEAD_STAGES, STAGE_LABEL, apiErrorMessage, fullVnd, overdueDays, shortDate,
   useLeadCatalog, useLeadMutations, useLead, useStageHistory, type LeadStage,
 } from '../api'
+import { notifyLeadStageChanged } from '@/api/notificationEventHelper'
 
 import { StatusPill, type StatusTone } from '@/components/common/StatusPill'
 
@@ -44,7 +45,28 @@ export function LeadDetailPage() {
   const project = product ? (catalog.projects.data?.content ?? []).find((pj) => pj.id === product.projectId) : undefined
   const owner = (staff.data ?? []).find((s) => s.id === l?.assignedTo)
   const staffName = (uid: string) => (staff.data ?? []).find((s) => s.id === uid)?.fullName ?? uid.slice(0, 8)
-  const doMove = (stage: LeadStage) => { if (!l || l.stage === stage) return; update.mutate({ id: l.id, body: { stage } }, { onSuccess: () => message.success(`Đã chuyển sang «${STAGE_LABEL[stage]}»`), onError: (e) => message.error(apiErrorMessage(e)) }) }
+  const doMove = (stage: LeadStage) => {
+    if (!l || l.stage === stage) return
+    const prevStage = l.stage
+    update.mutate(
+      { id: l.id, body: { stage } },
+      {
+        onSuccess: (updatedLead) => {
+          notifyLeadStageChanged({
+            leadId: l.id,
+            customerName: customer?.fullName,
+            updaterName: user?.fullName,
+            oldStage: prevStage,
+            newStage: stage,
+            assignedTo: updatedLead?.assignedTo ?? l.assignedTo,
+            expectedValue: updatedLead?.expectedValue ?? l.expectedValue,
+          })
+          message.success(`Đã chuyển sang «${STAGE_LABEL[stage]}»`)
+        },
+        onError: (e) => message.error(apiErrorMessage(e)),
+      }
+    )
+  }
   const doDelete = () => { if (!l) return; modal.confirm({ title: 'Xóa lead này?', okText: 'Xóa', cancelText: 'Hủy', okButtonProps: { danger: true }, onOk: () => remove.mutateAsync(l.id).then(() => { message.success('Đã xóa lead'); navigate(paths.leads) }).catch((e) => { message.error(apiErrorMessage(e)); throw e }) }) }
 
   if (lead.isLoading) return <Card className="stitch-card" variant="borderless"><Skeleton active paragraph={{ rows: 10 }} /></Card>

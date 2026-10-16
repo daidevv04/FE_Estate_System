@@ -144,7 +144,7 @@
   height: 3px;
   width: 100%;
   background: #1677ff;
-  animation: notifProgress 2.6s linear forwards;
+  animation: notifProgress 4.5s linear forwards;
 }
 
 .notif-toast-card--SYSTEM .notif-toast-progress { background: #1677ff; }

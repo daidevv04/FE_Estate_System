@@ -46,6 +46,32 @@ export function useProducts(params: ProductFilters = {}) {
 export function useProductTotal(params: ProductFilters = {}) {
   return useQuery({ queryKey: ['products', 'total', params], queryFn: () => api.get<Page<Product>>('/products', { params: { ...params, page: 0, size: 1 } }).then((r) => r.data?.totalElements ?? 0) })
 }
+export type ProjectAssignmentRole = 'MANAGER' | 'SALES'
+
+export interface ProjectMember {
+  id: UUID
+  projectId: UUID
+  userId: UUID
+  assignedRole: ProjectAssignmentRole
+  assignedAt: string
+  assignedBy: UUID | null
+}
+
+export function useProjectMembers(projectId?: string) {
+  return useQuery({
+    queryKey: ['project-members', projectId],
+    enabled: Boolean(projectId),
+    queryFn: () => api.get<ProjectMember[]>(`/projects/${projectId}/members`).then((r) => r.data),
+  })
+}
+
+export function useMyAssignedProjectIds() {
+  return useQuery({
+    queryKey: ['my-assigned-project-ids'],
+    queryFn: () => api.get<UUID[]>('/projects/my-assigned-ids').then((r) => r.data),
+  })
+}
+
 export function useProjectMutations() {
   const qc = useQueryClient(); const done = () => void qc.invalidateQueries({ queryKey: projectsKey })
   return {
@@ -57,6 +83,16 @@ export function useProjectMutations() {
     updateProduct: useMutation({ mutationFn: ({ id, body }: { id: UUID; body: ProductInput }) => api.patch<Product>(`/products/${id}`, body).then((r) => r.data), onSuccess: () => void qc.invalidateQueries({ queryKey: ['products'] }) }),
     removeProduct: useMutation({ mutationFn: (id: UUID) => api.delete(`/products/${id}`), onSuccess: () => void qc.invalidateQueries({ queryKey: ['products'] }) }),
     uploadProductImage: useMutation({ mutationFn: ({ id, file }: { id: UUID; file: File }) => { const data = new FormData(); data.append('image', file); return api.post<Product>(`/products/${id}/image`, data).then((r) => r.data) }, onSuccess: () => void qc.invalidateQueries({ queryKey: ['products'] }) }),
+    assignMember: useMutation({
+      mutationFn: ({ projectId, userId, assignedRole }: { projectId: UUID; userId: UUID; assignedRole: ProjectAssignmentRole }) =>
+        api.post<ProjectMember>(`/projects/${projectId}/members`, { userId, assignedRole }).then((r) => r.data),
+      onSuccess: (_data, vars) => void qc.invalidateQueries({ queryKey: ['project-members', vars.projectId] }),
+    }),
+    removeMember: useMutation({
+      mutationFn: ({ projectId, userId }: { projectId: UUID; userId: UUID }) =>
+        api.delete(`/projects/${projectId}/members/${userId}`),
+      onSuccess: (_data, vars) => void qc.invalidateQueries({ queryKey: ['project-members', vars.projectId] }),
+    }),
   }
 }
 export const useProductMutations = useProjectMutations

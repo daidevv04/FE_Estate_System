@@ -64,10 +64,18 @@ export function buildNav(role?: UserRole): NavGroup[] {
     }
     groups.push({ key: 'g-reports', label: 'BÁO CÁO', children: reportChildren })
   }
-  if (isAdmin) {
-    groups.push({ key: 'g-system', label: 'HỆ THỐNG', children: [
-      { key: paths.users, icon: <UserOutlined />, label: 'Người dùng' },
-    ] })
+  if (isAdmin || role === 'MANAGER') {
+    groups.push({
+      key: 'g-system',
+      label: isAdmin ? 'HỆ THỐNG' : 'NHÂN SỰ',
+      children: [
+        {
+          key: paths.users,
+          icon: isAdmin ? <UserOutlined /> : <TeamOutlined />,
+          label: isAdmin ? 'Người dùng' : 'Nhân viên',
+        },
+      ],
+    })
   }
   return groups
 }

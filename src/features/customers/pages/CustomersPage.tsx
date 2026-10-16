@@ -4,11 +4,10 @@ import {
   ReloadOutlined, SearchOutlined, ShareAltOutlined, StarOutlined, TeamOutlined, UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons'
-import { App, Button, Card, Col, Input, Modal, Row, Select, Space, Table, Tooltip } from 'antd'
+import { Alert, App, Button, Card, Col, Input, Modal, Row, Select, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { api } from '@/api/client'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { paths } from '@/routes/paths'
@@ -17,7 +16,7 @@ import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import {
   CUSTOMER_STATUS, DEMAND_TYPE, apiErrorMessage, customerCode, demandLabel, statusLabel,
-  useCustomerMutations, useCustomers, useStaff,
+  useCustomerMutations, useCustomers, useMyManagedUserIds, useStaff,
   type Customer, type CustomerInput, type CustomerStatus, type DemandType,
 } from '../api'
 import { CustomerFormModal } from '../components/CustomerFormModal'
@@ -25,6 +24,8 @@ import { CustomerDetailModal } from '../components/CustomerDetailModal'
 import { SendCustomerEmailModal } from '../components/SendCustomerEmailModal'
 import { StatusPill as Pill, type StatusTone as Tone } from '@/components/common/StatusPill'
 import { KpiCard } from '@/components/common/KpiCard'
+import { SelectableTableContainer } from '@/components/common/SelectableTableContainer'
+import { notifyCustomerCreated } from '@/api/notificationEventHelper'
 
 const STATUS_TONE: Record<CustomerStatus, Tone> = {
   NEW: 'blue', POTENTIAL: 'amber', CUSTOMER: 'green', INACTIVE: 'gray',
@@ -71,15 +72,40 @@ function parseCsv(text: string): CustomerInput[] {
 
 export function CustomersPage() {
   const { message, modal } = App.useApp()
-  const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const role = user?.role
   const canWrite = role === 'ADMIN' || role === 'MANAGER'
   const canSendEmail = role === 'MANAGER' || role === 'SALES'
 
-  const { data, isLoading, isError, error } = useCustomers()
+  const { data, isLoading, isError, error, refetch } = useCustomers()
   const { data: staff = [] } = useStaff()
+  const { data: myManagedUserIds = [] } = useMyManagedUserIds()
   const { create, update, remove } = useCustomerMutations()
+
+  const isManager = role === 'MANAGER'
+  const rows = data?.content ?? []
+  const hasNoProjects = isManager && myManagedUserIds.length <= 1 && rows.length === 0 && !isLoading
+
+  const assignableStaff = useMemo(() => {
+    if (role === 'ADMIN') return staff
+    if (role === 'MANAGER') {
+      const idSet = new Set(myManagedUserIds)
+      return staff.filter((u) => idSet.has(u.id))
+    }
+    return staff.filter((u) => u.id === user?.id)
+  }, [staff, role, myManagedUserIds, user?.id])
+
+  const scopeText = useMemo(() => {
+    if (role === 'ADMIN') return 'Toàn hệ thống'
+    if (role === 'MANAGER') return hasNoProjects ? 'Chưa phân công dự án' : 'Dự án phụ trách (Theo đội ngũ)'
+    return 'Khách hàng của tôi'
+  }, [role, hasNoProjects])
+
+  const kpiSubText = useMemo(() => {
+    if (role === 'ADMIN') return 'Toàn hệ thống'
+    if (role === 'MANAGER') return 'Thuộc dự án phụ trách'
+    return 'Khách hàng của tôi'
+  }, [role])
 
   const [keyword, setKeyword] = useState('')
   const [demandType, setDemandType] = useState<DemandType | undefined>()
@@ -95,7 +121,6 @@ export function CustomersPage() {
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const rows = data?.content ?? []
   const staffById = useMemo(() => new Map(staff.map((u) => [u.id, u])), [staff])
   const ownerName = (id: string) => staffById.get(id)?.fullName ?? 'Chưa phân công'
 
@@ -163,6 +188,13 @@ export function CustomersPage() {
       create.mutate(body, {
         onSuccess: async (created) => {
           if (careNote) await saveCareNote(created.id, careNote)
+          notifyCustomerCreated({
+            customerId: created.id,
+            customerName: created.fullName,
+            creatorName: user?.fullName,
+            ownerId: created.ownerId,
+            phone: created.phone ?? undefined,
+          })
           afterWrite('Đã tạo khách hàng mới')
         },
         onError,
@@ -228,25 +260,57 @@ export function CustomersPage() {
           Thông tin liên hệ
         </span>
       ),
-      width: 200,
+      width: 220,
       render: (_v, row) => (
-        <div style={{ lineHeight: 1.4 }}>
-          <div className="stitch-num" style={{ fontSize: 13, fontWeight: 500, color: '#1e293b' }}>
-            {row.phone ?? '—'}
+        <div style={{ lineHeight: 1.4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="stitch-num" style={{ fontSize: 13, fontWeight: 500, color: '#1e293b' }}>
+              {row.phone ?? '—'}
+            </div>
+            <div
+              title={row.email ?? ''}
+              style={{
+                fontSize: 12,
+                color: t.colorTextMuted,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 140,
+              }}
+            >
+              {row.email ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <MailOutlined style={{ fontSize: 11 }} />
+                  <span>{row.email}</span>
+                </span>
+              ) : (
+                '—'
+              )}
+            </div>
           </div>
-          <div
-            title={row.email ?? ''}
-            style={{
-              fontSize: 12,
-              color: t.colorTextMuted,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              maxWidth: 190,
-            }}
-          >
-            {row.email ?? '—'}
-          </div>
+          {canSendEmail && (
+            <Tooltip title={row.email ? `Gửi email chăm sóc tới ${row.email}` : 'Gửi email chăm sóc cho khách hàng này'}>
+              <Button
+                type="text"
+                size="small"
+                icon={<MailOutlined style={{ color: '#059669', fontSize: 14 }} />}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setEmailCustomer(row)
+                }}
+                style={{
+                  background: 'rgba(5, 150, 105, 0.08)',
+                  borderRadius: 6,
+                  width: 30,
+                  height: 30,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              />
+            </Tooltip>
+          )}
         </div>
       ),
     },
@@ -311,44 +375,6 @@ export function CustomersPage() {
       width: 120,
       render: (v: string) => <span className="stitch-num" style={{ whiteSpace: 'nowrap' }}>{fmtDate(v)}</span>,
     },
-    {
-      title: 'Thao tác',
-      key: 'actions',
-      width: 110,
-      fixed: 'right',
-      render: (_v, row) => (
-        <Space size={2} onClick={(e) => e.stopPropagation()}>
-          {canSendEmail && row.email && (
-            <Tooltip title="Gửi email chăm sóc">
-              <Button
-                type="text"
-                size="small"
-                icon={<MailOutlined style={{ color: t.colorBrand }} />}
-                onClick={() => setEmailCustomer(row)}
-              />
-            </Tooltip>
-          )}
-          <Tooltip title="Xem chi tiết">
-            <Button
-              type="text"
-              size="small"
-              icon={<EyeOutlined />}
-              onClick={() => navigate(paths.customer(row.id))}
-            />
-          </Tooltip>
-          {canWrite && (
-            <Tooltip title="Chỉnh sửa">
-              <Button
-                type="text"
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => openEdit(row)}
-              />
-            </Tooltip>
-          )}
-        </Space>
-      ),
-    },
   ]
 
   return (
@@ -359,7 +385,7 @@ export function CustomersPage() {
         status={
           <span className="pipe-scope">
             <span className="pipe-scope__dot" />
-            Phạm vi: {canWrite ? 'Toàn hệ thống' : 'Khách hàng của tôi'}
+            Phạm vi: {scopeText}
           </span>
         }
         meta="Quản lý toàn bộ khách hàng, theo dõi hoạt động và phân công nhân viên phụ trách."
@@ -378,6 +404,20 @@ export function CustomersPage() {
         }
       />
 
+      {hasNoProjects && (
+        <Alert
+          showIcon
+          type="warning"
+          style={{ marginBottom: 16, borderRadius: 10, border: '1px solid #fde68a' }}
+          message={<strong style={{ fontSize: 14 }}>Tài khoản Quản lý chưa được phân công dự án</strong>}
+          description={
+            <div style={{ fontSize: 13, color: '#475569', marginTop: 4 }}>
+              Bạn hiện chưa được phân công phụ trách dự án bất động sản nào. Theo cơ chế phân quyền bảo mật dữ liệu khách hàng, bạn chỉ quản lý khách hàng của chính mình và đội ngũ nhân sự Sales thuộc các dự án bạn phụ trách. Vui lòng liên hệ <strong>Quản trị viên (Admin)</strong> để được gán dự án.
+            </div>
+          }
+        />
+      )}
+
       <input
         ref={fileRef}
         type="file"
@@ -391,7 +431,7 @@ export function CustomersPage() {
       />
 
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} xl={6}><KpiCard label="Tổng khách hàng" value={String(kpi.total)} sub="Toàn hệ thống" tone="green" icon={<TeamOutlined />} /></Col>
+        <Col xs={24} sm={12} xl={6}><KpiCard label="Tổng khách hàng" value={String(kpi.total)} sub={kpiSubText} tone="green" icon={<TeamOutlined />} /></Col>
         <Col xs={24} sm={12} xl={6}><KpiCard label="Khách hàng mới" value={String(kpi.fresh)} sub="Trong 30 ngày qua" tone="blue" icon={<PlusOutlined />} /></Col>
         <Col xs={24} sm={12} xl={6}><KpiCard label="Khách tiềm năng" value={String(kpi.potential)} sub="Trạng thái POTENTIAL" tone="teal" icon={<StarOutlined />} /></Col>
         <Col xs={24} sm={12} xl={6}><KpiCard label="Chưa hoạt động" value={String(kpi.inactive)} sub="INACTIVE / Tạm ngưng" tone="amber" icon={<PauseCircleOutlined />} /></Col>
@@ -431,7 +471,7 @@ export function CustomersPage() {
               placeholder="Tất cả nhân viên"
               value={ownerId}
               onChange={setOwnerId}
-              options={[...staff.map((u) => ({ value: u.id, label: u.fullName })), { value: '__none__', label: 'Chưa phân công' }]}
+              options={[...assignableStaff.map((u) => ({ value: u.id, label: u.fullName })), { value: '__none__', label: 'Chưa phân công' }]}
               style={{ flex: '1.2 1 150px', minWidth: 130 }}
             />
           )}
@@ -526,45 +566,52 @@ export function CustomersPage() {
           </div>
         )}
 
-        <Table<Customer>
-          size="middle"
-          rowKey="id"
-          style={{ marginTop: 14 }}
-          columns={columns}
-          dataSource={filtered}
-          loading={isLoading}
-          scroll={{ x: 1080 }}
-          onRow={(record) => ({
-            onClick: (e) => {
-              const target = e.target as HTMLElement
-              if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
-              setDetailCustomerId(record.id)
-            },
-            style: { cursor: 'pointer' },
-          })}
-          locale={{
-            emptyText: isError
-              ? `Không tải được danh sách khách hàng: ${apiErrorMessage(error)}`
-              : 'Không có khách hàng phù hợp bộ lọc',
-          }}
-          rowSelection={{
-            selectedRowKeys: selected,
-            onChange: (keys) => setSelected(keys.map(String)),
-            preserveSelectedRowKeys: true,
-          }}
-          pagination={{
-            defaultPageSize: 8,
-            pageSizeOptions: [8, 10, 20, 50],
-            showSizeChanger: true,
-            showTotal: (total, range) => `Hiển thị ${range[0]} - ${range[1]} trong tổng số ${total} khách hàng`,
-          }}
-        />
+        <SelectableTableContainer
+          items={filtered}
+          selectedKeys={selected}
+          onSelectionChange={(keys) => setSelected(keys)}
+          hintText="💡 Mẹo: Nhấn giữ chuột kéo để bôi đen chọn nhiều dòng, hoặc giữ Shift + Click để chọn dải"
+        >
+          <Table<Customer>
+            size="middle"
+            rowKey="id"
+            style={{ marginTop: 14 }}
+            columns={columns}
+            dataSource={filtered}
+            loading={isLoading}
+            scroll={{ x: 1080 }}
+            onRow={(record) => ({
+              onClick: (e) => {
+                const target = e.target as HTMLElement
+                if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
+                setDetailCustomerId(record.id)
+              },
+              style: { cursor: 'pointer' },
+            })}
+            locale={{
+              emptyText: isError
+                ? `Không tải được danh sách khách hàng: ${apiErrorMessage(error)}`
+                : 'Không có khách hàng phù hợp bộ lọc',
+            }}
+            rowSelection={{
+              selectedRowKeys: selected,
+              onChange: (keys) => setSelected(keys.map(String)),
+              preserveSelectedRowKeys: true,
+            }}
+            pagination={{
+              defaultPageSize: 8,
+              pageSizeOptions: [8, 10, 20, 50],
+              showSizeChanger: true,
+              showTotal: (total, range) => `Hiển thị ${range[0]} - ${range[1]} trong tổng số ${total} khách hàng`,
+            }}
+          />
+        </SelectableTableContainer>
       </Card>
 
       <CustomerFormModal
         open={formOpen}
         editing={editing}
-        staff={staff}
+        staff={assignableStaff}
         existing={rows}
         submitting={create.isPending || update.isPending}
         onCancel={() => { setFormOpen(false); setEditing(null) }}
@@ -577,6 +624,13 @@ export function CustomersPage() {
         canWrite={canWrite}
         onClose={() => setDetailCustomerId(undefined)}
         onEdit={openEdit}
+      />
+
+      <SendCustomerEmailModal
+        open={Boolean(emailCustomer)}
+        customer={emailCustomer}
+        onClose={() => setEmailCustomer(null)}
+        onSuccess={() => void refetch()}
       />
 
       <Modal
@@ -607,17 +661,9 @@ export function CustomersPage() {
           placeholder={bulk?.mode === 'assign' ? 'Chọn nhân viên' : 'Chọn trạng thái'}
           value={bulk?.value}
           onChange={(v) => setBulk((b) => (b ? { ...b, value: v } : b))}
-          options={bulk?.mode === 'assign' ? staff.map((u) => ({ value: u.id, label: u.fullName })) : CUSTOMER_STATUS}
+          options={bulk?.mode === 'assign' ? assignableStaff.map((u) => ({ value: u.id, label: u.fullName })) : CUSTOMER_STATUS}
         />
       </Modal>
-
-      {emailCustomer && (
-        <SendCustomerEmailModal
-          open={Boolean(emailCustomer)}
-          customer={emailCustomer}
-          onClose={() => setEmailCustomer(null)}
-        />
-      )}
     </>
   )
 }

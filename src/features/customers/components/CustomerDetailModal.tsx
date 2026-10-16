@@ -46,9 +46,14 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
             <Typography.Text>Dữ liệu được cập nhật tự động từ hệ thống CRM.</Typography.Text>
             <Space>
               <Button onClick={onClose}>Đóng</Button>
-              {canSendEmail && customer.email && (
-                <Button icon={<MailOutlined />} onClick={() => setEmailModalOpen(true)}>
-                  Gửi email
+              {canSendEmail && (
+                <Button
+                  type={canWrite ? 'default' : 'primary'}
+                  icon={<MailOutlined />}
+                  onClick={() => setEmailModalOpen(true)}
+                  style={!canWrite ? { background: '#059669', borderColor: '#059669', fontWeight: 600 } : undefined}
+                >
+                  Gửi email chăm sóc
                 </Button>
               )}
               {canWrite && (
@@ -83,9 +88,27 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
                 </span>
               </div>
             </div>
-            <div className="customer-detail-modal__audit">
-              <div>Ngày tạo: <strong>{date(customer.createdAt)}</strong></div>
-              <div>Cập nhật: <strong>{date(customer.updatedAt)}</strong></div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flex: '0 0 auto' }}>
+              <div className="customer-detail-modal__audit">
+                <div>Ngày tạo: <strong>{date(customer.createdAt)}</strong></div>
+                <div>Cập nhật: <strong>{date(customer.updatedAt)}</strong></div>
+              </div>
+              {canSendEmail && (
+                <Button
+                  type="primary"
+                  icon={<MailOutlined />}
+                  onClick={() => setEmailModalOpen(true)}
+                  style={{
+                    background: '#059669',
+                    borderColor: '#059669',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    boxShadow: '0 2px 6px rgba(5, 150, 105, 0.2)',
+                  }}
+                >
+                  Gửi email chăm sóc
+                </Button>
+              )}
             </div>
           </div>
           <div className="customer-detail-modal__grid">
@@ -99,7 +122,23 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
                 <div className="customer-kv-item"><span className="customer-kv-label"><UserOutlined /> Họ và tên</span><span className="customer-kv-value">{customer.fullName}</span></div>
                 <div className="customer-kv-item"><span className="customer-kv-label">Mã khách hàng</span><span className="customer-kv-value">{customerCode(customer)}</span></div>
                 <div className="customer-kv-item"><span className="customer-kv-label"><PhoneOutlined /> Số điện thoại</span><span className="customer-kv-value">{customer.phone || 'Chưa cập nhật'}</span></div>
-                <div className="customer-kv-item"><span className="customer-kv-label"><MailOutlined /> Email</span><span className="customer-kv-value">{customer.email || 'Chưa cập nhật'}</span></div>
+                <div className="customer-kv-item">
+                  <span className="customer-kv-label"><MailOutlined /> Email</span>
+                  <span className="customer-kv-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%' }}>
+                    <span>{customer.email || 'Chưa cập nhật'}</span>
+                    {canSendEmail && (
+                      <Button
+                        size="small"
+                        type="link"
+                        icon={<MailOutlined />}
+                        onClick={() => setEmailModalOpen(true)}
+                        style={{ padding: '0 6px', height: 'auto', fontSize: 12, color: '#059669', fontWeight: 600 }}
+                      >
+                        Gửi email
+                      </Button>
+                    )}
+                  </span>
+                </div>
                 <div className="customer-kv-item"><span className="customer-kv-label"><CalendarOutlined /> Tạo hồ sơ</span><span className="customer-kv-value">{date(customer.createdAt)}</span></div>
               </div>
             </Card>

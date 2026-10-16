@@ -1,14 +1,14 @@
 import {
+  AlertOutlined,
+  AppstoreOutlined,
   CalendarOutlined,
-  CheckOutlined,
-  DeleteOutlined,
+  ClockCircleOutlined,
   ExclamationCircleOutlined,
-  EyeOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
+  SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Button, Popconfirm, Space, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
 import { StatusPill, type Tone } from '@/components/common/StatusPill'
@@ -30,73 +30,122 @@ export const PRIORITY_CONFIG: Record<NotificationPriority, { label: string; tone
 }
 
 interface ColumnProps {
-  onSelect: (r: AppNotification) => void
-  onToggleRead: (id: string) => void
-  onDelete: (id: string) => void
+  onSelect?: (r: AppNotification) => void
 }
 
-export function buildNotificationColumns({ onSelect, onToggleRead, onDelete }: ColumnProps): ColumnsType<AppNotification> {
+export function buildNotificationColumns({ onSelect }: ColumnProps = {}): ColumnsType<AppNotification> {
   return [
     {
-      title: 'Loại',
+      title: (
+        <span>
+          <AppstoreOutlined style={{ marginRight: 6, color: '#059669' }} />
+          Loại
+        </span>
+      ),
       dataIndex: 'type',
-      width: 130,
+      width: 140,
       render: (t: NotificationType) => {
         const c = TYPE_CONFIG[t] ?? TYPE_CONFIG.SYSTEM
         return <StatusPill tone={c.tone} icon={c.icon} size="sm">{c.label}</StatusPill>
       },
     },
     {
-      title: 'Tiêu đề & Nội dung',
+      title: (
+        <span>
+          <FileTextOutlined style={{ marginRight: 6, color: '#059669' }} />
+          Tiêu đề & Nội dung
+        </span>
+      ),
       dataIndex: 'title',
       render: (_, r) => (
-        <div style={{ cursor: 'pointer' }} onClick={() => onSelect(r)}>
-          <div className="notif-item-row-title">
-            {!r.read && <span style={{ color: '#1677ff', marginRight: 6 }}>●</span>}
+        <div
+          style={{ lineHeight: 1.45, cursor: 'pointer' }}
+          onClick={() => onSelect?.(r)}
+        >
+          <div className="notif-item-row-title" style={{ fontWeight: 600, fontSize: 13, color: '#0f172a' }}>
+            {!r.read && <span style={{ color: '#059669', marginRight: 6, fontSize: 10 }}>●</span>}
             {r.title}
           </div>
-          <div className="notif-item-row-desc">{r.content}</div>
+          <div
+            className="notif-item-row-desc"
+            style={{
+              fontSize: 12,
+              color: '#64748b',
+              marginTop: 2,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              maxWidth: 480,
+            }}
+          >
+            {r.content}
+          </div>
         </div>
       ),
     },
     {
-      title: 'Mức độ',
+      title: (
+        <span>
+          <AlertOutlined style={{ marginRight: 6, color: '#059669' }} />
+          Mức độ
+        </span>
+      ),
       dataIndex: 'priority',
-      width: 120,
+      width: 130,
       render: (p: NotificationPriority) => {
         const c = PRIORITY_CONFIG[p] ?? PRIORITY_CONFIG.NORMAL
         return <StatusPill tone={c.tone} size="sm">{c.label}</StatusPill>
       },
     },
-    { title: 'Người gửi', dataIndex: 'senderName', width: 160 },
     {
-      title: 'Thời gian',
-      dataIndex: 'createdAt',
-      width: 150,
-      render: (v) => dayjs(v).format('DD/MM/YYYY HH:mm'),
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'read',
-      width: 110,
-      render: (read: boolean) => read ? <StatusPill tone="gray" size="sm">Đã đọc</StatusPill> : <StatusPill tone="blue" size="sm">Chưa đọc</StatusPill>,
-    },
-    {
-      title: 'Thao tác',
-      width: 120,
-      render: (_, r) => (
-        <Space size={4}>
-          <Tooltip title="Xem">
-            <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => onSelect(r)} />
-          </Tooltip>
-          <Tooltip title={r.read ? 'Đánh dấu chưa đọc' : 'Đánh dấu đã đọc'}>
-            <Button type="text" size="small" icon={<CheckOutlined />} onClick={() => onToggleRead(r.id)} />
-          </Tooltip>
-          <Popconfirm title="Xóa thông báo này?" onConfirm={() => onDelete(r.id)}>
-            <Button type="text" danger size="small" icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
+      title: (
+        <span>
+          <UserOutlined style={{ marginRight: 6, color: '#059669' }} />
+          Người gửi
+        </span>
       ),
+      dataIndex: 'senderName',
+      width: 150,
+      render: (v: string) => (
+        <span style={{ fontSize: 13, fontWeight: 500, color: '#334155' }}>
+          {v || 'Hệ thống CRM'}
+        </span>
+      ),
+    },
+    {
+      title: (
+        <span>
+          <ClockCircleOutlined style={{ marginRight: 6, color: '#059669' }} />
+          Thời gian
+        </span>
+      ),
+      dataIndex: 'createdAt',
+      width: 140,
+      render: (v) => {
+        const d = dayjs(v)
+        return (
+          <div style={{ lineHeight: 1.35, fontSize: 13, color: '#475569' }} className="stitch-num">
+            <div>{d.format('DD/MM/YYYY')}</div>
+            <div style={{ fontSize: 12, color: '#94a3b8' }}>{d.format('HH:mm')}</div>
+          </div>
+        )
+      },
+    },
+    {
+      title: (
+        <span>
+          <SafetyCertificateOutlined style={{ marginRight: 6, color: '#059669' }} />
+          Trạng thái
+        </span>
+      ),
+      dataIndex: 'read',
+      width: 120,
+      render: (read: boolean) =>
+        read ? (
+          <StatusPill tone="gray" size="sm">Đã đọc</StatusPill>
+        ) : (
+          <StatusPill tone="blue" size="sm">Chưa đọc</StatusPill>
+        ),
     },
   ]
 }

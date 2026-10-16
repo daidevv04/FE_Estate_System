@@ -27,7 +27,10 @@ export const refreshSession = () => {
 }
 
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken
+  const token =
+    useAuthStore.getState().accessToken ||
+    localStorage.getItem('dxmt.access') ||
+    sessionStorage.getItem('dxmt.access')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })

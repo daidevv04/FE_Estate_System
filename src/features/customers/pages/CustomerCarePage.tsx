@@ -52,6 +52,7 @@ import {
   useStaff,
   type CareType,
   type CustomerCare,
+  type StaffUser,
 } from '../api'
 import { CustomerDetailModal } from '../components/CustomerDetailModal'
 import './CustomerCarePage.css'

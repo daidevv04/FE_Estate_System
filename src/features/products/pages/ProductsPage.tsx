@@ -22,7 +22,7 @@ const INITIAL: FilterState = { page: 0, size: 10 }
 const PAGE_SIZE = [{ value: 10, label: '10' }, { value: 20, label: '20' }, { value: 50, label: '50' }]
 
 export function ProductsPage() {
-  const { message } = App.useApp()
+  const { message, modal } = App.useApp()
   const user = useAuthStore((s) => s.user)
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
   const isAdmin = user?.role === 'ADMIN'
@@ -105,7 +105,7 @@ export function ProductsPage() {
   }
 
   const handleUnlock = (product: Product) => {
-    Modal.confirm({
+    modal.confirm({
       title: `Mở khóa căn ${product.code}`,
       content: 'Bạn có chắc chắn muốn hủy giữ chỗ và mở lại căn này sang trạng thái Còn trống (AVAILABLE)?',
       okText: 'Xác nhận mở khóa',

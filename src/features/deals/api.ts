@@ -42,6 +42,32 @@ export interface DealPayment {
   createdBy: UUID | null
   createdAt: string
 }
+
+export type ScheduleStatus = 'PAID' | 'OVERDUE' | 'DUE_SOON' | 'PENDING'
+
+export interface DealPaymentSchedule {
+  id: UUID
+  dealId: UUID
+  installmentNo: number
+  name: string
+  percentage: number | null
+  amountDue: number
+  dueDate: string
+  notes: string | null
+  amountPaid: number
+  amountRemaining: number
+  status: ScheduleStatus
+  daysDiff: number | null
+}
+
+export interface PaymentScheduleItemInput {
+  installmentNo: number
+  name: string
+  percentage?: number | null
+  amountDue: number
+  dueDate: string
+  notes?: string | null
+}
 export interface ContactDetail {
   id: UUID
   dealId: UUID
@@ -273,6 +299,19 @@ export function useSingleDealPayments(dealId?: string) {
     enabled: Boolean(dealId),
   })
 }
+
+export function useDealPaymentSchedules(dealId?: string) {
+  return useQuery({
+    queryKey: [...KEY, 'schedules', dealId],
+    queryFn: () =>
+      api
+        .get<DealPaymentSchedule[]>(`/deals/${dealId}/schedules`)
+        .then((r) => r.data)
+        .catch(() => [] as DealPaymentSchedule[]),
+    enabled: Boolean(dealId),
+  })
+}
+
 export function useDealItems(dealId?: string) {
   return useQuery({
     queryKey: [...KEY, 'items', dealId],
@@ -302,6 +341,20 @@ export function useDealMutations() {
     addPayment: useMutation({
       mutationFn: ({ id, body }: { id: UUID; body: DealPaymentInput }) =>
         api.post<DealPayment>(`/deals/${id}/payments`, body).then((r) => r.data),
+      onSuccess: done,
+    }),
+    applyScheduleTemplate: useMutation({
+      mutationFn: ({ dealId, templateCode }: { dealId: UUID; templateCode: string }) =>
+        api
+          .post<DealPaymentSchedule[]>(`/deals/${dealId}/schedules/apply-template?templateCode=${encodeURIComponent(templateCode)}`)
+          .then((r) => r.data),
+      onSuccess: done,
+    }),
+    saveSchedule: useMutation({
+      mutationFn: ({ dealId, installments }: { dealId: UUID; installments: PaymentScheduleItemInput[] }) =>
+        api
+          .post<DealPaymentSchedule[]>(`/deals/${dealId}/schedules`, { installments })
+          .then((r) => r.data),
       onSuccess: done,
     }),
   }

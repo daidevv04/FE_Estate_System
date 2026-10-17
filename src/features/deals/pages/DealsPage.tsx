@@ -69,8 +69,8 @@ export function DealsPage() {
   const leadById = useMemo(() => new Map((leads.data?.content ?? []).map((l) => [l.id, l])), [leads.data])
   const productById = useMemo(() => new Map((products.data?.content ?? []).map((p) => [p.id, p])), [products.data])
   const projectById = useMemo(() => new Map((projects.data?.content ?? []).map((p) => [p.id, p])), [projects.data])
-  const staffList = useMemo(() => (Array.isArray(staff.data) ? staff.data : ((staff.data as any)?.content ?? [])), [staff.data])
-  const staffById = useMemo(() => new Map(staffList.map((u: any) => [u.id, u.fullName])), [staffList])
+  const staffList = useMemo(() => (Array.isArray(staff.data) ? staff.data : (((staff.data as any)?.content ?? []) as any[])), [staff.data])
+  const staffById = useMemo(() => new Map<string, string>(staffList.map((u: any) => [u.id, u.fullName || u.name || ''])), [staffList])
 
   const refs = (deal: Deal) => {
     const lead = leadById.get(deal.leadId)
@@ -114,7 +114,10 @@ export function DealsPage() {
       })
   }, [leads.data, deals.data, productById, customerById, projectById, editing])
 
-  const staffOptions = useMemo(() => staffList.map((u: any) => ({ id: u.id, label: u.fullName })), [staffList])
+  const staffOptions = useMemo(
+    () => staffList.map((u: any) => ({ id: (u.id || '') as string, label: (u.fullName || u.name || '') as string })),
+    [staffList],
+  )
 
   const set = <K extends keyof DealFilters>(key: K, value: DealFilters[K]) =>
     setFilters((f) => ({ ...f, [key]: value }))

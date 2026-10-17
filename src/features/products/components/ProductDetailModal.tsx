@@ -154,6 +154,20 @@ export function ProductDetailModal({ productId, onClose, onEdit }: Props) {
                 )}
               </div>
 
+              {product.status === 'RESERVED' && (
+                <div style={{ marginTop: 12, marginBottom: 14, padding: '10px 14px', background: '#FEF3C7', borderRadius: 8, border: '1px solid #FCD34D', color: '#92400E', fontSize: 13 }}>
+                  <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🔒 Căn đang được giữ chỗ</span>
+                    {product.lockExpiresAt && <span>· Hạn chót: {product.lockExpiresAt}</span>}
+                  </div>
+                  {product.lockDepositAmount != null && product.lockDepositAmount > 0 && (
+                    <div style={{ marginTop: 2, fontSize: 12 }}>
+                      Tiền cọc thiện chí / booking: <strong>{formatMoney(product.lockDepositAmount)}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="prod-kpi-grid">
                 <div className="prod-kpi-card prod-kpi-card--green">
                   <span className="prod-kpi-label">DIỆN TÍCH THÔNG THỦY</span>

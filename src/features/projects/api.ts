@@ -10,7 +10,7 @@ export type ProductType = 'APARTMENT' | 'LAND' | 'TOWNHOUSE'
 export type Direction = 'N' | 'S' | 'E' | 'W' | 'NE' | 'NW' | 'SE' | 'SW'
 
 export interface Project { id: UUID; name: string; location: string | null; investor: string | null; description: string | null; imageUrl: string | null; status: ProjectStatus; createdAt: string; updatedAt: string }
-export interface Product { id: UUID; projectId: UUID; code: string; type: ProductType; area: number; block: string | null; price: number | null; bedroom: number | null; direction: Direction | null; imageUrl: string | null; status: ProductStatus; createdAt: string; updatedAt: string }
+export interface Product { id: UUID; projectId: UUID; code: string; type: ProductType; area: number; block: string | null; price: number | null; bedroom: number | null; direction: Direction | null; imageUrl: string | null; status: ProductStatus; lockedBy?: UUID | null; lockedCustomerId?: UUID | null; lockExpiresAt?: string | null; lockDepositAmount?: number | null; createdAt: string; updatedAt: string }
 export interface ProjectInput { name?: string; location?: string | null; investor?: string | null; description?: string | null; imageUrl?: string | null; status?: ProjectStatus }
 export interface ProductInput { projectId?: UUID; code?: string; type?: ProductType; area?: number; block?: string | null; price?: number | null; bedroom?: number | null; direction?: Direction | null; imageUrl?: string | null; status?: ProductStatus }
 export interface ProductFilters { projectId?: UUID; keyword?: string; type?: ProductType; status?: ProductStatus; block?: string; minPrice?: number; maxPrice?: number; page?: number; size?: number }
@@ -92,6 +92,15 @@ export function useProjectMutations() {
       mutationFn: ({ projectId, userId }: { projectId: UUID; userId: UUID }) =>
         api.delete(`/projects/${projectId}/members/${userId}`),
       onSuccess: (_data, vars) => void qc.invalidateQueries({ queryKey: ['project-members', vars.projectId] }),
+    }),
+    lockProduct: useMutation({
+      mutationFn: ({ id, body }: { id: UUID; body: { customerId: UUID; days?: number; expiryDate?: string; depositAmount?: number; notes?: string } }) =>
+        api.post<Product>(`/products/${id}/lock`, body).then((r) => r.data),
+      onSuccess: () => void qc.invalidateQueries({ queryKey: ['products'] }),
+    }),
+    unlockProduct: useMutation({
+      mutationFn: (id: UUID) => api.post<Product>(`/products/${id}/unlock`).then((r) => r.data),
+      onSuccess: () => void qc.invalidateQueries({ queryKey: ['products'] }),
     }),
   }
 }

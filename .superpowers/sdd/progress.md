@@ -1,9 +1,9 @@
-# SDD Progress Ledger: Chuẩn Hóa Nghiệp Vụ BĐS Giai Đoạn 1 (Lead & Bán Căn)
+# SDD Progress Ledger: Chuẩn Hóa Nghiệp Vụ BĐS Giai Đoạn 2 (Giữ Chỗ & Khóa Căn Theo Ngày)
 
-## Kế hoạch: docs/superpowers/plans/2026-10-17-real-estate-business-logic-phase-1.md
+## Kế hoạch: docs/superpowers/plans/2026-10-17-real-estate-business-logic-phase-2-product-lock.md
 
 ## Tasks
-- [x] Task 1: Backend `crm-service` — Migration V5 & Cập nhật Entity, DTO, Service cho Lead (commit 7b22b38, unit tests passing 5/5)
-- [x] Task 2: Backend `crm-service` — Ràng Buộc Hợp Đồng & Tự Động Đồng Bộ Trạng Thái Căn SOLD (commit 77126c1, unit tests passing 9/9)
-- [x] Task 3: Frontend `FE_Estate_System` — Cập Nhật API Types & Giao Diện Lead (commit c0da0a4, tsc clean & bundle 0 errors)
-- [x] Task 4: Kiểm Thử Toàn Diện & Kịch Bản E2E Playwright (commit ffbc8cb, 5 screenshots verified, 100% pass)
+- [ ] Task 1: Backend `crm-service` — Entity, Enum & Repository cho Giữ Chỗ
+- [ ] Task 2: Backend `crm-service` — DTOs, Service & Controller (Lock, Unlock, Auto-release)
+- [ ] Task 3: Frontend `FE_Estate_System` — UI Giữ Chỗ & Mở Khóa Căn
+- [ ] Task 4: Kiểm Thử Toàn Diện E2E Bằng Playwright

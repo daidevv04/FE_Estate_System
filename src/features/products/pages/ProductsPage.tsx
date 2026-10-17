@@ -16,6 +16,7 @@ import { ProductQuickFilter } from '../components/ProductQuickFilter'
 import { ProductSummary } from '../components/ProductSummary'
 import { ProductTable } from '../components/ProductTable'
 import { ProductDetailModal } from '../components/ProductDetailModal'
+import { ProductLockModal } from '../components/ProductLockModal'
 
 const INITIAL: FilterState = { page: 0, size: 10 }
 const PAGE_SIZE = [{ value: 10, label: '10' }, { value: 20, label: '20' }, { value: 50, label: '50' }]
@@ -29,6 +30,7 @@ export function ProductsPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [bulkStatus, setBulkStatus] = useState<ProductStatus | undefined>()
   const [editing, setEditing] = useState<Product | null | undefined>(undefined)
+  const [lockingProduct, setLockingProduct] = useState<Product | undefined>()
   const [detailProductId, setDetailProductId] = useState<string>()
   const mutations = useProductMutations()
 
@@ -76,6 +78,48 @@ export function ProductsPage() {
         message.error(apiErrorMessage(error))
       }
     })()
+  }
+
+  const handleLock = (product: Product) => {
+    setLockingProduct(product)
+  }
+
+  const handleConfirmLock = async (values: {
+    customerId: string
+    days?: number
+    expiryDate?: string
+    depositAmount?: number
+    notes?: string
+  }) => {
+    if (!lockingProduct) return
+    try {
+      await mutations.lockProduct.mutateAsync({
+        id: lockingProduct.id,
+        body: values,
+      })
+      message.success(`Đã giữ chỗ thành công căn ${lockingProduct.code}`)
+      setLockingProduct(undefined)
+    } catch (error) {
+      message.error(apiErrorMessage(error))
+    }
+  }
+
+  const handleUnlock = (product: Product) => {
+    Modal.confirm({
+      title: `Mở khóa căn ${product.code}`,
+      content: 'Bạn có chắc chắn muốn hủy giữ chỗ và mở lại căn này sang trạng thái Còn trống (AVAILABLE)?',
+      okText: 'Xác nhận mở khóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await mutations.unlockProduct.mutateAsync(product.id)
+          message.success(`Đã mở khóa căn ${product.code} về trạng thái Còn trống`)
+        } catch (error) {
+          message.error(apiErrorMessage(error))
+        }
+      },
+    })
   }
 
   return (
@@ -166,6 +210,8 @@ export function ProductsPage() {
           onSelect={setSelected}
           onEdit={setEditing}
           onView={(product) => setDetailProductId(product.id)}
+          onLock={handleLock}
+          onUnlock={handleUnlock}
         />
 
         <div className="products-pager">
@@ -200,6 +246,13 @@ export function ProductsPage() {
         submitting={submitting}
         onCancel={() => setEditing(undefined)}
         onSubmit={save}
+      />
+      <ProductLockModal
+        open={Boolean(lockingProduct)}
+        product={lockingProduct}
+        submitting={mutations.lockProduct.isPending}
+        onCancel={() => setLockingProduct(undefined)}
+        onSubmit={handleConfirmLock}
       />
       <ProductDetailModal productId={detailProductId} onClose={() => setDetailProductId(undefined)} onEdit={(product) => { setDetailProductId(undefined); setEditing(product) }} />
     </>

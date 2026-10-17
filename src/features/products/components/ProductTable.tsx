@@ -8,10 +8,12 @@ import {
   DollarOutlined,
   HomeOutlined,
   LayoutOutlined,
+  LockOutlined,
   PictureOutlined,
   ShopOutlined,
+  UnlockOutlined,
 } from '@ant-design/icons'
-import { Table, Tooltip } from 'antd'
+import { Button, Space, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ReactNode } from 'react'
 import { SelectableTableContainer } from '@/components/common/SelectableTableContainer'
@@ -29,6 +31,8 @@ interface Props {
   onSelect: (keys: string[]) => void
   onEdit: (product: Product) => void
   onView: (product: Product) => void
+  onLock?: (product: Product) => void
+  onUnlock?: (product: Product) => void
 }
 
 const TYPE_PILL: Record<ProductType, { icon: ReactNode; bg: string; fg: string }> = {
@@ -43,7 +47,7 @@ const STATUS_PILL: Record<ProductStatus, { bg: string; fg: string; dot: string }
   SOLD: { bg: '#E0F2FE', fg: '#0369A1', dot: t.colorTeal },
 }
 
-export function ProductTable({ rows, loading, emptyText, selected, projectNames, onSelect, onView }: Props) {
+export function ProductTable({ rows, loading, emptyText, selected, projectNames, onSelect, onView, onLock, onUnlock }: Props) {
   const columns: ColumnsType<Product> = [
     {
       title: (
@@ -161,8 +165,57 @@ export function ProductTable({ rows, loading, emptyText, selected, projectNames,
         </span>
       ),
       dataIndex: 'status',
-      width: 115,
-      render: (value: ProductStatus) => { const p = STATUS_PILL[value]; return <span className="stitch-pill stitch-pill--sm" style={{ background: p.bg, color: p.fg }}><span className="stitch-pill__dot" style={{ background: p.dot }} />{labelOf(PRODUCT_STATUS, value)}</span> },
+      width: 130,
+      render: (value: ProductStatus, row) => {
+        const p = STATUS_PILL[value];
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span className="stitch-pill stitch-pill--sm" style={{ background: p.bg, color: p.fg }}>
+              <span className="stitch-pill__dot" style={{ background: p.dot }} />
+              {labelOf(PRODUCT_STATUS, value)}
+            </span>
+            {value === 'RESERVED' && row.lockExpiresAt && (
+              <span style={{ fontSize: 11, color: '#b45309', fontWeight: 600 }}>
+                Hạn: {row.lockExpiresAt}
+              </span>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      title: 'Thao tác',
+      width: 105,
+      align: 'center',
+      render: (_, row) => (
+        <Space size={2} onClick={(e) => e.stopPropagation()}>
+          {row.status === 'AVAILABLE' && onLock && (
+            <Button
+              size="small"
+              type="primary"
+              ghost
+              style={{ borderColor: '#d97706', color: '#d97706', fontSize: 12, height: 26, padding: '0 8px' }}
+              icon={<LockOutlined />}
+              onClick={() => onLock(row)}
+              title="Khóa căn / Giữ chỗ"
+            >
+              Giữ chỗ
+            </Button>
+          )}
+          {row.status === 'RESERVED' && onUnlock && (
+            <Button
+              size="small"
+              danger
+              style={{ fontSize: 12, height: 26, padding: '0 8px' }}
+              icon={<UnlockOutlined />}
+              onClick={() => onUnlock(row)}
+              title="Mở khóa căn"
+            >
+              Mở khóa
+            </Button>
+          )}
+        </Space>
+      ),
     },
   ]
 

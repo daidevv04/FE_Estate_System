@@ -125,10 +125,20 @@ export const CARE_TYPE_LABEL: Record<CareType, string> = {
 export interface CustomerCare {
   id: UUID
   customerId: UUID
+  customerName?: string | null
+  customerPhone?: string | null
   type: CareType
   content: string
   createdBy: UUID
   createdAt: string
+}
+
+export interface AllCustomerCareFilters {
+  ownerId?: string
+  type?: CareType
+  keyword?: string
+  page?: number
+  size?: number
 }
 
 export function useCustomerCares(customerId?: string) {
@@ -139,16 +149,42 @@ export function useCustomerCares(customerId?: string) {
   })
 }
 
+export function useAllCustomerCares(filters?: AllCustomerCareFilters) {
+  return useQuery({
+    queryKey: ['customer-cares', 'all', filters],
+    queryFn: () =>
+      api.get<Page<CustomerCare>>('/customers/cares', {
+        params: {
+          size: filters?.size ?? 50,
+          page: filters?.page ?? 0,
+          sort: 'createdAt,desc',
+          ownerId: filters?.ownerId || undefined,
+          type: filters?.type || undefined,
+          keyword: filters?.keyword || undefined,
+        },
+      }).then((r) => r.data),
+  })
+}
+
 export function useCareMutations(customerId?: string) {
   const qc = useQueryClient()
-  const done = () => { void qc.invalidateQueries({ queryKey: ['customer-cares', customerId] }) }
+  const done = () => {
+    void qc.invalidateQueries({ queryKey: ['customer-cares'] })
+  }
   return {
     create: useMutation({
-      mutationFn: (body: { type: CareType; content: string }) => api.post<CustomerCare>(`/customers/${customerId}/cares`, body).then((r) => r.data),
+      mutationFn: (body: { type: CareType; content: string; targetCustomerId?: string }) => {
+        const id = body.targetCustomerId || customerId
+        return api.post<CustomerCare>(`/customers/${id}/cares`, { type: body.type, content: body.content }).then((r) => r.data)
+      },
       onSuccess: done,
     }),
     remove: useMutation({
-      mutationFn: (careId: string) => api.delete(`/customers/${customerId}/cares/${careId}`),
+      mutationFn: (args: string | { careId: string; targetCustomerId?: string }) => {
+        const careId = typeof args === 'string' ? args : args.careId
+        const id = typeof args === 'string' ? customerId : (args.targetCustomerId || customerId)
+        return api.delete(`/customers/${id}/cares/${careId}`)
+      },
       onSuccess: done,
     }),
   }

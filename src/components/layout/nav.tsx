@@ -6,6 +6,7 @@ import {
   DashboardOutlined,
   FileTextOutlined,
   FunnelPlotOutlined,
+  HistoryOutlined,
   MailOutlined,
   ProjectOutlined,
   TeamOutlined,
@@ -37,6 +38,7 @@ export function buildNav(role?: UserRole): NavGroup[] {
     ] },
     { key: 'g-sales', label: 'BÁN HÀNG', children: [
       { key: paths.customers, icon: <TeamOutlined />, label: 'Khách hàng' },
+      { key: paths.customerCares, icon: <HistoryOutlined />, label: 'Nhật ký chăm sóc' },
       { key: paths.appointments, icon: <CalendarOutlined />, label: 'Lịch hẹn' },
       { key: paths.leads, icon: <FunnelPlotOutlined />, label: 'Lead (pipeline)' },
       { key: paths.deals, icon: <FileTextOutlined />, label: 'Hợp đồng' },

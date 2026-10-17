@@ -11,6 +11,7 @@ export const paths = {
   search: '/search',
 
   customers: '/customers',
+  customerCares: '/customer-cares',
   customer: (id = ':id') => `/customers/${id}`,
 
   appointments: '/appointments',

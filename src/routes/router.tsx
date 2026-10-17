@@ -7,6 +7,7 @@ import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
 import { CustomersPage } from '@/features/customers/pages/CustomersPage'
 import { CustomerDetailPage } from '@/features/customers/pages/CustomerDetailPage'
+import { CustomerCarePage } from '@/features/customers/pages/CustomerCarePage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { DealsPage } from '@/features/deals/pages/DealsPage'
 import { DealDetailPage } from '@/features/deals/pages/DealDetailPage'
@@ -52,6 +53,14 @@ export const router = createBrowserRouter([
       { path: paths.search, element: <SearchPage /> },
 
       { path: paths.customers, element: <CustomersPage /> },
+      {
+        path: paths.customerCares,
+        element: (
+          <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}>
+            <CustomerCarePage />
+          </ProtectedRoute>
+        ),
+      },
       { path: paths.customer(), element: <CustomerDetailPage /> },
       { path: paths.appointments, element: <AppointmentsPage /> },
       { path: paths.appointment(), element: <AppointmentDetailPage /> },

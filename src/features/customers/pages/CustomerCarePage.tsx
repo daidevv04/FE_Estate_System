@@ -118,7 +118,10 @@ export function CustomerCarePage() {
   const { create: createCare, remove: removeCare } = useCareMutations()
 
   const allCares = caresQuery.data?.content ?? []
-  const staffList = staffQuery.data ?? []
+  const rawStaff = staffQuery.data
+  const staffList: StaffUser[] = Array.isArray(rawStaff)
+    ? rawStaff
+    : ((rawStaff as unknown as { content?: StaffUser[] })?.content ?? [])
   const customerList = customersQuery.data?.content ?? []
 
   const staffName = (uid: string) =>

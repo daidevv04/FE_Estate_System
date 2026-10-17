@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import { apiErrorMessage, customerCode, demandLabel, statusLabel, useCustomer, useCustomerMutations, type Customer, type StaffUser } from '../api'
+import { CustomerCareTimeline } from './CustomerCareTimeline'
 import { SendCustomerEmailModal } from './SendCustomerEmailModal'
 import './CustomerDetailModal.css'
 
@@ -184,12 +185,12 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
           <Card
             className="customer-detail-modal__card customer-detail-modal__crm-activity"
             size="small"
-            title={<Space size={7}><CalendarOutlined />Hoạt động CRM gần đây</Space>}
+            title={<Space size={7}><CalendarOutlined />Nhật ký chăm sóc khách hàng</Space>}
           >
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chưa có dữ liệu hoạt động CRM ghi nhận cho khách hàng này."
-              style={{ margin: '14px 0' }}
+            <CustomerCareTimeline
+              customerId={customer.id}
+              canWrite={canWrite}
+              staff={staff}
             />
           </Card>
 

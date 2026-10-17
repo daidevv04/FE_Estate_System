@@ -125,8 +125,8 @@ export function PipelineBoard({
                       key={lead.id}
                       lead={lead}
                       customer={customerById.get(lead.customerId)}
-                      product={productById.get(lead.productId)}
-                      project={projectById.get(productById.get(lead.productId)?.projectId ?? '')}
+                      product={lead.productId ? productById.get(lead.productId) : undefined}
+                      project={projectById.get(lead.projectId || (lead.productId ? productById.get(lead.productId)?.projectId ?? '' : ''))}
                       ownerName={ownerName(lead.assignedTo)}
                       overdue={overdueDays(lead)}
                       dragging={draggingId === lead.id}

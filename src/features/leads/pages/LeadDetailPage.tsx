@@ -42,7 +42,7 @@ export function LeadDetailPage() {
   const l = lead.data
   const customer = (customers.data?.content ?? []).find((c) => c.id === l?.customerId)
   const product = (catalog.products.data?.content ?? []).find((p) => p.id === l?.productId)
-  const project = product ? (catalog.projects.data?.content ?? []).find((pj) => pj.id === product.projectId) : undefined
+  const project = (catalog.projects.data?.content ?? []).find((pj) => pj.id === (product?.projectId ?? l?.projectId))
   const owner = (staff.data ?? []).find((s) => s.id === l?.assignedTo)
   const staffName = (uid: string) => (staff.data ?? []).find((s) => s.id === uid)?.fullName ?? uid.slice(0, 8)
   const doMove = (stage: LeadStage) => {
@@ -95,8 +95,9 @@ export function LeadDetailPage() {
         <Descriptions column={{ xs: 1, sm: 2 }} size="small" colon={false}>
           <Descriptions.Item label="Khách hàng">{customer?.fullName ?? '—'}</Descriptions.Item>
           <Descriptions.Item label="SĐT khách">{customer?.phone ?? '—'}</Descriptions.Item>
-          <Descriptions.Item label="Sản phẩm">{product ? `${product.code} · ${product.type}` : '—'}</Descriptions.Item>
+          <Descriptions.Item label="Sản phẩm">{product ? `${product.code} · ${product.type}` : 'Chưa chọn căn cụ thể'}</Descriptions.Item>
           <Descriptions.Item label="Dự án">{project?.name ?? '—'}</Descriptions.Item>
+          <Descriptions.Item label="Nhu cầu">{l?.demandNotes || '—'}</Descriptions.Item>
           <Descriptions.Item label="Giá trị kỳ vọng">{fullVnd(l.expectedValue)}</Descriptions.Item>
           <Descriptions.Item label="Hạn chốt"><span style={{ color: overdue > 0 ? t.colorError : undefined }}>{shortDate(l.closeDate)}</span></Descriptions.Item>
           <Descriptions.Item label="Phụ trách">{owner?.fullName ?? '—'}</Descriptions.Item>

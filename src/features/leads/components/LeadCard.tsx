@@ -29,6 +29,9 @@ interface Props {
 }
 
 const productLabel = (lead: Lead, product?: Product, project?: Project) => {
+  if (!lead.productId) {
+    return project ? `Chưa chọn căn · ${project.name}` : (lead.demandNotes || 'Chưa gán căn cụ thể')
+  }
   if (!product) return `Căn #${lead.productId.slice(0, 8)}`
   const unit = `${PRODUCT_TYPE_LABEL[product.type] ?? 'Căn'} ${product.code}`
   return project ? `${unit} · ${project.name}` : unit

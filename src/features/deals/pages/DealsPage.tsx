@@ -73,8 +73,8 @@ export function DealsPage() {
 
   const refs = (deal: Deal) => {
     const lead = leadById.get(deal.leadId)
-    const product = lead ? productById.get(lead.productId) : undefined
-    const project = product ? projectById.get(product.projectId) : undefined
+    const product = lead?.productId ? productById.get(lead.productId) : undefined
+    const project = product ? projectById.get(product.projectId) : (lead?.projectId ? projectById.get(lead.projectId) : undefined)
     const customer = lead ? customerById.get(lead.customerId) : undefined
     return {
       customerName: customer?.fullName ?? `Lead ${deal.leadId.slice(0, 8)}`,
@@ -106,10 +106,10 @@ export function DealsPage() {
     return (leads.data?.content ?? [])
       .filter((l) => l.stage === 'WON' && !used.has(l.id))
       .map((l) => {
-        const p = productById.get(l.productId)
+        const p = l.productId ? productById.get(l.productId) : null
         const c = customerById.get(l.customerId)
-        const project = projectById.get(p?.projectId ?? '')
-        return { id: l.id, label: `${c?.fullName ?? 'Khách'} · ${p?.code ?? 'căn'} · ${project?.name ?? '—'}` }
+        const project = projectById.get(p?.projectId ?? l.projectId ?? '')
+        return { id: l.id, label: `${c?.fullName ?? 'Khách'} · ${p?.code ?? 'Chưa gán căn'} · ${project?.name ?? '—'}` }
       })
   }, [leads.data, deals.data, productById, customerById, projectById, editing])
 

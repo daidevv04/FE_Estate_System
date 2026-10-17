@@ -223,7 +223,7 @@ export function ProfilePage() {
 
     return userDeals.slice(0, 5).map((deal) => {
       const lead = leadMap.get(deal.leadId)
-      const product = lead ? productMap.get(lead.productId) : undefined
+      const product = lead?.productId ? productMap.get(lead.productId) : undefined
       const project = product ? projectMap.get(product.projectId) : undefined
       const customer = lead ? customerMap.get(lead.customerId) : undefined
 

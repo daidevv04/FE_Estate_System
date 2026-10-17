@@ -104,16 +104,17 @@ export function LeadsPage() {
     return leads.filter((l) => {
       if (stage !== 'all' && l.stage !== stage) return false
       if (salesId !== 'all' && l.assignedTo !== salesId) return false
-      const product = productById.get(l.productId)
-      if (projectId !== 'all' && product?.projectId !== projectId) return false
+      const product = l.productId ? productById.get(l.productId) : undefined
+      const leadProjectId = l.projectId || product?.projectId
+      if (projectId !== 'all' && leadProjectId !== projectId) return false
       if (!matchValue(l.expectedValue, value)) return false
       if (!matchClose(l.closeDate, closeWin)) return false
       if (!kw) return true
       const customer = customerById.get(l.customerId)
-      const project = product ? projectById.get(product.projectId) : undefined
+      const project = leadProjectId ? projectById.get(leadProjectId) : undefined
       const owner = staffById.get(l.assignedTo)
       return [customer?.fullName, customer?.phone, customer?.email, customer?.source,
-        product?.code, project?.name, owner?.fullName]
+        product?.code, project?.name, owner?.fullName, l.demandNotes]
         .some((v) => (v ?? '').toLowerCase().includes(kw))
     })
   }, [leads, keyword, stage, salesId, projectId, value, closeWin, customerById, productById, projectById, staffById])
@@ -200,6 +201,10 @@ export function LeadsPage() {
   }
 
   const productLabel = (lead: Lead) => {
+    if (!lead.productId) {
+      const project = projectById.get(lead.projectId)
+      return project ? `Chưa chọn căn · ${project.name}` : (lead.demandNotes || 'Chưa chọn căn')
+    }
     const product = productById.get(lead.productId)
     if (!product) return `Căn #${lead.productId.slice(0, 8)}`
     const project = projectById.get(product.projectId)

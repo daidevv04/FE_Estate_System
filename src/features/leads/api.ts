@@ -12,7 +12,9 @@ export type LeadStage =
 export interface Lead {
   id: UUID
   customerId: UUID
-  productId: UUID
+  projectId: UUID
+  productId: UUID | null
+  demandNotes?: string | null
   stage: LeadStage
   expectedValue: number | null
   closeDate: string | null
@@ -42,7 +44,9 @@ export interface Project {
 
 export interface LeadInput {
   customerId?: UUID
-  productId?: UUID
+  projectId?: UUID
+  productId?: UUID | null
+  demandNotes?: string | null
   stage?: LeadStage
   expectedValue?: number | null
   closeDate?: string | null

@@ -1,4 +1,4 @@
-import { DatePicker, Form, InputNumber, Modal, Select } from 'antd'
+import { DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useMemo } from 'react'
 import type { Customer, StaffUser } from '@/features/customers/api'
@@ -9,7 +9,9 @@ import {
 
 interface FormValues {
   customerId: string
-  productId: string
+  projectId: string
+  productId?: string | null
+  demandNotes?: string | null
   stage?: LeadStage
   expectedValue?: number | null
   closeDate?: dayjs.Dayjs | null
@@ -32,12 +34,12 @@ export function LeadFormModal({
   open, customers, products, projects, staff, canAssign, submitting, onCancel, onSubmit,
 }: Props) {
   const [form] = Form.useForm<FormValues>()
+  const selectedProjectId = Form.useWatch('projectId', form)
 
   useEffect(() => {
     if (open) form.resetFields()
   }, [open, form])
 
-  const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects])
   const customerOptions = useMemo(
     () => customers.map((c) => ({
       value: c.id,
@@ -45,23 +47,46 @@ export function LeadFormModal({
     })),
     [customers],
   )
-  const productOptions = useMemo(
-    () => products.map((p) => ({
+
+  const projectOptions = useMemo(
+    () => projects.map((p) => ({
       value: p.id,
-      label: `${PRODUCT_TYPE_LABEL[p.type] ?? 'Căn'} ${p.code} · ${projectById.get(p.projectId)?.name ?? '—'}`,
+      label: p.name,
     })),
-    [products, projectById],
+    [projects],
   )
+
+  const filteredProducts = useMemo(() => {
+    if (!selectedProjectId) return []
+    return products.filter((p) => p.projectId === selectedProjectId && p.status !== 'SOLD')
+  }, [products, selectedProjectId])
+
+  const productOptions = useMemo(
+    () => filteredProducts.map((p) => ({
+      value: p.id,
+      label: `${PRODUCT_TYPE_LABEL[p.type] ?? 'Căn'} ${p.code}${p.price ? ` · ${new Intl.NumberFormat('vi-VN').format(p.price)} đ` : ''}`,
+    })),
+    [filteredProducts],
+  )
+
   const staffOptions = useMemo(
     () => staff.filter((u) => u.status !== 'INACTIVE').map((u) => ({ value: u.id, label: `${u.fullName} (${u.role})` })),
     [staff],
   )
 
+  const handleProductChange = (productId: string | undefined) => {
+    if (!productId) return
+    const p = products.find((item) => item.id === productId)
+    if (p?.price && !form.getFieldValue('expectedValue')) {
+      form.setFieldValue('expectedValue', p.price)
+    }
+  }
+
   return (
     <Modal
       open={open}
       title="Thêm lead mới"
-      width={620}
+      width={640}
       centered
       destroyOnHidden
       okText="Tạo lead"
@@ -72,7 +97,9 @@ export function LeadFormModal({
         void form.validateFields().then((v) => {
           onSubmit({
             customerId: v.customerId,
-            productId: v.productId,
+            projectId: v.projectId,
+            productId: v.productId || null,
+            demandNotes: v.demandNotes?.trim() || null,
             stage: v.stage,
             expectedValue: v.expectedValue ?? null,
             closeDate: v.closeDate ? v.closeDate.format('YYYY-MM-DD') : null,
@@ -97,13 +124,47 @@ export function LeadFormModal({
           />
         </Form.Item>
 
-        <Form.Item name="productId" label="Căn / sản phẩm" rules={[{ required: true, message: 'Chọn căn/sản phẩm' }]}>
-          <Select
-            id="productId"
-            showSearch
-            optionFilterProp="label"
-            placeholder="Tìm theo mã căn hoặc dự án"
-            options={productOptions}
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Form.Item
+            name="projectId"
+            label="Dự án quan tâm"
+            style={{ flex: 1 }}
+            rules={[{ required: true, message: 'Vui lòng chọn dự án quan tâm' }]}
+          >
+            <Select
+              id="projectId"
+              showSearch
+              optionFilterProp="label"
+              placeholder="Chọn dự án"
+              options={projectOptions}
+              onChange={() => form.setFieldValue('productId', undefined)}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="productId"
+            label="Mã căn cụ thể (tùy chọn)"
+            style={{ flex: 1 }}
+            extra={!selectedProjectId ? 'Chọn dự án trước để hiển thị danh sách căn' : undefined}
+          >
+            <Select
+              id="productId"
+              allowClear
+              showSearch
+              disabled={!selectedProjectId}
+              optionFilterProp="label"
+              placeholder={selectedProjectId ? 'Chưa chốt căn cụ thể (chọn sau)' : 'Chọn dự án trước'}
+              options={productOptions}
+              onChange={handleProductChange}
+            />
+          </Form.Item>
+        </div>
+
+        <Form.Item name="demandNotes" label="Ghi chú nhu cầu khách hàng">
+          <Input.TextArea
+            id="demandNotes"
+            rows={2}
+            placeholder="Ví dụ: Căn 2PN tầng trung hướng Đông Nam, view sông, ngân sách 3.5 - 4 tỷ..."
           />
         </Form.Item>
 

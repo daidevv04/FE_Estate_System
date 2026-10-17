@@ -197,7 +197,7 @@ export function useDeals(filters: DealServerFilters = {}) {
   })
 }
 
-interface LeadRef { id: UUID; customerId: UUID; productId: UUID; stage: string }
+interface LeadRef { id: UUID; customerId: UUID; projectId?: UUID; productId: UUID | null; stage: string }
 interface CustomerRef { id: UUID; fullName: string; phone: string | null }
 interface ProductRef { id: UUID; projectId: UUID; code: string }
 interface ProjectRef { id: UUID; name: string }

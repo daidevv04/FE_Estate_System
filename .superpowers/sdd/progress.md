@@ -1,11 +1,13 @@
-# SDD Progress Ledger: Chuẩn Hóa Nghiệp Vụ BĐS Giai Đoạn 3 (Bảng Hàng Matrix Căn Hộ & Chốt Hợp Đồng)
+# SDD Progress Ledger: Tiến Độ Thanh Toán Theo Đợt & Nhắc Nợ Căn Hộ (Giai Đoạn 4)
 
-## Kế hoạch: docs/superpowers/plans/2026-10-18-real-estate-phase-3-apartment-matrix-and-deal-conversion.md
+## Kế hoạch: docs/superpowers/plans/2026-10-18-apartment-payment-schedule-and-debt-tracking.md
 
 ## Tasks
-- [x] Task 1: Backend `crm-service` — Đồng Bộ Chốt Hợp Đồng Khi Duyệt Deal (Commit `6625493`, DealService auto-convert reservation & unit tests 9/9 pass)
-- [x] Task 2: Frontend `FE_Estate_System` — Xây Dựng Component Bảng Hàng Matrix Căn Hộ (Commit `bf72e19`, `ProductMatrixView.tsx` & `ProductMatrixView.css`)
-- [x] Task 3: Frontend `FE_Estate_System` — Tích Hợp Chế Độ Xem Matrix Vào `ProductsPage.tsx` (Commit `bf72e19`, Segmented switcher & deal conversion link)
-- [x] Task 4: Kiểm Thử Toàn Diện E2E Bằng Playwright (Commit `fd2bd54`, `audit-phase3-matrix.cjs` 5/5 pass, 5 screenshots captured in artifact dir)
+- [x] Task 1: Backend `crm-service` — Entity, Repository & DTOs cho `deal_payment_schedules` (Commit `9fd11e4`)
+- [x] Task 2: Backend `crm-service` — Logic Gạch Nợ FIFO, 3 Mẫu Căn Hộ & Controller (Commit `7bb4ee8`, Unit tests 3/3 pass)
+- [x] Task 3: Frontend `FE_Estate_System` — API Client & Hooks cho Tiến Độ Thanh Toán (Commit `8a57578`)
+- [x] Task 4: Frontend `FE_Estate_System` — Component Tiến Độ Thanh Toán & Nhắc Nợ (Commit `0156584`)
+- [x] Task 5: Frontend `FE_Estate_System` — Tích Hợp Chọn Mẫu Tiến Độ Khi Chốt Cọc (Commit `809c809`)
+- [x] Task 6: Kiểm Thử Toàn Diện E2E Bằng Playwright (Hoàn tất 100%, 5/5 kịch bản pass)
 
-## Trạng Thái: HOÀN THÀNH TOÀN BỘ GIAI ĐOẠN 3
+## Trạng Thái: HOÀN THÀNH TOÀN BỘ GIAI ĐOẠN 4

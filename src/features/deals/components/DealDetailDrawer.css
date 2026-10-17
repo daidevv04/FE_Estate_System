@@ -28,13 +28,21 @@
   overflow-y: auto;
   padding: 20px 24px;
   background: #f8fafc;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 .deal-detail-modal .ant-modal-body::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+  width: 6px;
+}
+.deal-detail-modal .ant-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.deal-detail-modal .ant-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.deal-detail-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 .deal-detail-modal .ant-modal-footer {
   flex: 0 0 auto;

@@ -63,7 +63,7 @@ export function DealsPage() {
   const deals = useDeals(serverFilters)
   const { leads, customers, products, projects } = useDealCatalog()
   const staff = useDealStaff()
-  const { create, update, remove, addPayment } = useDealMutations()
+  const { create, update, remove, addPayment, applyScheduleTemplate } = useDealMutations()
 
   const customerById = useMemo(() => new Map((customers.data?.content ?? []).map((c) => [c.id, c])), [customers.data])
   const leadById = useMemo(() => new Map((leads.data?.content ?? []).map((l) => [l.id, l])), [leads.data])
@@ -769,7 +769,7 @@ export function DealsPage() {
         canApprove={canManage}
         submitting={create.isPending || update.isPending}
         onCancel={() => setFormOpen(false)}
-        onSubmit={(body) => {
+        onSubmit={(body, scheduleTemplate) => {
           const done = editing
             ? update.mutateAsync({ id: editing.id, body })
               .then((updatedDeal) => {
@@ -786,7 +786,17 @@ export function DealsPage() {
                 message.success(`Đã cập nhật ${body.contractCode ?? editing.contractCode}`)
               })
             : create.mutateAsync(body)
-              .then((createdDeal) => {
+              .then(async (createdDeal) => {
+                if (scheduleTemplate && scheduleTemplate !== 'NONE') {
+                  try {
+                    await applyScheduleTemplate.mutateAsync({
+                      dealId: createdDeal.id,
+                      templateCode: scheduleTemplate,
+                    })
+                  } catch {
+                    // Non-fatal: user can re-apply in drawer
+                  }
+                }
                 notifyDealCreated({
                   dealId: createdDeal.id,
                   contractCode: createdDeal.contractCode,

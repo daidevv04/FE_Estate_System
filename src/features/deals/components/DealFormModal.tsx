@@ -26,6 +26,7 @@ interface FormValues {
   fileUrl?: string | null
   note?: string | null
   salesId?: UUID | null
+  scheduleTemplate?: string
 }
 
 interface Props {
@@ -37,7 +38,7 @@ interface Props {
   canApprove: boolean
   submitting: boolean
   onCancel: () => void
-  onSubmit: (body: DealInput) => void
+  onSubmit: (body: DealInput, scheduleTemplate?: string) => void
 }
 
 const money = {
@@ -119,14 +120,18 @@ export function DealFormModal({
           if (!isEdit) body.leadId = v.leadId
           if (canApprove) body.approvalStatus = v.approvalStatus as DealInput['approvalStatus']
           if (canAssign) body.salesId = v.salesId || undefined
-          onSubmit(body)
+          onSubmit(body, v.scheduleTemplate)
         })
       }}
     >
       <Form<FormValues>
         form={form}
         layout="vertical"
-        initialValues={{ status: 'IN_PROGRESS' as DealStatus, paymentStatus: 'UNPAID' as PaymentStatus }}
+        initialValues={{
+          status: 'IN_PROGRESS' as DealStatus,
+          paymentStatus: 'UNPAID' as PaymentStatus,
+          scheduleTemplate: 'TEMPLATE_CONSTRUCTION_7',
+        }}
         style={{ marginTop: 8 }}
       >
         <div style={{ display: 'flex', gap: 12 }}>
@@ -248,6 +253,24 @@ export function DealFormModal({
             <Select id="paymentMethod" allowClear options={PAYMENT_METHOD_OPTIONS} placeholder="Chọn phương thức" />
           </Form.Item>
         </div>
+
+        {!isEdit && (
+          <Form.Item
+            name="scheduleTemplate"
+            label="Mẫu tiến độ thanh toán căn hộ"
+            extra="Hệ thống sẽ tự động tạo bảng chia tiền và hạn thanh toán theo các đợt"
+          >
+            <Select
+              id="scheduleTemplate"
+              options={[
+                { label: 'Mẫu 1: Tiến độ xây dựng chuẩn (7 đợt)', value: 'TEMPLATE_CONSTRUCTION_7' },
+                { label: 'Mẫu 2: Thanh toán sớm 95% (Chiết khấu mở bán - 3 đợt)', value: 'TEMPLATE_FAST_DISCOUNT_3' },
+                { label: 'Mẫu 3: Vay ngân hàng hỗ trợ lãi suất 0% (4 đợt)', value: 'TEMPLATE_BANK_LOAN_4' },
+                { label: 'Tùy chỉnh sau (Không áp dụng mẫu)', value: 'NONE' },
+              ]}
+            />
+          </Form.Item>
+        )}
 
         <div style={{ display: 'flex', gap: 12 }}>
           <Form.Item

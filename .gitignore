@@ -6,6 +6,11 @@ dist-ssr
 .env.local
 .vite
 *.log
+.*.log
+*.exit
+.*.exit
+logs/
+audit*.cjs
 .cache/
 .turbo/
 .eslintcache

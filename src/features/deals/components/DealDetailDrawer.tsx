@@ -8,6 +8,7 @@ import {
   APPROVAL_STATUS_LABEL, DEAL_STATUS_LABEL, PAYMENT_STATUS_LABEL, paymentMethodLabel, progressPct,
   type Deal, type DealPayment,
 } from '../api'
+import { DealPaymentScheduleSection } from './DealPaymentScheduleSection'
 import './DealDetailDrawer.css'
 
 interface Props {
@@ -126,6 +127,8 @@ export function DealDetailDrawer({
             </div>
           </Card>
           </div>
+
+          <DealPaymentScheduleSection deal={deal} onRecordPayment={onRecordPayment} />
 
           <Card className="deal-detail-modal__payments"
             size="small"

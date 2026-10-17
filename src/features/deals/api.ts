@@ -312,6 +312,30 @@ export function useDealPaymentSchedules(dealId?: string) {
   })
 }
 
+export function useApplyScheduleTemplate() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ dealId, templateCode }: { dealId: UUID; templateCode: string }) =>
+      api
+        .post<DealPaymentSchedule[]>(
+          `/deals/${dealId}/schedules/apply-template?templateCode=${encodeURIComponent(templateCode)}`,
+        )
+        .then((r) => r.data),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
+export function useSaveDealSchedule() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ dealId, installments }: { dealId: UUID; installments: PaymentScheduleItemInput[] }) =>
+      api
+        .post<DealPaymentSchedule[]>(`/deals/${dealId}/schedules`, { installments })
+        .then((r) => r.data),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: KEY }),
+  })
+}
+
 export function useDealItems(dealId?: string) {
   return useQuery({
     queryKey: [...KEY, 'items', dealId],

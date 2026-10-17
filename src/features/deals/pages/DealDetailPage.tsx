@@ -15,6 +15,7 @@ import {
 } from '../api'
 import { PaymentModal } from '../components/PaymentModal'
 import { DealFormModal } from '../components/DealFormModal'
+import { DealPaymentScheduleSection } from '../components/DealPaymentScheduleSection'
 import { StatusPill, type StatusTone } from '@/components/common/StatusPill'
 
 const statusTone = (d: Deal): StatusTone => {
@@ -109,6 +110,7 @@ export function DealDetailPage() {
         <Progress percent={pct} strokeColor={t.colorSuccess} size="small" style={{ marginTop: 8 }} />
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>Đã thu {formatMoney(collected)} / {formatMoney(d.contractValue)} · Còn lại {formatMoney(remaining)}</Typography.Text>
       </Card>
+      <DealPaymentScheduleSection deal={d} onRecordPayment={() => setPayOpen(true)} />
       <Card className="stitch-card" variant="borderless" title={`Đợt thanh toán (${payList.length})`} loading={payments.isLoading} extra={canApprove && <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => setPayOpen(true)}>Ghi nhận</Button>}>
         <Table<DealPayment> rowKey="id" size="small" columns={payCols} dataSource={payList} pagination={false} scroll={{ x: 'max-content' }} locale={{ emptyText: 'Chưa có đợt thanh toán' }} />
       </Card>

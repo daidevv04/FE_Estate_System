@@ -1,15 +1,14 @@
-# SDD Progress Ledger: Tính Hoa Hồng & Thưởng Doanh Số Sales (Giai Đoạn 5)
+# SDD Progress Ledger: Xuất Hồ Sơ & Văn Bản BĐS Tự Động (Giai Đoạn 6)
 
-## Kế hoạch: docs/superpowers/plans/2026-10-18-sales-commission-and-incentive-engine.md
+## Kế hoạch: docs/superpowers/plans/2026-10-18-real-estate-document-pdf-generator.md
 
 ## Tasks
-- [x] Task 1: Backend `crm-service` — Entities, Enums & Repositories cho `deal_commissions`, `deal_commission_milestones`, `project_commission_policies` (Commit `3c73b31`)
-- [x] Task 2: Backend `crm-service` — Logic Tự Động Đối Soát Mốc Giải Ngân & Unit Tests (Commit `d1674ac`, 3/3 unit tests pass)
-- [x] Task 3: Backend `crm-service` — REST Controllers & Policy Management (Commit `f1a54dc`)
-- [x] Task 4: Frontend `FE_Estate_System` — API Client & React Query Hooks cho Hoa Hồng (Commit `f7b36bc`)
-- [x] Task 5: Frontend `FE_Estate_System` — Trang `/commissions` (4 Thẻ KPIs, Tab Sales, Tab Duyệt Manager, Tab Chính Sách) (Commit `f50145e`)
-- [x] Task 6: Frontend `FE_Estate_System` — Tích Hợp Khối Hoa Hồng Vào Deal Detail Modal & Sidebar Menu (Commit `2b1d61e`)
-- [x] Task 7: Kiểm Thử Toàn Diện E2E Bằng Playwright (5/5 kịch bản audit pass 100%)
+- [ ] Task 1: Backend `crm-service` — DTOs & Service Tổng Hợp Dữ Liệu In Ấn
+- [ ] Task 2: Backend `crm-service` — REST Controller `DealDocumentController` (`/deals/{id}/print-data`)
+- [ ] Task 3: Frontend `FE_Estate_System` — API Client & Chuyển Số Thành Chữ Tiếng Việt
+- [ ] Task 4: Frontend `FE_Estate_System` — CSS In Khổ A4 & 3 Templates Văn Bản (Phiếu Cọc, Phiếu Thu, Tiến Độ)
+- [ ] Task 5: Frontend `FE_Estate_System` — Modal Xem Trước & Thao Tác In (`PrintPreviewModal`)
+- [ ] Task 6: Frontend `FE_Estate_System` — Tích Hợp Vào Deal Detail Modal & Deal Detail Page
+- [ ] Task 7: Kiểm Thử Toàn Diện E2E Bằng Playwright
 
-## Trạng Thái: HOÀN THÀNH TOÀN DIỆN (7/7 TASKS)
-
+## Trạng Thái: SẴN SÀNG TRIỂN KHAI

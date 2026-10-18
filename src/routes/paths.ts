@@ -35,6 +35,8 @@ export const paths = {
   deals: '/deals',
   deal: (id = ':id') => `/deals/${id}`,
 
+  commissions: '/commissions',
+
   reports: {
     salesPerformance: '/reports/sales-performance',
     pipelineSummary: '/reports/pipeline-summary',

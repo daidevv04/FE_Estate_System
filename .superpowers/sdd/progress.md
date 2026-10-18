@@ -3,7 +3,7 @@
 ## Kế hoạch: docs/superpowers/plans/2026-10-18-real-estate-document-pdf-generator.md
 
 ## Tasks
-- [ ] Task 1: Backend `crm-service` — DTOs & Service Tổng Hợp Dữ Liệu In Ấn
+- [x] Task 1: Backend `crm-service` — DTOs & Service Tổng Hợp Dữ Liệu In Ấn (Commit `96eee1b`, 2/2 tests pass)
 - [ ] Task 2: Backend `crm-service` — REST Controller `DealDocumentController` (`/deals/{id}/print-data`)
 - [ ] Task 3: Frontend `FE_Estate_System` — API Client & Chuyển Số Thành Chữ Tiếng Việt
 - [ ] Task 4: Frontend `FE_Estate_System` — CSS In Khổ A4 & 3 Templates Văn Bản (Phiếu Cọc, Phiếu Thu, Tiến Độ)

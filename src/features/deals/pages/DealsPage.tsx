@@ -103,8 +103,10 @@ export function DealsPage() {
 
   const dealIds = useMemo(() => rows.map((d) => d.id), [rows])
   const payments = useDealPayments(dealIds)
-  const collectedOf = (id: UUID) =>
-    (payments.data?.[id] ?? []).reduce((sum, p) => sum + (p.amount ?? 0), 0)
+  const collectedOf = (id: UUID) => {
+    const list = Array.isArray(payments.data?.[id]) ? payments.data[id] : []
+    return list.reduce((sum, p) => sum + (p.amount ?? 0), 0)
+  }
 
   const kpi = useMemo(() => {
     const total = rows.reduce((sum, d) => sum + (d.contractValue ?? 0), 0)

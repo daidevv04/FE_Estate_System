@@ -8,7 +8,7 @@
 - [x] Task 3: Frontend `FE_Estate_System` — API Client & Types (`useDebtAgingSummary`, `useRemindPayment`) (Commit `dc42b4f`, typecheck pass)
 - [x] Task 4: Frontend `FE_Estate_System` — Thẻ KPI Dòng Tiền & Công Nợ (`DebtKpiCards.tsx`) (Commit `719c814`, typecheck pass)
 - [x] Task 5: Frontend `FE_Estate_System` — Bảng Danh Sách Công Nợ & Modal Nhắc Nợ (`DebtAgingTable.tsx`, `RemindPaymentModal.tsx`) (Commit `000b720`, typecheck pass)
-- [x] Task 6: Frontend `FE_Estate_System` — Tích Hợp Tab Công Nợ Vào `DealsPage` (Commit pending, typecheck pass)
-- [ ] Task 7: Kiểm Thử Toàn Diện E2E Bằng Playwright
+- [x] Task 6: Frontend `FE_Estate_System` — Tích Hợp Tab Công Nợ Vào `DealsPage` (Commit `3a15b79`, typecheck pass)
+- [x] Task 7: Kiểm Thử Toàn Diện E2E Bằng Playwright (5/5 assertions pass 100%, 5 screenshots captured)
 
-## Trạng Thái: ĐANG TRIỂN KHAI TASK 7 (E2E PLAYWRIGHT AUDIT)
+## Trạng Thái: HOÀN THÀNH TOÀN DIỆN GIAI ĐOẠN 7

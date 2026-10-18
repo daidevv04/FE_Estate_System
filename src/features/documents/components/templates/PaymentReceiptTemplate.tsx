@@ -7,9 +7,9 @@ import '../../styles/documentPrint.css'
 interface Props {
   deal: DealPrintData
   customer?: {
-    fullName?: string
-    phone?: string
-    address?: string
+    fullName?: string | null
+    phone?: string | null
+    address?: string | null
   } | null
   payment?: PaymentPrintDto | null
 }

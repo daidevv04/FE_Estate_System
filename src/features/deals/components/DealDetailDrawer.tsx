@@ -1,5 +1,6 @@
-import { CheckCircleOutlined, CloseCircleOutlined, EditOutlined, FilePdfOutlined, PlusOutlined } from '@ant-design/icons'
+import { CheckCircleOutlined, CloseCircleOutlined, EditOutlined, FilePdfOutlined, PlusOutlined, PrinterOutlined } from '@ant-design/icons'
 import { Button, Card, Descriptions, Empty, Modal, Popconfirm, Progress, Space, Table, Typography } from 'antd'
+import { useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { StatusPill, type StatusTone } from '@/components/common/StatusPill'
@@ -10,6 +11,7 @@ import {
 } from '../api'
 import { DealPaymentScheduleSection } from './DealPaymentScheduleSection'
 import { DealCommissionSection } from '@/features/commissions/components/DealCommissionSection'
+import { type DocumentType, PrintPreviewModal } from '@/features/documents/components/PrintPreviewModal'
 import './DealDetailDrawer.css'
 
 interface Props {
@@ -55,23 +57,45 @@ export function DealDetailDrawer({
   open, deal, customerName, unitLabel, projectName, salesName, payments, collected,
   canApprove, submitting, loadingPayments, onClose, onApprove, onReject, onRecordPayment, onEdit,
 }: Props) {
+  const [printOpen, setPrintOpen] = useState(false)
+  const [printType, setPrintType] = useState<DocumentType>('DEPOSIT')
+  const [printPayId, setPrintPayId] = useState<string | null>(null)
+
   const remaining = Math.max(0, (deal?.contractValue ?? 0) - collected)
   const pct = progressPct(collected, deal?.contractValue ?? null)
 
   const columns: ColumnsType<DealPayment> = [
-    { title: 'Ngày thanh toán', dataIndex: 'paidAt', width: 150, render: (v: string) => formatDateTime(v) },
+    { title: 'Ngày thanh toán', dataIndex: 'paidAt', width: 140, render: (v: string) => formatDateTime(v) },
     {
-      title: 'Số tiền', dataIndex: 'amount', align: 'right', width: 150,
+      title: 'Số tiền', dataIndex: 'amount', align: 'right', width: 140,
       render: (v: number) => <span className="stitch-num" style={{ fontWeight: 600 }}>{formatMoney(v)}</span>,
     },
-    { title: 'Phương thức', dataIndex: 'method', width: 130, render: (v: string | null) => paymentMethodLabel(v) },
+    { title: 'Phương thức', dataIndex: 'method', width: 120, render: (v: string | null) => paymentMethodLabel(v) },
     {
-      title: 'Biên lai', dataIndex: 'receiptUrl', width: 90,
+      title: 'Biên lai', dataIndex: 'receiptUrl', width: 80,
       render: (v: string | null) => (v
         ? <a href={v} target="_blank" rel="noreferrer">Mở</a>
         : <Typography.Text type="secondary">—</Typography.Text>),
     },
     { title: 'Ghi chú', dataIndex: 'note', render: (v: string | null) => v || '—' },
+    {
+      title: 'In phiếu',
+      key: 'print',
+      width: 80,
+      align: 'center',
+      render: (_, r) => (
+        <Button
+          size="small"
+          type="text"
+          icon={<PrinterOutlined style={{ color: '#059669' }} />}
+          onClick={() => {
+            setPrintType('RECEIPT')
+            setPrintPayId(r.id)
+            setPrintOpen(true)
+          }}
+        />
+      ),
+    },
   ]
 
   return (
@@ -83,7 +107,7 @@ export function DealDetailDrawer({
       centered
       destroyOnHidden
       title="Thông tin hợp đồng"
-      footer={deal && <div className="deal-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space><Button onClick={onClose}>Đóng</Button><Button icon={<PlusOutlined />} onClick={onRecordPayment}>Ghi nhận thanh toán</Button><Button type="primary" icon={<EditOutlined />} onClick={onEdit}>Chỉnh sửa</Button></Space></div>}
+      footer={deal && <div className="deal-detail-modal__footer"><Typography.Text>Thông tin được tải mới từ hệ thống CRM.</Typography.Text><Space><Button onClick={onClose}>Đóng</Button><Button icon={<PrinterOutlined />} onClick={() => { setPrintType('DEPOSIT'); setPrintPayId(null); setPrintOpen(true) }}>In hồ sơ & Phiếu cọc</Button><Button icon={<PlusOutlined />} onClick={onRecordPayment}>Ghi nhận thanh toán</Button><Button type="primary" icon={<EditOutlined />} onClick={onEdit}>Chỉnh sửa</Button></Space></div>}
     >
       {!deal ? <Empty description="Không có dữ liệu hợp đồng" /> : (
         <div className="deal-detail-modal__content">
@@ -197,6 +221,18 @@ export function DealDetailDrawer({
             </div>
           </Card>
         </div>
+      )}
+
+      {printOpen && (
+        <PrintPreviewModal
+          open={printOpen}
+          dealId={deal?.id || null}
+          defaultDocType={printType}
+          selectedPaymentId={printPayId}
+          customer={{ fullName: customerName }}
+          salesPersonName={salesName}
+          onClose={() => setPrintOpen(false)}
+        />
       )}
     </Modal>
   )

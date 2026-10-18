@@ -20,12 +20,12 @@ interface Props {
   defaultDocType?: DocumentType
   selectedPaymentId?: string | null
   customer?: {
-    fullName?: string
-    phone?: string
-    idCard?: string
-    idCardDate?: string
-    idCardPlace?: string
-    address?: string
+    fullName?: string | null
+    phone?: string | null
+    idCard?: string | null
+    idCardDate?: string | null
+    idCardPlace?: string | null
+    address?: string | null
   } | null
   salesPersonName?: string
   onClose: () => void

@@ -1,4 +1,4 @@
-import { ArrowLeftOutlined, EditOutlined, FilePdfOutlined, PlusOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, EditOutlined, FilePdfOutlined, PlusOutlined, PrinterOutlined } from '@ant-design/icons'
 import { App, Button, Card, Descriptions, Progress, Result, Skeleton, Space, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
@@ -17,6 +17,7 @@ import { PaymentModal } from '../components/PaymentModal'
 import { DealFormModal } from '../components/DealFormModal'
 import { DealPaymentScheduleSection } from '../components/DealPaymentScheduleSection'
 import { DealCommissionSection } from '@/features/commissions/components/DealCommissionSection'
+import { type DocumentType, PrintPreviewModal } from '@/features/documents/components/PrintPreviewModal'
 import { StatusPill, type StatusTone } from '@/components/common/StatusPill'
 
 const statusTone = (d: Deal): StatusTone => {
@@ -51,6 +52,9 @@ export function DealDetailPage() {
   const { addPayment, update } = useDealMutations()
   const [payOpen, setPayOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [printOpen, setPrintOpen] = useState(false)
+  const [printType, setPrintType] = useState<DocumentType>('DEPOSIT')
+  const [printPayId, setPrintPayId] = useState<string | null>(null)
   const d = deal.data
   const payList = payments.data ?? []
   const collected = payList.reduce((s, p) => s + p.amount, 0)
@@ -69,11 +73,29 @@ export function DealDetailPage() {
   if (deal.isError || !d) return <Result status="warning" title="Không tìm thấy hợp đồng" extra={<Button onClick={() => navigate(paths.deals)}>Về danh sách</Button>} />
   const pct = progressPct(collected, d.contractValue), remaining = Math.max(0, (d.contractValue ?? 0) - collected)
   const payCols: ColumnsType<DealPayment> = [
-    { title: 'Ngày', dataIndex: 'paidAt', width: 150, render: (v: string) => formatDateTime(v) },
-    { title: 'Số tiền', dataIndex: 'amount', align: 'right', width: 150, render: (v: number) => <span className="stitch-num" style={{ fontWeight: 600 }}>{formatMoney(v)}</span> },
-    { title: 'Phương thức', dataIndex: 'method', width: 130, render: (v: string | null) => paymentMethodLabel(v) },
-    { title: 'Biên lai', dataIndex: 'receiptUrl', width: 90, render: (v: string | null) => v ? <a href={v} target="_blank" rel="noreferrer">Mở</a> : '—' },
+    { title: 'Ngày', dataIndex: 'paidAt', width: 140, render: (v: string) => formatDateTime(v) },
+    { title: 'Số tiền', dataIndex: 'amount', align: 'right', width: 140, render: (v: number) => <span className="stitch-num" style={{ fontWeight: 600 }}>{formatMoney(v)}</span> },
+    { title: 'Phương thức', dataIndex: 'method', width: 120, render: (v: string | null) => paymentMethodLabel(v) },
+    { title: 'Biên lai', dataIndex: 'receiptUrl', width: 80, render: (v: string | null) => v ? <a href={v} target="_blank" rel="noreferrer">Mở</a> : '—' },
     { title: 'Ghi chú', dataIndex: 'note', render: (v: string | null) => v || '—' },
+    {
+      title: 'In phiếu',
+      key: 'print',
+      width: 80,
+      align: 'center',
+      render: (_, r) => (
+        <Button
+          size="small"
+          type="text"
+          icon={<PrinterOutlined style={{ color: '#059669' }} />}
+          onClick={() => {
+            setPrintType('RECEIPT')
+            setPrintPayId(r.id)
+            setPrintOpen(true)
+          }}
+        />
+      ),
+    },
   ]
 
   return (
@@ -87,6 +109,7 @@ export function DealDetailPage() {
             <StatusPill tone={payTone(d)} size="sm">{PAYMENT_STATUS_LABEL[d.paymentStatus]}</StatusPill>
           </Space>
           <Space wrap className="page-header__actions">
+            <Button icon={<PrinterOutlined />} onClick={() => { setPrintType('DEPOSIT'); setPrintPayId(null); setPrintOpen(true) }}>In hồ sơ & Phiếu cọc</Button>
             {canEdit && <Button icon={<EditOutlined />} onClick={() => setEditOpen(true)}>Chỉnh sửa</Button>}
             {canApprove && <Button icon={<PlusOutlined />} onClick={() => setPayOpen(true)}>Ghi nhận thanh toán</Button>}
           </Space>
@@ -137,6 +160,17 @@ export function DealDetailPage() {
               onError: (e) => message.error(apiErrorMessage(e)),
             })
           }}
+        />
+      )}
+      {printOpen && (
+        <PrintPreviewModal
+          open={printOpen}
+          dealId={d.id}
+          defaultDocType={printType}
+          selectedPaymentId={printPayId}
+          customer={customer}
+          salesPersonName={salesName}
+          onClose={() => setPrintOpen(false)}
         />
       )}
     </div>

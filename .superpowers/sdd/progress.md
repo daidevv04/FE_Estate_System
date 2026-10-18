@@ -9,7 +9,7 @@
 - [x] Task 4: Frontend `FE_Estate_System` — API Client & React Query Hooks cho Hoa Hồng (Commit `f7b36bc`)
 - [x] Task 5: Frontend `FE_Estate_System` — Trang `/commissions` (4 Thẻ KPIs, Tab Sales, Tab Duyệt Manager, Tab Chính Sách) (Commit `f50145e`)
 - [x] Task 6: Frontend `FE_Estate_System` — Tích Hợp Khối Hoa Hồng Vào Deal Detail Modal & Sidebar Menu (Commit `2b1d61e`)
-- [ ] Task 7: Kiểm Thử Toàn Diện E2E Bằng Playwright
+- [x] Task 7: Kiểm Thử Toàn Diện E2E Bằng Playwright (5/5 kịch bản audit pass 100%)
 
-## Trạng Thái: SẴN SÀNG TRIỂN KHAI
+## Trạng Thái: HOÀN THÀNH TOÀN DIỆN (7/7 TASKS)
 

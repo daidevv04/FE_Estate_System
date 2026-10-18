@@ -43,12 +43,20 @@ import './CommissionsPage.css'
 
 export function CommissionsPage() {
   const user = useAuthStore((s) => s.user)
+  const isAdmin = user?.role === 'ADMIN'
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
 
-  const [activeTab, setActiveTab] = useState('my')
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'all' : 'my')
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
   const [payoutModalMilestone, setPayoutModalMilestone] = useState<DealCommissionMilestone | null>(null)
   const [payoutNote, setPayoutNote] = useState('')
+
+  // Đảm bảo Admin luôn ở tab quản lý chung
+  React.useEffect(() => {
+    if (isAdmin && activeTab === 'my') {
+      setActiveTab('all')
+    }
+  }, [isAdmin, activeTab])
 
   // Queries
   const myQuery = useMyCommissions()
@@ -70,7 +78,7 @@ export function CommissionsPage() {
     }
   }, [projects, selectedProjectId])
 
-  const activeData = activeTab === 'all' && canManage ? allQuery.data : myQuery.data
+  const activeData = (isAdmin || activeTab === 'all') && canManage ? allQuery.data : myQuery.data
   const summary = activeData?.summary ?? {
     totalExpected: 0,
     totalPaid: 0,
@@ -404,28 +412,32 @@ export function CommissionsPage() {
           activeKey={activeTab}
           onChange={setActiveTab}
           items={[
-            {
-              key: 'my',
-              label: (
-                <span>
-                  <UserOutlined />
-                  Hoa hồng của tôi ({commissions.length})
-                </span>
-              ),
-              children: (
-                <Table<DealCommission>
-                  rowKey="id"
-                  columns={salesColumns}
-                  dataSource={commissions}
-                  loading={myQuery.isLoading}
-                  pagination={{ pageSize: 10 }}
-                  expandable={{
-                    expandedRowRender,
-                    defaultExpandAllRows: true,
-                  }}
-                />
-              ),
-            },
+            ...(!isAdmin
+              ? [
+                  {
+                    key: 'my',
+                    label: (
+                      <span>
+                        <UserOutlined />
+                        Hoa hồng của tôi ({commissions.length})
+                      </span>
+                    ),
+                    children: (
+                      <Table<DealCommission>
+                        rowKey="id"
+                        columns={salesColumns}
+                        dataSource={commissions}
+                        loading={myQuery.isLoading}
+                        pagination={{ pageSize: 10 }}
+                        expandable={{
+                          expandedRowRender,
+                          defaultExpandAllRows: true,
+                        }}
+                      />
+                    ),
+                  },
+                ]
+              : []),
             ...(canManage
               ? [
                   {

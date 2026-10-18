@@ -23,6 +23,7 @@ import { ProductsPage } from '@/features/products/pages/ProductsPage'
 import { ProductDetailPage } from '@/features/products/pages/ProductDetailPage'
 import { ProfilePage } from '@/features/profile/pages/ProfilePage'
 import { SalesPerformancePage } from '@/features/reports/pages/SalesPerformancePage'
+import { SalesLeaderboardPage } from '@/features/reports/pages/SalesLeaderboardPage'
 import { PipelineSummaryPage } from '@/features/reports/pages/PipelineSummaryPage'
 import { RevenueReportPage } from '@/features/reports/pages/RevenueReportPage'
 import { ProjectPerformanceReportPage } from '@/features/reports/pages/ProjectPerformanceReportPage'
@@ -83,6 +84,10 @@ export const router = createBrowserRouter([
       {
         path: paths.reports.salesPerformance,
         element: <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><SalesPerformancePage /></ProtectedRoute>,
+      },
+      {
+        path: paths.reports.leaderboard,
+        element: <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER', 'SALES']}><SalesLeaderboardPage /></ProtectedRoute>,
       },
       {
         path: paths.reports.pipelineSummary,

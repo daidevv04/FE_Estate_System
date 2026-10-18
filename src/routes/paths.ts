@@ -39,6 +39,7 @@ export const paths = {
 
   reports: {
     salesPerformance: '/reports/sales-performance',
+    leaderboard: '/reports/leaderboard',
     pipelineSummary: '/reports/pipeline-summary',
     revenue: '/reports/revenue',
     projectPerformance: '/reports/project-performance',

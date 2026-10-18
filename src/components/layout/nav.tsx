@@ -57,6 +57,7 @@ export function buildNav(role?: UserRole): NavGroup[] {
 
   if (canSeeReports) {
     const reportChildren: NavLink[] = [
+      { key: paths.reports.leaderboard, icon: <TrophyOutlined />, label: 'Bảng xếp hạng Sales' },
       { key: paths.reports.salesPerformance, icon: <BarChartOutlined />, label: 'Hiệu suất Sales' },
       { key: paths.reports.pipelineSummary, icon: <FunnelPlotOutlined />, label: 'Tổng quan pipeline' },
     ]

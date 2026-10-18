@@ -13,7 +13,6 @@ import {
   Card,
   Form,
   Input,
-  InputNumber,
   message,
   Modal,
   Popconfirm,
@@ -38,9 +37,8 @@ import {
   useApproveMilestone,
   useMyCommissions,
   usePayoutMilestone,
-  useProjectCommissionPolicy,
-  useUpdateProjectCommissionPolicy,
 } from '../api'
+import { ProjectCommissionPolicyCard } from '../components/ProjectCommissionPolicyCard'
 import './CommissionsPage.css'
 
 export function CommissionsPage() {
@@ -61,7 +59,6 @@ export function CommissionsPage() {
   // Mutations
   const approveMutation = useApproveMilestone()
   const payoutMutation = usePayoutMilestone()
-  const updatePolicyMutation = useUpdateProjectCommissionPolicy()
 
   const projects = projectsQuery.data?.content ?? []
   const deals = dealsQuery.data?.content ?? []
@@ -72,8 +69,6 @@ export function CommissionsPage() {
       setSelectedProjectId(projects[0].id)
     }
   }, [projects, selectedProjectId])
-
-  const policyQuery = useProjectCommissionPolicy(selectedProjectId)
 
   const activeData = activeTab === 'all' && canManage ? allQuery.data : myQuery.data
   const summary = activeData?.summary ?? {
@@ -473,41 +468,8 @@ export function CommissionsPage() {
                           />
                         </div>
 
-                        {policyQuery.data && (
-                          <Form
-                            layout="vertical"
-                            initialValues={{
-                              commissionRate: policyQuery.data.commissionRate,
-                              defaultBonusAmount: policyQuery.data.defaultBonusAmount,
-                              milestoneRules: policyQuery.data.milestoneRules,
-                            }}
-                            onFinish={(vals) => {
-                              if (!selectedProjectId) return
-                              updatePolicyMutation.mutate(
-                                { projectId: selectedProjectId, input: vals },
-                                {
-                                  onSuccess: () => message.success('Đã cập nhật chính sách hoa hồng dự án!'),
-                                  onError: () => message.error('Không thể cập nhật chính sách'),
-                                },
-                              )
-                            }}
-                          >
-                            <Form.Item name="commissionRate" label="Tỷ lệ hoa hồng chuẩn (%)" rules={[{ required: true }]}>
-                              <InputNumber min={0.1} max={50} step={0.1} style={{ width: '100%' }} />
-                            </Form.Item>
-
-                            <Form.Item name="defaultBonusAmount" label="Thưởng nóng mặc định cho mỗi căn (VNĐ)">
-                              <InputNumber min={0} step={1000000} style={{ width: '100%' }} />
-                            </Form.Item>
-
-                            <Form.Item name="milestoneRules" label="Quy tắc mốc giải ngân (JSON)">
-                              <Input.TextArea rows={6} />
-                            </Form.Item>
-
-                            <Button type="primary" htmlType="submit" loading={updatePolicyMutation.isPending}>
-                              Lưu chính sách dự án
-                            </Button>
-                          </Form>
+                        {selectedProjectId && (
+                          <ProjectCommissionPolicyCard projectId={selectedProjectId} canManage={canManage} />
                         )}
                       </div>
                     ),

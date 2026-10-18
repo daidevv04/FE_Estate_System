@@ -1,7 +1,8 @@
-import { ReloadOutlined } from '@ant-design/icons'
+import { CalculatorOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, DatePicker, Form, Input, InputNumber, Modal, Select, Tooltip } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { DiscountCalculatorModal } from '@/features/policies/components/DiscountCalculatorModal'
 import {
   APPROVAL_STATUS_OPTIONS, DEAL_STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, PAYMENT_STATUS_OPTIONS,
   generateContractCode, type Deal, type DealInput, type DealStatus, type PaymentStatus, type UUID,
@@ -52,6 +53,7 @@ export function DealFormModal({
 }: Props) {
   const [form] = Form.useForm<FormValues>()
   const isEdit = Boolean(editing)
+  const [calcOpen, setCalcOpen] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -190,7 +192,20 @@ export function DealFormModal({
         <div style={{ display: 'flex', gap: 12 }}>
           <Form.Item
             name="contractValue"
-            label="Giá trị hợp đồng (đ)"
+            label={
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <span>Giá trị hợp đồng (đ)</span>
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<CalculatorOutlined style={{ color: '#059669' }} />}
+                  style={{ padding: 0, height: 'auto', fontSize: 12, color: '#059669', fontWeight: 600 }}
+                  onClick={() => setCalcOpen(true)}
+                >
+                  Tính chiết khấu chính sách
+                </Button>
+              </div>
+            }
             style={{ flex: 1 }}
             rules={[{ required: true, message: 'Nhập giá trị hợp đồng' }]}
           >
@@ -311,6 +326,22 @@ export function DealFormModal({
           <Input.TextArea id="note" rows={2} placeholder="Điều kiện thanh toán, thoả thuận riêng…" />
         </Form.Item>
       </Form>
+
+      {calcOpen && (
+        <DiscountCalculatorModal
+          open={calcOpen}
+          initialPrice={form.getFieldValue('contractValue') || 3_500_000_000}
+          onClose={() => setCalcOpen(false)}
+          onApply={({ netValue, summaryNote }) => {
+            form.setFieldsValue({
+              contractValue: netValue,
+              depositAmount: Math.round(netValue * 0.1),
+            })
+            const currentNote = form.getFieldValue('note') || ''
+            form.setFieldValue('note', currentNote ? `${currentNote}\n${summaryNote}` : summaryNote)
+          }}
+        />
+      )}
     </Modal>
   )
 }

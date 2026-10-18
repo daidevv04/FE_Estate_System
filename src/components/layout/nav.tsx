@@ -55,20 +55,22 @@ export function buildNav(role?: UserRole): NavGroup[] {
     ] },
   ]
 
+  const reportChildren: NavLink[] = [
+    { key: paths.reports.leaderboard, icon: <TrophyOutlined />, label: 'Bảng xếp hạng Sales' },
+  ]
   if (canSeeReports) {
-    const reportChildren: NavLink[] = [
-      { key: paths.reports.leaderboard, icon: <TrophyOutlined />, label: 'Bảng xếp hạng Sales' },
+    reportChildren.push(
       { key: paths.reports.salesPerformance, icon: <BarChartOutlined />, label: 'Hiệu suất Sales' },
       { key: paths.reports.pipelineSummary, icon: <FunnelPlotOutlined />, label: 'Tổng quan pipeline' },
-    ]
+    )
     if (isAdmin) {
       reportChildren.push(
         { key: paths.reports.revenue, icon: <BarChartOutlined />, label: 'Doanh thu' },
         { key: paths.reports.projectPerformance, icon: <ProjectOutlined />, label: 'Hiệu suất dự án' },
       )
     }
-    groups.push({ key: 'g-reports', label: 'BÁO CÁO', children: reportChildren })
   }
+  groups.push({ key: 'g-reports', label: 'BÁO CÁO', children: reportChildren })
   if (isAdmin || role === 'MANAGER') {
     groups.push({
       key: 'g-system',

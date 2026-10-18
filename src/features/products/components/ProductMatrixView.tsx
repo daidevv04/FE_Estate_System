@@ -24,17 +24,45 @@ interface Props {
 }
 
 /**
- * Trích xuất số tầng từ mã căn hộ hoặc block
- * Ví dụ: RL-A101 -> 1, A1204 -> 12, P-0502 -> 5
+ * Trích xuất số tầng từ mã căn hộ chuẩn BĐS (1 -> 50)
+ * Ví dụ: E2E-A657 -> 6, A1204 -> 12, P-0502 -> 5, cd1 -> 1
+ * Chặn triệt để lỗi parse timestamp (1792086118376) thành tầng 17 tỷ
  */
 export function extractFloor(code: string): number {
-  const digits = code.match(/\d+/g)
-  if (!digits || digits.length === 0) return 1
-  const lastNum = parseInt(digits[digits.length - 1], 10)
-  if (lastNum >= 100) {
-    return Math.floor(lastNum / 100)
+  if (!code) return 1
+
+  // 1. Nếu mã chứa chuỗi số dài >= 5 chữ số (thường là timestamp mock data hoặc ngày tháng)
+  if (/\d{5,}/.test(code)) {
+    const explicitPrefix = code.match(/(?:^|[_-])(?:T|F|FL|Tang)(0?[1-9]|[1-4]\d|50)[_-]/i)
+    if (explicitPrefix) {
+      return parseInt(explicitPrefix[1], 10)
+    }
+    return 1
   }
-  return lastNum || 1
+
+  // 2. Mẫu ký hiệu Tầng rõ ràng: T05-02, F12, FL08, Tang-3
+  const floorPrefixMatch = code.match(/(?:^|[_-])(?:T|F|FL|Tang)[-_]?(0?[1-9]|[1-4]\d|50)(?:[-_]|$)/i)
+  if (floorPrefixMatch) {
+    const fl = parseInt(floorPrefixMatch[1], 10)
+    if (fl >= 1 && fl <= 50) return fl
+  }
+
+  // 3. Mẫu căn hộ chuẩn BĐS Việt Nam: [Block][Tầng 1-2 chữ số][Phòng 2 chữ số]
+  // VD: A657 -> Tầng 6; B1204 -> Tầng 12; E2E-A237 -> Tầng 2; CH-0502 -> Tầng 5
+  const aptMatch = code.match(/(?:^|[A-Za-z_-])(0?[1-9]|[1-4]\d)([0-9]{2})$/)
+  if (aptMatch) {
+    const fl = parseInt(aptMatch[1], 10)
+    if (fl >= 1 && fl <= 50) return fl
+  }
+
+  // 4. Mẫu mã ngắn có số 1-2 chữ số ở đuôi (VD: LK-02 -> 1, cd1 -> 1)
+  const shortNum = code.match(/^[A-Za-z]+(\d{1,2})$/)
+  if (shortNum) {
+    const fl = parseInt(shortNum[1], 10)
+    if (fl >= 1 && fl <= 50) return fl
+  }
+
+  return 1
 }
 
 export function ProductMatrixView({
@@ -55,6 +83,7 @@ export function ProductMatrixView({
   }, [rows])
 
   const [activeBlock, setActiveBlock] = useState<string>('ALL')
+  const [sortOrder, setSortOrder] = useState<'DESC' | 'ASC'>('DESC')
 
   // Sản phẩm thuộc block đang chọn
   const filteredProducts = useMemo(() => {
@@ -72,7 +101,7 @@ export function ProductMatrixView({
     return { total, available, reserved, sold, rate }
   }, [filteredProducts])
 
-  // Nhóm theo Tầng, sắp xếp từ tầng cao nhất xuống tầng thấp nhất (chuẩn kiến trúc BĐS)
+  // Nhóm theo Tầng, sắp xếp theo tùy chọn (Mặc định: Tầng cao nhất lên đầu theo chuẩn mặt cắt đứng)
   const floorMap = useMemo(() => {
     const map = new Map<number, Product[]>()
     filteredProducts.forEach((p) => {
@@ -87,13 +116,15 @@ export function ProductMatrixView({
       list.sort((a, b) => a.code.localeCompare(b.code))
     })
 
-    // Sắp xếp tầng giảm dần (Tầng cao nhất lên đầu)
-    const sortedFloors = Array.from(map.keys()).sort((a, b) => b - a)
+    // Sắp xếp tầng theo chiều người dùng chọn
+    const sortedFloors = Array.from(map.keys()).sort((a, b) =>
+      sortOrder === 'DESC' ? b - a : a - b
+    )
     return sortedFloors.map((fl) => ({
       floor: fl,
       units: map.get(fl) || [],
     }))
-  }, [filteredProducts])
+  }, [filteredProducts, sortOrder])
 
   const renderUnitCard = (product: Product) => {
     const isAvail = product.status === 'AVAILABLE'
@@ -201,6 +232,18 @@ export function ProductMatrixView({
             options={blockOptions}
             value={activeBlock}
             onChange={(v) => setActiveBlock(v as string)}
+          />
+
+          <span style={{ fontWeight: 600, fontSize: 13, color: '#64748b', marginLeft: 8 }}>
+            Thứ tự tầng:
+          </span>
+          <Segmented
+            options={[
+              { label: 'Tầng cao → thấp', value: 'DESC' },
+              { label: 'Tầng thấp → cao', value: 'ASC' },
+            ]}
+            value={sortOrder}
+            onChange={(v) => setSortOrder(v as 'DESC' | 'ASC')}
           />
         </Space>
 

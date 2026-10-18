@@ -1,11 +1,11 @@
 import {
-  ApartmentOutlined, BarcodeOutlined, CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined,
-  DeleteOutlined, DollarOutlined, DownloadOutlined, EditOutlined, EyeOutlined, FilePdfOutlined,
+  ApartmentOutlined, BarcodeOutlined, CalendarOutlined, CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined,
+  DeleteOutlined, DollarOutlined, DownloadOutlined, EditOutlined, EyeOutlined, FilePdfOutlined, FileTextOutlined,
   PlusOutlined, ReloadOutlined, SafetyCertificateOutlined, SearchOutlined, TeamOutlined, UserOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
 import {
-  App, Alert, Avatar, Button, Card, Col, DatePicker, Input, Row, Select, Space, Table,
+  App, Alert, Avatar, Button, Card, Col, DatePicker, Input, Row, Segmented, Select, Space, Table,
   Tag, Tooltip, Typography,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -29,6 +29,10 @@ import { PaymentModal } from '../components/PaymentModal'
 import { StatusPill as Pill, type StatusTone as Tone } from '@/components/common/StatusPill'
 import { KpiCard } from '@/components/common/KpiCard'
 import { notifyDealCreated, notifyDealStatusChanged } from '@/api/notificationEventHelper'
+import { DebtKpiCards } from '@/features/debt/components/DebtKpiCards'
+import { DebtAgingTable } from '@/features/debt/components/DebtAgingTable'
+import { RemindPaymentModal } from '@/features/debt/components/RemindPaymentModal'
+import { useDebtAgingSummary, useRemindPayment, type DebtAgingItem } from '@/features/debt/api'
 
 const DEAL_TONE: Record<string, Tone> = {
   IN_PROGRESS: 'blue', ACTIVE: 'purple', COMPLETED: 'green', CANCELLED: 'gray',
@@ -52,6 +56,10 @@ export function DealsPage() {
   const [detail, setDetail] = useState<Deal | null>(null)
   const [paying, setPaying] = useState<Deal | null>(null)
   const [selected, setSelected] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<'DEALS' | 'DEBT'>('DEALS')
+  const [remindTarget, setRemindTarget] = useState<DebtAgingItem | null>(null)
+  const debtSummary = useDebtAgingSummary()
+  const remindMutation = useRemindPayment()
 
   const serverFilters = useMemo(() => ({
     status: filters.status,
@@ -71,6 +79,8 @@ export function DealsPage() {
   const projectById = useMemo(() => new Map((projects.data?.content ?? []).map((p) => [p.id, p])), [projects.data])
   const staffList = useMemo(() => (Array.isArray(staff.data) ? staff.data : (((staff.data as any)?.content ?? []) as any[])), [staff.data])
   const staffById = useMemo(() => new Map<string, string>(staffList.map((u: any) => [u.id, u.fullName || u.name || ''])), [staffList])
+  const customerMap = useMemo(() => new Map((customers.data?.content ?? []).map((c) => [c.id, { fullName: c.fullName, phone: c.phone }])), [customers.data])
+  const staffMap = useMemo(() => new Map(staffList.map((u: any) => [u.id, { fullName: u.fullName || u.name || '', email: u.email || '' }])), [staffList])
 
   const refs = (deal: Deal) => {
     const lead = leadById.get(deal.leadId)
@@ -485,8 +495,38 @@ export function DealsPage() {
         />
       )}
 
-      {/* 4 thẻ KPI tài chính — số liệu tính trên TOÀN BỘ kết quả lọc, không phải riêng trang hiện tại */}
-      <Row gutter={[16, 16]}>
+      {/* Tab Switcher */}
+      <div style={{ marginBottom: 16 }}>
+        <Segmented
+          size="middle"
+          value={activeTab}
+          onChange={(v) => setActiveTab(v as 'DEALS' | 'DEBT')}
+          options={[
+            { label: 'Danh Sách Hợp Đồng', value: 'DEALS', icon: <FileTextOutlined /> },
+            { label: 'Công Nợ & Dòng Tiền', value: 'DEBT', icon: <ClockCircleOutlined /> },
+          ]}
+        />
+      </div>
+
+      {activeTab === 'DEBT' ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <DebtKpiCards summary={debtSummary.data} loading={debtSummary.isLoading} />
+          <DebtAgingTable
+            items={debtSummary.data?.items ?? []}
+            loading={debtSummary.isLoading}
+            customerMap={customerMap}
+            staffMap={staffMap}
+            onSelectDeal={(dealId) => {
+              const d = (deals.data?.content ?? []).find((x) => x.id === dealId)
+              if (d) setDetail(d)
+            }}
+            onRemind={(item) => setRemindTarget(item)}
+          />
+        </div>
+      ) : (
+        <>
+          {/* 4 thẻ KPI tài chính — số liệu tính trên TOÀN BỘ kết quả lọc, không phải riêng trang hiện tại */}
+          <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} xl={6}>
           <KpiCard
             tone="green"
@@ -759,6 +799,8 @@ export function DealsPage() {
           </span>
         </div>
       </Card>
+      </>
+      )}
 
       <DealFormModal
         open={formOpen}
@@ -845,6 +887,34 @@ export function DealsPage() {
         onRecordPayment={() => { const d = detail; setDetail(null); setPaying(d) }}
         onEdit={() => { const d = detail; setDetail(null); setEditing(d); setFormOpen(true) }}
       />
+
+      {remindTarget && (
+        <RemindPaymentModal
+          open={Boolean(remindTarget)}
+          item={remindTarget}
+          customerName={remindTarget.customerId ? customerMap.get(remindTarget.customerId)?.fullName : undefined}
+          customerPhone={remindTarget.customerId ? customerMap.get(remindTarget.customerId)?.phone || undefined : undefined}
+          salesName={remindTarget.salesId ? staffMap.get(remindTarget.salesId)?.fullName : undefined}
+          salesEmail={remindTarget.salesId ? staffMap.get(remindTarget.salesId)?.email : undefined}
+          submitting={remindMutation.isPending}
+          onClose={() => setRemindTarget(null)}
+          onSubmit={(note) => {
+            remindMutation.mutate(
+              { scheduleId: remindTarget.scheduleId, note },
+              {
+                onSuccess: (res) => {
+                  message.success(res.message || 'Đã gửi thông báo nhắc nộp tiền thành công')
+                  setRemindTarget(null)
+                  void debtSummary.refetch()
+                },
+                onError: (err) => {
+                  message.error(apiErrorMessage(err))
+                },
+              }
+            )
+          }}
+        />
+      )}
     </>
   )
 }

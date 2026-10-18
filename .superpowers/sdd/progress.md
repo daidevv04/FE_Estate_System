@@ -8,7 +8,7 @@
 - [x] Task 3: Backend `crm-service` — REST Controllers & Policy Management (Commit `f1a54dc`)
 - [x] Task 4: Frontend `FE_Estate_System` — API Client & React Query Hooks cho Hoa Hồng (Commit `f7b36bc`)
 - [x] Task 5: Frontend `FE_Estate_System` — Trang `/commissions` (4 Thẻ KPIs, Tab Sales, Tab Duyệt Manager, Tab Chính Sách) (Commit `f50145e`)
-- [ ] Task 6: Frontend `FE_Estate_System` — Tích Hợp Khối Hoa Hồng Vào Deal Detail Modal & Sidebar Menu
+- [x] Task 6: Frontend `FE_Estate_System` — Tích Hợp Khối Hoa Hồng Vào Deal Detail Modal & Sidebar Menu (Commit `2b1d61e`)
 - [ ] Task 7: Kiểm Thử Toàn Diện E2E Bằng Playwright
 
 ## Trạng Thái: SẴN SÀNG TRIỂN KHAI

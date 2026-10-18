@@ -4,7 +4,7 @@
 
 ## Tasks
 - [x] Task 1: Backend `crm-service` — Entities, Enums & Repositories cho `deal_commissions`, `deal_commission_milestones`, `project_commission_policies` (Commit `3c73b31`)
-- [ ] Task 2: Backend `crm-service` — Logic Tự Động Đối Soát Mốc Giải Ngân & Unit Tests
+- [x] Task 2: Backend `crm-service` — Logic Tự Động Đối Soát Mốc Giải Ngân & Unit Tests (Commit `d1674ac`, 3/3 unit tests pass)
 - [ ] Task 3: Backend `crm-service` — REST Controllers & Policy Management
 - [ ] Task 4: Frontend `FE_Estate_System` — API Client & React Query Hooks cho Hoa Hồng
 - [ ] Task 5: Frontend `FE_Estate_System` — Trang `/commissions` (4 Thẻ KPIs, Tab Sales, Tab Duyệt Manager, Tab Chính Sách)

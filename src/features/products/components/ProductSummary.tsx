@@ -32,9 +32,9 @@ export function ProductSummary({ total, counts }: Props) {
   const pct = (n: number) => (total > 0 ? Math.round((n / total) * 1000) / 10 : 0)
   const items: Item[] = [
     { label: 'TỔNG SẢN PHẨM', value: total, percent: 100, caption: 'Toàn bộ bảng hàng trên hệ thống', icon: <AppstoreOutlined />, color: t.colorBrand, bg: t.colorSurfaceContainer, fg: t.colorBrand },
-    { label: 'CÒN TRỐNG (AVAILABLE)', value: counts.AVAILABLE, percent: pct(counts.AVAILABLE), caption: 'Sẵn sàng mở bán & giao dịch', icon: <HomeOutlined />, color: t.colorSuccess, bg: t.colorSuccessBg, fg: t.colorSuccessText },
-    { label: 'ĐANG GIỮ CHỖ (RESERVED)', value: counts.RESERVED, percent: pct(counts.RESERVED), caption: 'Đang rắp cọc & giữ chỗ 24h', icon: <ClockCircleOutlined />, color: t.colorWarningText, bg: t.colorAccentBg, fg: t.colorWarningText },
-    { label: 'ĐÃ BÁN (SOLD)', value: counts.SOLD, percent: pct(counts.SOLD), caption: 'Đã vào hợp đồng & bàn giao', icon: <CheckCircleOutlined />, color: '#0F766E', bg: t.colorTealBg, fg: t.colorTeal },
+    { label: 'CÒN TRỐNG (AVAILABLE)', value: counts?.AVAILABLE ?? 0, percent: pct(counts?.AVAILABLE ?? 0), caption: 'Sẵn sàng mở bán & giao dịch', icon: <HomeOutlined />, color: t.colorSuccess, bg: t.colorSuccessBg, fg: t.colorSuccessText },
+    { label: 'ĐANG GIỮ CHỖ (RESERVED)', value: counts?.RESERVED ?? 0, percent: pct(counts?.RESERVED ?? 0), caption: 'Đang rắp cọc & giữ chỗ 24h', icon: <ClockCircleOutlined />, color: t.colorWarningText, bg: t.colorAccentBg, fg: t.colorWarningText },
+    { label: 'ĐÃ BÁN (SOLD)', value: counts?.SOLD ?? 0, percent: pct(counts?.SOLD ?? 0), caption: 'Đã vào hợp đồng & bàn giao', icon: <CheckCircleOutlined />, color: '#0F766E', bg: t.colorTealBg, fg: t.colorTeal },
   ]
   return (
     <Row gutter={[16, 16]}>

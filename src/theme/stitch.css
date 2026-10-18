@@ -238,7 +238,7 @@ h1, h2, h3, h4, h5,
   font-feature-settings: 'tnum' 1;
 }
 .anticon { font-family: anticon !important; }
-.ant-btn { min-height: 40px; padding-inline: 14px; border-width: 1px; box-shadow: none; transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, border-color .16s ease; }
+.ant-btn { min-height: 44px; padding-inline: 14px; border-width: 1px; box-shadow: none; transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, border-color .16s ease; }
 .ant-btn:not(:disabled):not(.ant-btn-text):hover { transform: translateY(-1px); box-shadow: 0 8px 16px -12px rgba(0, 107, 44, .45); }
 .ant-btn-primary { box-shadow: 0 8px 16px -12px rgba(0, 107, 44, .72); }
 .ant-btn-text { border-radius: 10px; }

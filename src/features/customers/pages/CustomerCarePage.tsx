@@ -6,7 +6,6 @@ import {
   MailOutlined,
   MessageOutlined,
   PhoneOutlined,
-  PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
   TableOutlined,
@@ -17,13 +16,10 @@ import {
   App,
   Button,
   Card,
-  Col,
+  DatePicker,
   Empty,
-  Form,
   Input,
-  Modal,
   Popconfirm,
-  Row,
   Segmented,
   Select,
   Space,
@@ -59,6 +55,13 @@ import './CustomerCarePage.css'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
+
+const DATE_PRESETS: { label: string; value: [dayjs.Dayjs, dayjs.Dayjs] }[] = [
+  { label: 'Hôm nay', value: [dayjs().startOf('day'), dayjs().endOf('day')] },
+  { label: '7 ngày qua', value: [dayjs().subtract(7, 'day').startOf('day'), dayjs().endOf('day')] },
+  { label: '30 ngày qua', value: [dayjs().subtract(30, 'day').startOf('day'), dayjs().endOf('day')] },
+  { label: 'Tháng này', value: [dayjs().startOf('month'), dayjs().endOf('month')] },
+]
 
 const CARE_CONFIG: Record<
   CareType,
@@ -99,24 +102,19 @@ export function CustomerCarePage() {
   const [keyword, setKeyword] = useState('')
   const [selectedType, setSelectedType] = useState<CareType | undefined>(undefined)
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | undefined>(undefined)
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(undefined)
+  const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null)
   const [viewMode, setViewMode] = useState<'table' | 'timeline'>('table')
 
   // Modals state
-  const [createModalOpen, setCreateModalOpen] = useState(false)
   const [detailCustomerId, setDetailCustomerId] = useState<string | undefined>(undefined)
-
-  const [form] = Form.useForm()
 
   // Queries
   const staffQuery = useStaff()
   const customersQuery = useCustomers()
-  const caresQuery = useAllCustomerCares({
-    keyword: keyword.trim() || undefined,
-    type: selectedType,
-    ownerId: selectedOwnerId,
-  })
+  const caresQuery = useAllCustomerCares({ size: 1000 })
 
-  const { create: createCare, remove: removeCare } = useCareMutations()
+  const { remove: removeCare } = useCareMutations()
 
   const allCares = caresQuery.data?.content ?? []
   const rawStaff = staffQuery.data
@@ -125,8 +123,51 @@ export function CustomerCarePage() {
     : ((rawStaff as unknown as { content?: StaffUser[] })?.content ?? [])
   const customerList = customersQuery.data?.content ?? []
 
-  const staffName = (uid: string) =>
-    staffList.find((s) => s.id === uid)?.fullName ?? (uid === user?.id ? 'Tôi' : uid.slice(0, 8))
+  const staffName = (uid?: string | null) => {
+    if (!uid) return 'Chưa phân công'
+    return staffList.find((s) => s.id === uid)?.fullName ?? (uid === user?.id ? 'Tôi' : (typeof uid === 'string' ? uid.slice(0, 8) : '—'))
+  }
+
+  // Filtered care logs
+  const filteredCares = useMemo(() => {
+    let list = allCares
+    const kw = keyword.trim().toLowerCase()
+    if (kw) {
+      list = list.filter((c) => {
+        const found = customerList.find((cust) => cust.id === c.customerId)
+        const name = (c.customerName || found?.fullName || '').toLowerCase()
+        const phone = (c.customerPhone || found?.phone || '').toLowerCase()
+        const code = (found ? customerCode(found) : '').toLowerCase()
+        const content = (c.content || '').toLowerCase()
+        const staff = staffName(c.createdBy).toLowerCase()
+        return (
+          name.includes(kw) ||
+          phone.includes(kw) ||
+          code.includes(kw) ||
+          content.includes(kw) ||
+          staff.includes(kw)
+        )
+      })
+    }
+    if (selectedType) {
+      list = list.filter((c) => c.type === selectedType)
+    }
+    if (selectedOwnerId) {
+      list = list.filter((c) => c.createdBy === selectedOwnerId)
+    }
+    if (selectedCustomerId) {
+      list = list.filter((c) => c.customerId === selectedCustomerId)
+    }
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const start = dateRange[0].startOf('day').valueOf()
+      const end = dateRange[1].endOf('day').valueOf()
+      list = list.filter((c) => {
+        const t = dayjs(c.createdAt).valueOf()
+        return t >= start && t <= end
+      })
+    }
+    return list
+  }, [allCares, keyword, selectedType, selectedOwnerId, selectedCustomerId, dateRange, customerList, staffList, user?.id])
 
   // KPI calculations
   const kpis = useMemo(() => {
@@ -134,38 +175,36 @@ export function CustomerCarePage() {
     let meeting = 0
     let email = 0
     let note = 0
-    allCares.forEach((item) => {
+    filteredCares.forEach((item) => {
       if (item.type === 'CALL') call++
       else if (item.type === 'MEETING') meeting++
       else if (item.type === 'EMAIL') email++
       else if (item.type === 'NOTE') note++
     })
     return {
-      total: allCares.length,
+      total: filteredCares.length,
       call,
       meeting,
       email,
       note,
     }
-  }, [allCares])
+  }, [filteredCares])
 
-  const handleCreateSubmit = async () => {
-    try {
-      const values = await form.validateFields()
-      await createCare.mutateAsync({
-        targetCustomerId: values.customerId,
-        type: values.type,
-        content: values.content,
-      })
-      message.success('Đã lưu nhật ký chăm sóc thành công')
-      setCreateModalOpen(false)
-      form.resetFields()
-      void caresQuery.refetch()
-    } catch (err: unknown) {
-      if ((err as { errorFields?: unknown })?.errorFields) return
-      message.error(apiErrorMessage(err))
-    }
+  const handleClearFilters = () => {
+    setKeyword('')
+    setSelectedType(undefined)
+    setSelectedOwnerId(undefined)
+    setSelectedCustomerId(undefined)
+    setDateRange(null)
   }
+
+  const hasFilter = Boolean(
+    keyword ||
+      selectedType ||
+      selectedOwnerId ||
+      selectedCustomerId ||
+      (dateRange && (dateRange[0] || dateRange[1]))
+  )
 
   const handleDeleteCare = (care: CustomerCare) => {
     removeCare.mutate(
@@ -180,8 +219,8 @@ export function CustomerCarePage() {
     )
   }
 
-  const canDelete = (createdBy: string) =>
-    user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.id === createdBy
+  const canDelete = (createdBy?: string | null) =>
+    Boolean(user?.role === 'ADMIN' || user?.role === 'MANAGER' || (createdBy && user?.id === createdBy))
 
   // Table columns
   const columns: ColumnsType<CustomerCare> = [
@@ -265,35 +304,41 @@ export function CustomerCarePage() {
       width: 160,
       render: (uid: string) => (
         <Space size={6}>
-          <UserOutlined style={{ color: '#94a3b8' }} />
-          <span style={{ fontSize: 13, fontWeight: 500 }}>{staffName(uid)}</span>
+          <UserOutlined style={{ color: '#64748b', fontSize: 12 }} />
+          <span style={{ fontSize: 13, color: '#334155' }}>{staffName(uid)}</span>
         </Space>
       ),
     },
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 100,
+      width: 90,
       align: 'center',
-      render: (_, r) => (
-        <Space size={4}>
-          <Tooltip title="Xem chi tiết khách hàng">
+      render: (_, record) => (
+        <Space size={8}>
+          <Tooltip title="Xem thông tin khách hàng">
             <Button
               type="text"
               size="small"
               icon={<EyeOutlined />}
-              onClick={() => setDetailCustomerId(r.customerId)}
+              onClick={() => setDetailCustomerId(record.customerId)}
             />
           </Tooltip>
-          {canDelete(r.createdBy) && (
+          {canDelete(record.createdBy) && (
             <Popconfirm
               title="Xóa ghi nhận này?"
+              description="Hành động này không thể hoàn tác"
               okText="Xóa"
               cancelText="Hủy"
               okButtonProps={{ danger: true }}
-              onConfirm={() => handleDeleteCare(r)}
+              onConfirm={() => handleDeleteCare(record)}
             >
-              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+              />
             </Popconfirm>
           )}
         </Space>
@@ -307,124 +352,138 @@ export function CustomerCarePage() {
         title="Nhật ký chăm sóc khách hàng"
         meta="Quản lý và theo dõi toàn diện tiến trình tư vấn, cuộc gọi và tương tác của Sales với khách hàng"
         actions={
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => void caresQuery.refetch()}>
-              Làm mới
-            </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setCreateModalOpen(true)}
-              style={{
-                background: '#059669',
-                borderColor: '#059669',
-                fontWeight: 600,
-                borderRadius: 8,
-              }}
-            >
-              Ghi nhận chăm sóc
-            </Button>
-          </Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => void caresQuery.refetch()}
+            loading={caresQuery.isFetching}
+          >
+            Làm mới
+          </Button>
         }
       />
 
       {/* KPI Section */}
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={8} md={6} lg={4} xl={4} style={{ flex: '1 1 200px' }}>
-          <KpiCard
-            label="Tổng lượt tương tác"
-            value={kpis.total}
-            icon={<HistoryOutlined />}
-            tone="green"
-            loading={caresQuery.isLoading}
-          />
-        </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={4} style={{ flex: '1 1 200px' }}>
-          <KpiCard
-            label="Cuộc gọi tư vấn"
-            value={kpis.call}
-            icon={<PhoneOutlined />}
-            tone="blue"
-            loading={caresQuery.isLoading}
-          />
-        </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={4} style={{ flex: '1 1 200px' }}>
-          <KpiCard
-            label="Cuộc hẹn & Gặp mặt"
-            value={kpis.meeting}
-            icon={<CalendarOutlined />}
-            tone="green"
-            loading={caresQuery.isLoading}
-          />
-        </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={4} style={{ flex: '1 1 200px' }}>
-          <KpiCard
-            label="Email chăm sóc"
-            value={kpis.email}
-            icon={<MailOutlined />}
-            tone="purple"
-            loading={caresQuery.isLoading}
-          />
-        </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={4} style={{ flex: '1 1 200px' }}>
-          <KpiCard
-            label="Ghi chú & Phản hồi"
-            value={kpis.note}
-            icon={<MessageOutlined />}
-            tone="amber"
-            loading={caresQuery.isLoading}
-          />
-        </Col>
-      </Row>
+      <div className="customer-care-page__kpis">
+        <KpiCard
+          label="Tổng lượt tương tác"
+          value={kpis.total}
+          icon={<HistoryOutlined />}
+          tone="green"
+          loading={caresQuery.isLoading}
+        />
+        <KpiCard
+          label="Cuộc gọi tư vấn"
+          value={kpis.call}
+          icon={<PhoneOutlined />}
+          tone="blue"
+          loading={caresQuery.isLoading}
+        />
+        <KpiCard
+          label="Cuộc hẹn & Gặp mặt"
+          value={kpis.meeting}
+          icon={<CalendarOutlined />}
+          tone="green"
+          loading={caresQuery.isLoading}
+        />
+        <KpiCard
+          label="Email chăm sóc"
+          value={kpis.email}
+          icon={<MailOutlined />}
+          tone="purple"
+          loading={caresQuery.isLoading}
+        />
+        <KpiCard
+          label="Ghi chú & Phản hồi"
+          value={kpis.note}
+          icon={<MessageOutlined />}
+          tone="amber"
+          loading={caresQuery.isLoading}
+        />
+      </div>
 
       {/* Filter Card */}
-      <Card className="stitch-card" variant="borderless" styles={{ body: { padding: '14px 18px' } }}>
-        <div className="customer-care-page__filters">
-          <div className="customer-care-page__filters-left">
-            <Input.Search
-              placeholder="Tìm theo tên khách, SĐT, nội dung..."
-              allowClear
-              onSearch={(v) => setKeyword(v)}
-              style={{ width: 280 }}
-              prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
-            />
+      <Card className="stitch-card crm-filter-card" variant="borderless" styles={{ body: { padding: '12px 16px' } }}>
+        <div className="crm-filter-bar">
+          <Input
+            allowClear
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+            placeholder="Tìm theo tên khách, SĐT, nội dung..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ flex: '1.8 1 200px', minWidth: 180 }}
+          />
 
+          <Select
+            placeholder="Tất cả hình thức"
+            allowClear
+            value={selectedType}
+            onChange={(val) => setSelectedType(val)}
+            style={{ flex: '1 1 140px', minWidth: 130 }}
+            options={[
+              { value: undefined, label: 'Tất cả hình thức' },
+              ...Object.entries(CARE_TYPE_LABEL).map(([val, label]) => ({
+                value: val,
+                label: (
+                  <Space size={6}>
+                    {CARE_CONFIG[val as CareType]?.icon}
+                    <span>{label}</span>
+                  </Space>
+                ),
+              })),
+            ]}
+          />
+
+          {isManagerOrAdmin && (
             <Select
-              placeholder="Tất cả hình thức"
+              placeholder="Tất cả nhân sự"
               allowClear
-              value={selectedType}
-              onChange={(val) => setSelectedType(val)}
-              style={{ width: 170 }}
-              options={[
-                { value: undefined, label: 'Tất cả hình thức' },
-                ...Object.entries(CARE_TYPE_LABEL).map(([val, label]) => ({
-                  value: val,
-                  label: (
-                    <Space size={6}>
-                      {CARE_CONFIG[val as CareType]?.icon}
-                      <span>{label}</span>
-                    </Space>
-                  ),
-                })),
-              ]}
+              showSearch
+              optionFilterProp="label"
+              value={selectedOwnerId}
+              onChange={(val) => setSelectedOwnerId(val)}
+              style={{ flex: '1.2 1 160px', minWidth: 150 }}
+              options={staffList.map((s) => ({
+                value: s.id,
+                label: `${s.fullName} (${s.role})`,
+              }))}
             />
+          )}
 
-            {isManagerOrAdmin && (
-              <Select
-                placeholder="Lọc theo nhân sự phụ trách"
-                allowClear
-                value={selectedOwnerId}
-                onChange={(val) => setSelectedOwnerId(val)}
-                style={{ width: 220 }}
-                options={staffList.map((s) => ({
-                  value: s.id,
-                  label: `${s.fullName} (${s.role})`,
-                }))}
-              />
-            )}
-          </div>
+          <Select
+            placeholder="Tất cả khách hàng"
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            value={selectedCustomerId}
+            onChange={(val) => setSelectedCustomerId(val)}
+            style={{ flex: '1.2 1 180px', minWidth: 160 }}
+            options={customerList.map((c) => ({
+              value: c.id,
+              label: `${c.fullName}${c.phone ? ' - ' + c.phone : ''}`,
+            }))}
+          />
 
-          <div className="customer-care-page__filters-right">
+          <DatePicker.RangePicker
+            value={dateRange}
+            onChange={(val) => setDateRange(val as [dayjs.Dayjs | null, dayjs.Dayjs | null] | null)}
+            format="DD/MM/YYYY"
+            placeholder={['Từ ngày', 'Đến ngày']}
+            presets={DATE_PRESETS}
+            allowClear
+            style={{ flex: '1.5 1 230px', minWidth: 210 }}
+          />
+
+          {hasFilter && (
+            <Button
+              className="crm-filter-clear-btn"
+              icon={<ReloadOutlined />}
+              onClick={handleClearFilters}
+            >
+              Xoá lọc
+            </Button>
+          )}
+
+          <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
             <Segmented
               value={viewMode}
               onChange={(val) => setViewMode(val as 'table' | 'timeline')}
@@ -442,29 +501,26 @@ export function CustomerCarePage() {
         {viewMode === 'table' ? (
           <Table<CustomerCare>
             columns={columns}
-            dataSource={allCares}
+            dataSource={filteredCares}
             rowKey="id"
             loading={caresQuery.isLoading}
             pagination={{
-              pageSize: 15,
-              showTotal: (total) => `Tổng cộng ${total} lượt chăm sóc`,
+              defaultPageSize: 20,
+              pageSizeOptions: [10, 20, 50, 100],
               showSizeChanger: true,
-              pageSizeOptions: ['15', '30', '50'],
+              showTotal: (total, range) =>
+                `Hiển thị ${range[0]} - ${range[1]} trong tổng số ${total} lượt chăm sóc`,
             }}
             locale={{
               emptyText: (
                 <Empty
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description="Chưa có dữ liệu nhật ký chăm sóc khách hàng"
-                >
-                  <Button
-                    type="dashed"
-                    icon={<PlusOutlined />}
-                    onClick={() => setCreateModalOpen(true)}
-                  >
-                    Ghi nhận ngay
-                  </Button>
-                </Empty>
+                  description={
+                    hasFilter
+                      ? 'Không có nhật ký chăm sóc phù hợp với bộ lọc'
+                      : 'Chưa có dữ liệu nhật ký chăm sóc khách hàng'
+                  }
+                />
               ),
             }}
           />
@@ -474,7 +530,7 @@ export function CustomerCarePage() {
               <div style={{ padding: 24 }}>
                 <Typography.Text type="secondary">Đang tải dòng thời gian...</Typography.Text>
               </div>
-            ) : allCares.length === 0 ? (
+            ) : filteredCares.length === 0 ? (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
                 description="Không có nhật ký chăm sóc phù hợp với bộ lọc"
@@ -482,7 +538,7 @@ export function CustomerCarePage() {
               />
             ) : (
               <Timeline
-                items={allCares.map((item) => {
+                items={filteredCares.map((item) => {
                   const cfg = CARE_CONFIG[item.type]
                   const found = customerList.find((c) => c.id === item.customerId)
                   const name = item.customerName || found?.fullName || 'Khách hàng'
@@ -517,19 +573,14 @@ export function CustomerCarePage() {
                             >
                               {name}
                             </span>
-                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                              ({phone})
-                            </Typography.Text>
+                            <span style={{ fontSize: 12, color: '#64748b' }}>
+                              {phone} {found ? `· ${customerCode(found)}` : ''}
+                            </span>
                           </Space>
-                          <Space size={8}>
-                            <Tooltip title={dayjs(item.createdAt).format('DD/MM/YYYY HH:mm')}>
-                              <span style={{ fontSize: 12, color: '#64748b' }}>
-                                {dayjs(item.createdAt).fromNow()}
-                              </span>
-                            </Tooltip>
-                            <Typography.Text strong style={{ fontSize: 12 }}>
-                              · {staffName(item.createdBy)}
-                            </Typography.Text>
+                          <Space size={12}>
+                            <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                              {formatDateTime(item.createdAt)}
+                            </span>
                             {canDelete(item.createdBy) && (
                               <Popconfirm
                                 title="Xóa ghi nhận này?"
@@ -542,12 +593,14 @@ export function CustomerCarePage() {
                                   type="text"
                                   size="small"
                                   danger
-                                  icon={<DeleteOutlined />}
-                                  style={{ padding: '0 4px', height: 20 }}
+                                  icon={<DeleteOutlined style={{ fontSize: 12 }} />}
                                 />
                               </Popconfirm>
                             )}
                           </Space>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
+                          Nhân sự: <strong>{staffName(item.createdBy)}</strong>
                         </div>
                         <div style={{ fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap', color: '#1e293b' }}>
                           {item.content}
@@ -561,80 +614,6 @@ export function CustomerCarePage() {
           </div>
         )}
       </Card>
-
-      {/* Modal Tạo Ghi Nhận Mới */}
-      <Modal
-        open={createModalOpen}
-        title="Ghi nhận hoạt động chăm sóc khách hàng"
-        okText="Lưu ghi nhận"
-        cancelText="Hủy"
-        confirmLoading={createCare.isPending}
-        onOk={handleCreateSubmit}
-        onCancel={() => {
-          setCreateModalOpen(false)
-          form.resetFields()
-        }}
-        width={560}
-        centered
-        destroyOnHidden
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{ type: 'CALL' }}
-          style={{ marginTop: 16 }}
-        >
-          <Form.Item
-            name="customerId"
-            label="Khách hàng tiếp nhận"
-            rules={[{ required: true, message: 'Vui lòng chọn khách hàng' }]}
-          >
-            <Select
-              showSearch
-              placeholder="Chọn khách hàng phụ trách..."
-              optionFilterProp="label"
-              options={customerList.map((c) => ({
-                value: c.id,
-                label: `${c.fullName} - ${c.phone ?? 'Chưa có SĐT'} (${customerCode(c)})`,
-              }))}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="type"
-            label="Hình thức tương tác"
-            rules={[{ required: true, message: 'Vui lòng chọn hình thức' }]}
-          >
-            <Select
-              options={Object.entries(CARE_TYPE_LABEL).map(([val, label]) => ({
-                value: val,
-                label: (
-                  <Space>
-                    {CARE_CONFIG[val as CareType]?.icon}
-                    <span>{label}</span>
-                  </Space>
-                ),
-              }))}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="content"
-            label="Nội dung chăm sóc / Phản hồi khách hàng"
-            rules={[
-              { required: true, message: 'Vui lòng nhập nội dung chăm sóc' },
-              { min: 5, message: 'Nội dung tối thiểu 5 ký tự' },
-            ]}
-          >
-            <Input.TextArea
-              rows={4}
-              maxLength={2000}
-              showCount
-              placeholder="Nhập chi tiết cuộc gọi, nhu cầu tư vấn hoặc các cam kết đã thảo luận với khách hàng..."
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {/* Modal Chi Tiết Khách Hàng */}
       {detailCustomerId && (

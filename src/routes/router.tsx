@@ -56,6 +56,9 @@ export const router = createBrowserRouter([
       { path: paths.search, element: <SearchPage /> },
 
       { path: paths.customers, element: <CustomersPage /> },
+      { path: '/customer_cares', element: <Navigate to={paths.customerCares} replace /> },
+      { path: '/customer-care', element: <Navigate to={paths.customerCares} replace /> },
+      { path: '/customer_care', element: <Navigate to={paths.customerCares} replace /> },
       {
         path: paths.customerCares,
         element: (
@@ -114,6 +117,7 @@ export const router = createBrowserRouter([
       },
       { path: paths.profile, element: <ProfilePage /> },
       { path: paths.security, element: ph('Bảo mật 2FA', '9.6') },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 

@@ -10,6 +10,8 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { api } from '@/api/client'
 import { paths } from '@/routes/paths'
 
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -33,6 +35,7 @@ const DATE = 'DD/MM/YYYY'
 const hhmm = (v: string) => dayjs(v).format('HH:mm')
 
 export function AppointmentsPage() {
+  const qc = useQueryClient()
   const { message, modal } = App.useApp()
   const user = useAuthStore((s) => s.user)
   const canViewAll = user?.role === 'ADMIN' || user?.role === 'MANAGER'
@@ -130,8 +133,19 @@ export function AppointmentsPage() {
       return
     }
     create.mutate(body, {
-      onSuccess: () => {
+      onSuccess: async () => {
         message.success('Đã tạo lịch hẹn mới')
+        if (body.customerId) {
+          try {
+            await api.post(`/customers/${body.customerId}/cares`, {
+              type: 'MEETING',
+              content: `[LỊCH HẸN GẶP - ${dayjs(body.startTime).format('DD/MM/YYYY HH:mm')}] Tiêu đề: ${body.title}`,
+            })
+            void qc.invalidateQueries({ queryKey: ['customer-cares'] })
+          } catch {
+            // bỏ qua nếu log phụ thất bại
+          }
+        }
         closeForm()
         setWeekStart(startOfWeek(dayjs(body.startTime)))
       },
@@ -141,7 +155,21 @@ export function AppointmentsPage() {
 
   const setStatusQuick = (a: Appointment, next: AppointmentStatus, doneMsg: string) =>
     update.mutate({ id: a.id, body: { status: next } }, {
-      onSuccess: () => { message.success(doneMsg); setDetail(null) },
+      onSuccess: async () => {
+        message.success(doneMsg)
+        if (next === 'DONE' && a.customerId) {
+          try {
+            await api.post(`/customers/${a.customerId}/cares`, {
+              type: 'MEETING',
+              content: `[HOÀN THÀNH CUỘC HẸN] Tiêu đề: ${a.title} - Thời gian: ${dayjs(a.startTime).format('DD/MM/YYYY HH:mm')}`,
+            })
+            void qc.invalidateQueries({ queryKey: ['customer-cares'] })
+          } catch {
+            // bỏ qua nếu log phụ thất bại
+          }
+        }
+        setDetail(null)
+      },
       onError,
     })
 

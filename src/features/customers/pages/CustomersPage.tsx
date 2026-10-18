@@ -1,13 +1,14 @@
 import {
   CalendarOutlined, CheckCircleOutlined, CloudUploadOutlined, CompassOutlined, DeleteOutlined,
-  DownloadOutlined, EditOutlined, EyeOutlined, MailOutlined, PauseCircleOutlined, PhoneOutlined, PlusOutlined,
-  ReloadOutlined, SearchOutlined, ShareAltOutlined, StarOutlined, TeamOutlined, UserOutlined,
+  DownloadOutlined, EditOutlined, EyeOutlined, MailOutlined, MessageOutlined, PauseCircleOutlined, PhoneOutlined, PlusOutlined,
+  ReloadOutlined, SaveOutlined, SearchOutlined, ShareAltOutlined, StarOutlined, TeamOutlined, UserOutlined,
   UserSwitchOutlined,
 } from '@ant-design/icons'
-import { Alert, App, Button, Card, Col, Input, Modal, Row, Select, Table, Tooltip } from 'antd'
+import { Alert, App, Button, Card, Col, Input, Modal, Popover, Row, Select, Space, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs from 'dayjs'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { paths } from '@/routes/paths'
@@ -16,12 +17,14 @@ import { useAuthStore } from '@/store/authStore'
 import { tokens as t } from '@/theme/tokens'
 import {
   CUSTOMER_STATUS, DEMAND_TYPE, apiErrorMessage, customerCode, demandLabel, statusLabel,
-  useCustomerMutations, useCustomers, useMyManagedUserIds, useStaff,
+  useAllCustomerCares, useCustomerMutations, useCustomers, useMyManagedUserIds, useStaff,
   type Customer, type CustomerInput, type CustomerStatus, type DemandType,
 } from '../api'
 import { CustomerFormModal } from '../components/CustomerFormModal'
 import { CustomerDetailModal } from '../components/CustomerDetailModal'
 import { SendCustomerEmailModal } from '../components/SendCustomerEmailModal'
+import { QuickCallActionModal } from '../components/QuickCallActionModal'
+import { CustomerMeetingModal } from '../components/CustomerMeetingModal'
 import { StatusPill as Pill, type StatusTone as Tone } from '@/components/common/StatusPill'
 import { KpiCard } from '@/components/common/KpiCard'
 import { SelectableTableContainer } from '@/components/common/SelectableTableContainer'
@@ -70,6 +73,148 @@ function parseCsv(text: string): CustomerInput[] {
   }).filter((r) => r.fullName)
 }
 
+function SalesNextActionCell({
+  customer,
+  initialNote,
+  onSaved,
+}: {
+  customer: Customer
+  initialNote: string
+  onSaved: () => void
+}) {
+  const qc = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [note, setNote] = useState(initialNote)
+  const [loading, setLoading] = useState(false)
+  const { message } = App.useApp()
+
+  useEffect(() => {
+    setNote(initialNote)
+  }, [initialNote])
+
+  const handleSave = async () => {
+    if (!note.trim()) {
+      message.warning('Vui lòng nhập nội dung ghi chú kế hoạch cần làm')
+      return
+    }
+    setLoading(true)
+    try {
+      await api.post(`/customers/${customer.id}/cares`, {
+        type: 'NOTE',
+        content: `[Kế hoạch tiếp theo] ${note.trim()}`,
+      })
+      await qc.invalidateQueries({ queryKey: ['customer-cares'] })
+      message.success(`Đã lưu kế hoạch tiếp theo cho khách ${customer.fullName}`)
+      setOpen(false)
+      onSaved()
+    } catch (e) {
+      message.error(apiErrorMessage(e))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const cleanNote = initialNote.replace(/^\[Kế hoạch tiếp theo\]\s*/, '')
+
+  const content = (
+    <div
+      style={{ width: 310, padding: '4px 0' }}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 13, color: '#1e293b' }}>
+        Kế hoạch / Hành động tiếp theo với khách hàng:
+      </div>
+      <Input.TextArea
+        rows={3}
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="Ví dụ: Gửi bảng giá Regal trước 17h, gọi điện lại sáng mai lúc 9h..."
+        style={{ marginBottom: 10, fontSize: 13 }}
+        maxLength={500}
+        showCount
+      />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <Button
+          size="small"
+          onClick={(e) => {
+            e.stopPropagation()
+            setOpen(false)
+          }}
+        >
+          Hủy
+        </Button>
+        <Button
+          size="small"
+          type="primary"
+          loading={loading}
+          icon={<SaveOutlined />}
+          onClick={(e) => {
+            e.stopPropagation()
+            void handleSave()
+          }}
+          style={{ background: '#059669', borderColor: '#059669' }}
+        >
+          Lưu ghi chú
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div
+      className="sales-next-action-cell"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <Popover
+        content={content}
+        trigger="click"
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v)
+          if (v) setNote(cleanNote)
+        }}
+        placement="leftBottom"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: 6,
+            background: cleanNote ? '#f8fafc' : 'rgba(245, 158, 11, 0.06)',
+            border: '1px dashed',
+            borderColor: cleanNote ? '#cbd5e1' : '#f59e0b',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 6,
+            minHeight: 32,
+          }}
+          title="Bấm để cập nhật ghi chú nên làm gì tiếp theo cho khách hàng này"
+        >
+          <span
+            style={{
+              fontSize: 12,
+              color: cleanNote ? '#334155' : '#d97706',
+              fontStyle: cleanNote ? 'normal' : 'italic',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+            }}
+          >
+            {cleanNote || '+ Thêm hành động tiếp theo...'}
+          </span>
+          <EditOutlined style={{ fontSize: 12, color: cleanNote ? '#64748b' : '#d97706', flexShrink: 0 }} />
+        </div>
+      </Popover>
+    </div>
+  )
+}
+
 export function CustomersPage() {
   const { message, modal } = App.useApp()
   const user = useAuthStore((s) => s.user)
@@ -81,6 +226,18 @@ export function CustomersPage() {
   const { data: staff = [] } = useStaff()
   const { data: myManagedUserIds = [] } = useMyManagedUserIds()
   const { create, update, remove } = useCustomerMutations()
+  const { data: careNotesData, refetch: refetchCareNotes } = useAllCustomerCares({ type: 'NOTE', size: 1000 })
+  const careNotes = careNotesData?.content ?? []
+
+  const latestNoteByCustomer = useMemo(() => {
+    const map = new Map<string, string>()
+    careNotes.forEach((c) => {
+      if (c.customerId && !map.has(c.customerId)) {
+        map.set(c.customerId, c.content)
+      }
+    })
+    return map
+  }, [careNotes])
 
   const isManager = role === 'MANAGER'
   const rows = data?.content ?? []
@@ -119,6 +276,8 @@ export function CustomersPage() {
   const [editing, setEditing] = useState<Customer | null>(null)
   const [detailCustomerId, setDetailCustomerId] = useState<string>()
   const [emailCustomer, setEmailCustomer] = useState<Customer | null>(null)
+  const [callCustomer, setCallCustomer] = useState<Customer | null>(null)
+  const [meetingCustomer, setMeetingCustomer] = useState<Customer | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const staffById = useMemo(() => new Map(staff.map((u) => [u.id, u])), [staff])
@@ -260,13 +419,34 @@ export function CustomersPage() {
           Thông tin liên hệ
         </span>
       ),
-      width: 220,
+      width: 250,
       render: (_v, row) => (
         <div style={{ lineHeight: 1.4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div className="stitch-num" style={{ fontSize: 13, fontWeight: 500, color: '#1e293b' }}>
-              {row.phone ?? '—'}
-            </div>
+            {row.phone ? (
+              <button
+                type="button"
+                onClick={() => setCallCustomer(row)}
+                title="Bấm để gọi điện cho khách hàng (Tự động ghi log thực tế)"
+                style={{
+                  background: 'transparent',
+                  border: 0,
+                  padding: 0,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  color: '#059669',
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                <PhoneOutlined style={{ fontSize: 13 }} />
+                <span className="stitch-num" style={{ textDecoration: 'underline' }}>{row.phone}</span>
+              </button>
+            ) : (
+              <span style={{ fontSize: 13, color: '#94a3b8' }}>—</span>
+            )}
             <div
               title={row.email ?? ''}
               style={{
@@ -275,34 +455,96 @@ export function CustomersPage() {
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                maxWidth: 140,
+                maxWidth: 145,
+                marginTop: 2,
               }}
             >
               {row.email ? (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => setEmailCustomer(row)}
+                  title={`Gửi email chăm sóc tới ${row.email}`}
+                  style={{
+                    background: 'transparent',
+                    border: 0,
+                    padding: 0,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    color: '#6366f1',
+                    fontSize: 12,
+                  }}
+                >
                   <MailOutlined style={{ fontSize: 11 }} />
-                  <span>{row.email}</span>
-                </span>
+                  <span style={{ textDecoration: 'underline' }}>{row.email}</span>
+                </button>
               ) : (
                 '—'
               )}
             </div>
           </div>
-          {canSendEmail && (
-            <Tooltip title={row.email ? `Gửi email chăm sóc tới ${row.email}` : 'Gửi email chăm sóc cho khách hàng này'}>
+          <Space size={4}>
+            {row.phone && (
+              <Tooltip title="Gọi điện & Ghi log cuộc gọi thực tế">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<PhoneOutlined style={{ color: '#059669', fontSize: 13 }} />}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setCallCustomer(row)
+                  }}
+                  style={{
+                    background: 'rgba(5, 150, 105, 0.08)',
+                    borderRadius: 6,
+                    width: 28,
+                    height: 28,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                />
+              </Tooltip>
+            )}
+            {canSendEmail && (
+              <Tooltip title={row.email ? `Gửi email chăm sóc tới ${row.email}` : 'Gửi email chăm sóc'}>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<MailOutlined style={{ color: '#6366f1', fontSize: 13 }} />}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEmailCustomer(row)
+                  }}
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.08)',
+                    borderRadius: 6,
+                    width: 28,
+                    height: 28,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                />
+              </Tooltip>
+            )}
+            <Tooltip title="Đặt lịch hẹn gặp mặt (Tự động ghi log thực tế)">
               <Button
                 type="text"
                 size="small"
-                icon={<MailOutlined style={{ color: '#059669', fontSize: 14 }} />}
+                icon={<CalendarOutlined style={{ color: '#0284c7', fontSize: 13 }} />}
                 onClick={(e) => {
                   e.stopPropagation()
-                  setEmailCustomer(row)
+                  setMeetingCustomer(row)
                 }}
                 style={{
-                  background: 'rgba(5, 150, 105, 0.08)',
+                  background: 'rgba(2, 132, 199, 0.08)',
                   borderRadius: 6,
-                  width: 30,
-                  height: 30,
+                  width: 28,
+                  height: 28,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -310,7 +552,7 @@ export function CustomersPage() {
                 }}
               />
             </Tooltip>
-          )}
+          </Space>
         </div>
       ),
     },
@@ -374,6 +616,26 @@ export function CustomersPage() {
       dataIndex: 'createdAt',
       width: 120,
       render: (v: string) => <span className="stitch-num" style={{ whiteSpace: 'nowrap' }}>{fmtDate(v)}</span>,
+    },
+    {
+      title: (
+        <span>
+          <MessageOutlined style={{ marginRight: 5, color: '#d97706' }} />
+          Hành động tiếp theo (Sales)
+        </span>
+      ),
+      key: 'salesNextAction',
+      width: 250,
+      onCell: () => ({
+        onClick: (e) => e.stopPropagation(),
+      }),
+      render: (_v, row) => (
+        <SalesNextActionCell
+          customer={row}
+          initialNote={latestNoteByCustomer.get(row.id) ?? ''}
+          onSaved={() => void refetchCareNotes()}
+        />
+      ),
     },
   ]
 
@@ -583,7 +845,13 @@ export function CustomersPage() {
             onRow={(record) => ({
               onClick: (e) => {
                 const target = e.target as HTMLElement
-                if (target.closest('.ant-checkbox-wrapper') || target.closest('button') || target.closest('a')) return
+                if (
+                  target.closest('.ant-checkbox-wrapper') ||
+                  target.closest('button') ||
+                  target.closest('a') ||
+                  target.closest('.sales-next-action-cell') ||
+                  target.closest('.ant-popover')
+                ) return
                 setDetailCustomerId(record.id)
               },
               style: { cursor: 'pointer' },
@@ -631,6 +899,26 @@ export function CustomersPage() {
         customer={emailCustomer}
         onClose={() => setEmailCustomer(null)}
         onSuccess={() => void refetch()}
+      />
+
+      <QuickCallActionModal
+        open={Boolean(callCustomer)}
+        customer={callCustomer}
+        onClose={() => setCallCustomer(null)}
+        onSuccess={() => {
+          void refetch()
+          void refetchCareNotes()
+        }}
+      />
+
+      <CustomerMeetingModal
+        open={Boolean(meetingCustomer)}
+        customer={meetingCustomer}
+        onClose={() => setMeetingCustomer(null)}
+        onSuccess={() => {
+          void refetch()
+          void refetchCareNotes()
+        }}
       />
 
       <Modal

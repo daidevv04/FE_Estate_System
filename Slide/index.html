@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo Cáo Hệ Thống CRM Bất Động Sản - Đất Xanh Miền Trung (Regal Group)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #006B2C;
+      --primary-light: #059669;
+      --primary-dark: #004d1f;
+      --accent: #d97706;
+      --accent-gold: #f59e0b;
+      --bg-dark: #0a0f1d;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(16, 185, 129, 0.2);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #060913;
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Widescreen 16:9 Presentation Stage */
+    #stage-container {
+      position: relative;
+      width: 100vw;
+      height: 56.25vw; /* 16:9 */
+      max-height: 100vh;
+      max-width: 177.78vh;
+      background: radial-gradient(circle at 10% 20%, rgba(0, 107, 44, 0.15), transparent 40%),
+                  radial-gradient(circle at 90% 80%, rgba(217, 119, 6, 0.12), transparent 45%),
+                  #0a0f1d;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 2.8vw 3.5vw;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.97) translateY(12px);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+      z-index: 2;
+    }
+
+    /* Header for inside slides */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.8vw;
+      margin-bottom: 1.4vw;
+      flex-shrink: 0;
+    }
+
+    .slide-tag {
+      font-size: 0.72vw;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #34d399;
+      display: flex;
+      align-items: center;
+      gap: 0.4vw;
+      margin-bottom: 0.3vw;
+    }
+
+    .slide-tag::before {
+      content: '';
+      display: inline-block;
+      width: 0.5vw;
+      height: 0.5vw;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    .slide-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.7vw;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .slide-subtitle {
+      font-size: 0.85vw;
+      color: var(--text-muted);
+      margin-top: 0.2vw;
+    }
+
+    .slide-badge {
+      font-size: 0.7vw;
+      padding: 0.3vw 0.8vw;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    /* Body layout */
+    .slide-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      gap: 1.5vw;
+    }
+
+    /* Cards */
+    .glass-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      border-radius: 1vw;
+      padding: 1.2vw;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    /* UI Showcase Layout */
+    .ui-showcase-layout {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 1.4vw;
+      width: 100%;
+      height: 100%;
+    }
+
+    .screenshot-frame {
+      position: relative;
+      background: #020617;
+      border-radius: 0.8vw;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .screenshot-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+    }
+
+    /* Callout Pin Overlays */
+    .callout-pin {
+      position: absolute;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.68vw;
+      font-weight: 800;
+      width: 1.3vw;
+      height: 1.3vw;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3), 0 0 15px rgba(239, 68, 68, 0.8);
+      animation: pulse-pin 2s infinite;
+      z-index: 5;
+    }
+
+    @keyframes pulse-pin {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .callout-box {
+      background: rgba(15, 23, 42, 0.85);
+      border-left: 3.5px solid #10b981;
+      padding: 0.8vw 1vw;
+      border-radius: 0.5vw;
+      margin-bottom: 0.8vw;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-left: 4px solid var(--accent-gold);
+    }
+
+    .callout-box.emerald {
+      border-left-color: #10b981;
+    }
+
+    .callout-box.blue {
+      border-left-color: #38bdf8;
+    }
+
+    .callout-box.amber {
+      border-left-color: #f59e0b;
+    }
+
+    .callout-title {
+      font-size: 0.82vw;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.4vw;
+      margin-bottom: 0.25vw;
+    }
+
+    .callout-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ef4444;
+      color: white;
+      font-size: 0.6vw;
+      font-weight: 800;
+      width: 1.1vw;
+      height: 1.1vw;
+      border-radius: 50%;
+    }
+
+    .callout-desc {
+      font-size: 0.72vw;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5vw;
+      margin-top: 0.6vw;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6vw;
+      font-size: 0.74vw;
+      color: #e2e8f0;
+      line-height: 1.3;
+    }
+
+    .step-num {
+      width: 1.2vw;
+      height: 1.2vw;
+      border-radius: 0.3vw;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #6ee7b7;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.65vw;
+    }
+
+    /* Bottom Toolbar */
+    .controls-bar {
+      position: absolute;
+      bottom: 1.2vw;
+      right: 2vw;
+      display: flex;
+      align-items: center;
+      gap: 0.8vw;
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      padding: 0.4vw 0.8vw;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: white;
+      width: 1.8vw;
+      height: 1.8vw;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8vw;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      background: #10b981;
+      transform: scale(1.1);
+    }
+
+    .page-indicator {
+      font-size: 0.7vw;
+      font-weight: 600;
+      color: #cbd5e1;
+      letter-spacing: 0.05em;
+    }
+
+    /* Specific Slide Styles */
+    /* Slide 1 - Cover */
+    .cover-slide {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .cover-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6vw;
+      background: rgba(0, 107, 44, 0.25);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 0.4vw 1.2vw;
+      border-radius: 999px;
+      margin-bottom: 1.2vw;
+    }
+
+    .cover-brand-text {
+      color: #6ee7b7;
+      font-size: 0.8vw;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .cover-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.8vw;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 0.8vw;
+      background: linear-gradient(135deg, #ffffff 30%, #a7f3d0 70%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      max-width: 85%;
+    }
+
+    .cover-subtitle {
+      font-size: 1.05vw;
+      color: #cbd5e1;
+      max-width: 70%;
+      line-height: 1.4;
+      margin-bottom: 2vw;
+    }
+
+    .cover-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.2vw;
+      width: 60%;
+      margin: 0 auto;
+    }
+
+    .meta-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.8vw;
+      padding: 0.8vw 1.2vw;
+      display: flex;
+      align-items: center;
+      gap: 0.8vw;
+      text-align: left;
+    }
+
+    .meta-icon {
+      width: 2.2vw;
+      height: 2.2vw;
+      background: rgba(16, 185, 129, 0.15);
+      border-radius: 0.5vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1vw;
+      color: #34d399;
+      flex-shrink: 0;
+    }
+
+    .meta-label {
+      font-size: 0.65vw;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .meta-val {
+      font-size: 0.92vw;
+      font-weight: 700;
+      color: #f8fafc;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .meta-val.link {
+      color: #38bdf8;
+    }
+
+    /* Grid cards for slides */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2vw;
+      height: 100%;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1vw;
+      height: 100%;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.4vw;
+      height: 100%;
+    }
+
+    .highlight-icon {
+      width: 2.5vw;
+      height: 2.5vw;
+      border-radius: 0.6vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2vw;
+      margin-bottom: 0.8vw;
+    }
+
+    .icon-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .icon-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .icon-blue { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .icon-purple { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    .icon-red { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1vw;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.4vw;
+    }
+
+    .card-text {
+      font-size: 0.72vw;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      font-size: 0.62vw;
+      padding: 0.2vw 0.5vw;
+      border-radius: 0.3vw;
+      font-weight: 600;
+      margin-right: 0.3vw;
+      margin-top: 0.4vw;
+    }
+
+    .pill-green { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .pill-blue { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .pill-amber { background: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Architecture flow diagram */
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1vw;
+      height: 100%;
+    }
+
+    .arch-box {
+      flex: 1;
+      height: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 0.8vw;
+      padding: 1.2vw;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .arrow-divider {
+      color: #10b981;
+      font-size: 1.4vw;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="stage-container">
+
+    <!-- ================= SLIDE 1: COVER ================= -->
+    <div class="slide cover-slide active" data-slide="1">
+      <div class="cover-brand">
+        <span style="font-size: 0.9vw;">🏢</span>
+        <span class="cover-brand-text">ĐẤT XANH MIỀN TRUNG • REGAL GROUP</span>
+      </div>
+      <h1 class="cover-title">HỆ THỐNG CRM QUẢN LÝ BẤT ĐỘNG SẢN CAO CẤP</h1>
+      <p class="cover-subtitle">Nền tảng số hóa toàn diện quy trình kinh doanh, giỏ hàng dự án, phân hệ khách hàng & hợp đồng giao dịch chuẩn doanh nghiệp BĐS.</p>
+      
+      <div class="cover-meta-grid">
+        <div class="meta-card">
+          <div class="meta-icon">👤</div>
+          <div>
+            <div class="meta-label">Người trình bày</div>
+            <div class="meta-val">Trần Anh Đài</div>
+          </div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-icon">🌐</div>
+          <div>
+            <div class="meta-label">Website truy cập hệ thống</div>
+            <div class="meta-val link">estate.daidev.me</div>
+          </div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-icon">⚙️</div>
+          <div>
+            <div class="meta-label">Kiến trúc công nghệ</div>
+            <div class="meta-val">Spring Boot 3 • React Vite • Supabase</div>
+          </div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-icon">☁️</div>
+          <div>
+            <div class="meta-label">Môi trường Cloud</div>
+            <div class="meta-val">Render • Vercel • Resend API</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 2: AGENDA ================= -->
+    <div class="slide" data-slide="2">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">NỘI DUNG BÁO CÁO</div>
+          <div class="slide-title">Mục Lục Chương Trình Trình Chiếu</div>
+        </div>
+        <div class="slide-badge">14 Chuyên Đề Báo Cáo</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3" style="width: 100%;">
+          <div class="glass-card">
+            <div class="highlight-icon icon-emerald">01</div>
+            <div class="card-title">Phần 1: Kiến Trúc & Nền Tảng</div>
+            <div class="card-text">
+              • Tổng quan hệ thống & Phân quyền RBAC<br>
+              • Môi trường triển khai đám mây (Render, Vercel, Supabase)<br>
+              • Cơ chế bảo mật 2FA, OTP Mail, JWT Stateless
+            </div>
+            <span class="badge-pill pill-green">Nền tảng kỹ thuật</span>
+          </div>
+          <div class="glass-card">
+            <div class="highlight-icon icon-blue">02</div>
+            <div class="card-title">Phần 2: Trải Nghiệm & Luồng Nghiệp Vụ</div>
+            <div class="card-text">
+              • Giao diện & Luồng tác vụ Quản trị viên (Admin)<br>
+              • Giao diện & Phân bổ giỏ hàng (Manager)<br>
+              • Giao diện & Phễu tư vấn chốt deal (Sales)<br>
+              • Phân hệ chăm sóc khách hàng 360 đa kênh
+            </div>
+            <span class="badge-pill pill-blue">Giao diện trực quan</span>
+          </div>
+          <div class="glass-card">
+            <div class="highlight-icon icon-amber">03</div>
+            <div class="card-title">Phần 3: Vòng Đời, Hạn Chế & Tương Lai</div>
+            <div class="card-text">
+              • Quy trình giao dịch BĐS (Booking -> HĐMB -> Hoa hồng)<br>
+              • Hạn chế hạ tầng Render/Free & Giải pháp tối ưu<br>
+              • Định hướng tích hợp AI Chatbot tư vấn BĐS<br>
+              • Giá trị thực tiễn & Q&A
+            </div>
+            <span class="badge-pill pill-amber">Chiến lược & Đột phá</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 3: ROLES & RBAC ================= -->
+    <div class="slide" data-slide="3">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">PHÂN QUYỀN HỆ THỐNG</div>
+          <div class="slide-title">Mô Hình Vai Trò & Phân Quyền (RBAC)</div>
+          <div class="slide-subtitle">Bảo đảm an toàn dữ liệu khách hàng và phân cấp quản lý kinh doanh chặt chẽ</div>
+        </div>
+        <div class="slide-badge">Spring Security Filter</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3" style="width: 100%;">
+          <div class="glass-card" style="border-top: 3px solid #ef4444;">
+            <div class="highlight-icon icon-red">🛡️</div>
+            <div class="card-title">ADMIN (Quản Trị Viên)</div>
+            <div class="card-text">
+              <strong>Phạm vi kiểm soát:</strong> Toàn quyền cấp hệ thống.<br><br>
+              • Quản lý danh sách nhân sự, kích hoạt / khóa tài khoản.<br>
+              • Cấu hình hệ thống, phòng ban, phân quyền chức vụ.<br>
+              • Giám sát Audit Log, theo dõi các tác vụ nhạy cảm.<br>
+              • Xem tổng hợp KPI doanh số toàn công ty.
+            </div>
+            <div style="margin-top: 0.8vw;">
+              <span class="badge-pill pill-green">Toàn quyền Superuser</span>
+            </div>
+          </div>
+
+          <div class="glass-card" style="border-top: 3px solid #38bdf8;">
+            <div class="highlight-icon icon-blue">👔</div>
+            <div class="card-title">MANAGER (Trưởng Phòng KD)</div>
+            <div class="card-text">
+              <strong>Phạm vi kiểm soát:</strong> Phòng ban & Khối dự án.<br><br>
+              • Quản lý và mở khóa bảng hàng sản phẩm (Inventory).<br>
+              • Phân bổ Lead khách hàng nóng cho chuyên viên Sales.<br>
+              • Phê duyệt thỏa thuận đặt cọc, giữ chỗ (Booking).<br>
+              • Theo dõi tiến độ ký Hợp đồng Mua bán và giải ngân.
+            </div>
+            <div style="margin-top: 0.8vw;">
+              <span class="badge-pill pill-blue">Quản lý & Phê duyệt</span>
+            </div>
+          </div>
+
+          <div class="glass-card" style="border-top: 3px solid #10b981;">
+            <div class="highlight-icon icon-emerald">💼</div>
+            <div class="card-title">SALES (Chuyên Viên Tư Vấn)</div>
+            <div class="card-text">
+              <strong>Phạm vi kiểm soát:</strong> Danh mục khách hàng cá nhân.<br><br>
+              • Tiếp nhận Lead, phân loại nhóm khách hàng VIP.<br>
+              • Ghi nhật ký chăm sóc (Gọi điện, Gặp mặt, Email, Note).<br>
+              • Đặt lịch hẹn xem dự án thực tế / sa bàn Regal Group.<br>
+              • Lập phiếu đặt cọc và theo dõi hoa hồng môi giới.
+            </div>
+            <div style="margin-top: 0.8vw;">
+              <span class="badge-pill pill-green">Khai thác & Chăm sóc</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 4: DEPLOYMENT ================= -->
+    <div class="slide" data-slide="4">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">HẠ TẦNG & MÔI TRƯỜNG TRIỂN KHAI</div>
+          <div class="slide-title">Kiến Trúc Triển Khai Đám Mây Hiện Đại</div>
+          <div class="slide-subtitle">Sự kết hợp giữa Vercel CDN, Render Cloud, Supabase Database và Resend API</div>
+        </div>
+        <div class="slide-badge">Zero Infrastructure Cost</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-4" style="width: 100%;">
+          <div class="glass-card">
+            <div class="highlight-icon icon-blue">▲</div>
+            <div class="card-title">Vercel Cloud</div>
+            <div class="card-text">
+              <strong>Frontend Hosting:</strong><br>
+              • React 18 + Vite + TypeScript.<br>
+              • Tự động Build & Deploy qua GitHub CI/CD.<br>
+              • CDN Edge Network độ trễ dưới 20ms.<br>
+              • Tên miền chính thức: <code>estate.daidev.me</code>
+            </div>
+            <span class="badge-pill pill-blue">Vercel Edge</span>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-emerald">⚡</div>
+            <div class="card-title">Render Cloud</div>
+            <div class="card-text">
+              <strong>Backend Microservices:</strong><br>
+              • Spring Boot 3 API Gateway (Cổng 8080).<br>
+              • Đóng gói Docker Container độc lập.<br>
+              • Tự động khôi phục (Auto-restart) khi lỗi.<br>
+              • SSL/TLS HTTPS bảo mật đầu cuối.
+            </div>
+            <span class="badge-pill pill-green">Render Web Service</span>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-emerald">🗄️</div>
+            <div class="card-title">Supabase Cloud</div>
+            <div class="card-text">
+              <strong>Multi-DB PostgreSQL:</strong><br>
+              • Tách biệt 3 Database cô lập:<br>
+              &nbsp;&nbsp;+ <code>USER_DB</code> (Tài khoản, Role, 2FA)<br>
+              &nbsp;&nbsp;+ <code>CUSTOMER_DB</code> (Khách hàng, Lịch hẹn)<br>
+              &nbsp;&nbsp;+ <code>CRM_DB</code> (Dự án, Sản phẩm, Hợp đồng)<br>
+              • Sao lưu và phục hồi dữ liệu tự động.
+            </div>
+            <span class="badge-pill pill-green">PostgreSQL 15</span>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-amber">✉️</div>
+            <div class="card-title">Resend API</div>
+            <div class="card-text">
+              <strong>Transaction Mail Service:</strong><br>
+              • Gửi Email OTP bảo mật 6 số tức thì.<br>
+              • Thông báo biến động trạng thái HĐMB.<br>
+              • Hoạt động qua giao thức REST HTTP (Port 443), miễn nhiễm vấn đề chặn port SMTP.
+            </div>
+            <span class="badge-pill pill-amber">RESTful Mail API</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 5: SECURITY & AUTH ================= -->
+    <div class="slide" data-slide="5">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">BẢO MẬT & XÁC THỰC</div>
+          <div class="slide-title">Cơ Chế Xác Thực & An Toàn Thông Tin</div>
+          <div class="slide-subtitle">Bảo vệ tài sản số và dữ liệu giao dịch nhạy cảm với kiến trúc Zero-Trust</div>
+        </div>
+        <div class="slide-badge">Multi-Factor Authentication</div>
+      </div>
+      <div class="slide-body">
+        <div class="ui-showcase-layout">
+          <div class="screenshot-frame">
+            <img src="screen_login.png" alt="Màn hình đăng nhập bảo mật">
+            <div class="callout-pin" style="top: 42%; left: 45%;">1</div>
+            <div class="callout-pin" style="top: 60%; left: 52%;">2</div>
+          </div>
+          <div style="display: flex; flex-direction: column; justify-content: center;">
+            <div class="callout-box emerald">
+              <div class="callout-title">
+                <span class="callout-badge">1</span>
+                JWT Token Stateless + Claims Phân Quyền
+              </div>
+              <div class="callout-desc">
+                Cấp phát Token mã hóa HMAC-SHA256 chứa thông tin định danh và vai trò người dùng (ROLE_ADMIN, ROLE_MANAGER, ROLE_SALE). Client tự lưu trữ an toàn trong localStorage và đính kèm vào Bearer Authorization Header.
+              </div>
+            </div>
+
+            <div class="callout-box amber">
+              <div class="callout-title">
+                <span class="callout-badge">2</span>
+                Xác Thực 2 Lớp (2FA TOTP Google Authenticator)
+              </div>
+              <div class="callout-desc">
+                Hỗ trợ cơ chế Time-based One-Time Password xoay vòng 30 giây. Người dùng quét mã QR bằng Google Authenticator hoặc Microsoft Authenticator, ngăn chặn tuyệt đối nguy cơ lộ mật khẩu.
+              </div>
+            </div>
+
+            <div class="callout-box blue">
+              <div class="callout-title">
+                <span class="callout-badge">3</span>
+                Xác Thực Mã OTP Qua Email (Resend)
+              </div>
+              <div class="callout-desc">
+                Tự động gửi mã xác thực 6 chữ số qua Email khi đăng nhập trên thiết bị lạ hoặc kích hoạt tài khoản nhân sự mới, đảm bảo tính chính chủ.
+              </div>
+            </div>
+
+            <div class="callout-box" style="border-left-color: #a855f7;">
+              <div class="callout-title">
+                <span class="callout-badge" style="background: #a855f7;">4</span>
+                Mã Hóa Mật Khẩu Chuẩn Bcrypt (Salt 10 Rounds)
+              </div>
+              <div class="callout-desc">
+                Không lưu mật khẩu dạng thô (plaintext). Mọi mật khẩu đều băm qua thuật toán Bcrypt, có cơ chế Rate-limit ngăn chặn tấn công Brute-force.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 6: ADMIN SHOWCASE ================= -->
+    <div class="slide" data-slide="6">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">GIAO DIỆN & TÁC VỤ QUẢN TRỊ</div>
+          <div class="slide-title">Phân Hệ Quản Trị Viên (Admin Portal)</div>
+          <div class="slide-subtitle">Quản trị toàn diện nhân sự, phân bổ quyền hạn và giám sát KPI hệ thống</div>
+        </div>
+        <div class="slide-badge">Admin Experience</div>
+      </div>
+      <div class="slide-body">
+        <div class="ui-showcase-layout">
+          <div class="screenshot-frame">
+            <img src="screen_admin_users.png" alt="Quản lý người dùng Admin">
+            <div class="callout-pin" style="top: 15%; left: 12%;">1</div>
+            <div class="callout-pin" style="top: 22%; left: 88%;">2</div>
+            <div class="callout-pin" style="top: 50%; left: 50%;">3</div>
+          </div>
+          <div style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="callout-box emerald">
+                <div class="callout-title">
+                  <span class="callout-badge">1</span>
+                  Thanh Menu Phân Quyền Động
+                </div>
+                <div class="callout-desc">
+                  Hiển thị độc quyền các phân hệ cấu hình nhân sự, giám sát log hệ thống và phân bổ dự án cho Admin.
+                </div>
+              </div>
+
+              <div class="callout-box amber">
+                <div class="callout-title">
+                  <span class="callout-badge">2</span>
+                  Nút Thêm Mới & Cấp Quyền Nhân Sự
+                </div>
+                <div class="callout-desc">
+                  Khởi tạo tài khoản nhân viên nhanh, gắn Role (Manager, Sales), thiết lập chi nhánh trực thuộc và gửi email kích hoạt.
+                </div>
+              </div>
+
+              <div class="callout-box blue">
+                <div class="callout-title">
+                  <span class="callout-badge">3</span>
+                  Bảng Dữ Liệu Nhân Sự & Trạng Thái Bảo Mật
+                </div>
+                <div class="callout-desc">
+                  Theo dõi trạng thái kích hoạt 2FA, lần đăng nhập gần nhất, chức năng khóa tài khoản tức thì khi phát hiện nghi vấn.
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding: 0.8vw 1vw;">
+              <div style="font-size: 0.76vw; font-weight: 700; color: #34d399; margin-bottom: 0.3vw;">
+                ⚡ Luồng Thao Tác Chuẩn Của Admin:
+              </div>
+              <div class="flow-steps">
+                <div class="step-item">
+                  <div class="step-num">1</div>
+                  <span>Đăng nhập hệ thống bằng tài khoản quản trị bảo mật cao.</span>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">2</div>
+                  <span>Vào Quản lý người dùng -> Thêm mới nhân viên, gắn phòng ban kinh doanh.</span>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">3</div>
+                  <span>Giám sát biểu đồ doanh số tổng và kiểm tra tính toàn vẹn của dữ liệu.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 7: MANAGER SHOWCASE ================= -->
+    <div class="slide" data-slide="7">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">GIAO DIỆN & TÁC VỤ QUẢN LÝ</div>
+          <div class="slide-title">Phân Hệ Trưởng Phòng Kinh Doanh (Manager)</div>
+          <div class="slide-subtitle">Kiểm soát bảng hàng dự án, phê duyệt thỏa thuận đặt cọc và giám sát giỏ hàng</div>
+        </div>
+        <div class="slide-badge">Inventory & Deal Management</div>
+      </div>
+      <div class="slide-body">
+        <div class="ui-showcase-layout">
+          <div class="screenshot-frame">
+            <img src="screen_projects.png" alt="Quản lý dự án BĐS Regal Group">
+            <div class="callout-pin" style="top: 25%; left: 35%;">1</div>
+            <div class="callout-pin" style="top: 55%; left: 65%;">2</div>
+            <div class="callout-pin" style="top: 75%; left: 25%;">3</div>
+          </div>
+          <div style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="callout-box emerald">
+                <div class="callout-title">
+                  <span class="callout-badge">1</span>
+                  Danh Mục Siêu Dự Án (Regal Group)
+                </div>
+                <div class="callout-desc">
+                  Trực quan hóa 6 đại dự án trọng điểm: Regal Legend Quảng Bình, Regal Complex Đà Nẵng, Regal Victoria, Regal Maison Phú Yên,...
+                </div>
+              </div>
+
+              <div class="callout-box blue">
+                <div class="callout-title">
+                  <span class="callout-badge">2</span>
+                  Bảng Hàng & Tình Trạng Sản Phẩm Real-time
+                </div>
+                <div class="callout-desc">
+                  Kiểm tra trạng thái căn hộ/shophouse: Còn trống, Đã giữ chỗ (Booking), Đã đặt cọc, Đã ký HĐMB. Tránh tuyệt đối việc bán trùng căn.
+                </div>
+              </div>
+
+              <div class="callout-box amber">
+                <div class="callout-title">
+                  <span class="callout-badge">3</span>
+                  Duyệt Giao Dịch & Khóa Căn (Deal Approval)
+                </div>
+                <div class="callout-desc">
+                  Phê duyệt phiếu yêu cầu giữ chỗ của Sales khi khách hàng hoàn tất chuyển khoản thiện chí 50 - 100 triệu VNĐ.
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding: 0.8vw 1vw;">
+              <div style="font-size: 0.76vw; font-weight: 700; color: #38bdf8; margin-bottom: 0.3vw;">
+                ⚡ Luồng Thao Tác Chuẩn Của Manager:
+              </div>
+              <div class="flow-steps">
+                <div class="step-item">
+                  <div class="step-num">1</div>
+                  <span>Mở bảng hàng dự án, kiểm tra giỏ hàng mở bán đợt 1.</span>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">2</div>
+                  <span>Tiếp nhận yêu cầu Booking từ Sales -> Đối soát ủy nhiệm chi cọc.</span>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">3</div>
+                  <span>Nhấn "Phê duyệt" để hệ thống tự động khóa mã căn trên toàn hệ thống.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 8: SALES SHOWCASE ================= -->
+    <div class="slide" data-slide="8">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">GIAO DIỆN & TÁC VỤ KINH DOANH</div>
+          <div class="slide-title">Phân Hệ Chuyên Viên Tư Vấn (Sales)</div>
+          <div class="slide-subtitle">Quản trị phễu khách hàng, đặt lịch hẹn trải nghiệm sa bàn và chốt hợp đồng</div>
+        </div>
+        <div class="slide-badge">Sales Funnel Automation</div>
+      </div>
+      <div class="slide-body">
+        <div class="ui-showcase-layout">
+          <div class="screenshot-frame">
+            <img src="screen_customers.png" alt="Quản lý khách hàng tiềm năng">
+            <div class="callout-pin" style="top: 20%; left: 30%;">1</div>
+            <div class="callout-pin" style="top: 45%; left: 75%;">2</div>
+            <div class="callout-pin" style="top: 60%; left: 88%;">3</div>
+          </div>
+          <div style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="callout-box emerald">
+                <div class="callout-title">
+                  <span class="callout-badge">1</span>
+                  Bộ Lọc & Phân Khúc Khách Hàng Thông Minh
+                </div>
+                <div class="callout-desc">
+                  Lọc nhanh khách hàng theo nhóm: Nhà đầu tư VIP, Khách mua ở, Khách lướt sóng, Ngân sách tài chính từ 3 tỷ đến trên 20 tỷ.
+                </div>
+              </div>
+
+              <div class="callout-box blue">
+                <div class="callout-title">
+                  <span class="callout-badge">2</span>
+                  Lịch Hẹn Tư Vấn & Trải Nghiệm Sa Bàn Thực Tế
+                </div>
+                <div class="callout-desc">
+                  Lên lịch hẹn dẫn khách xem thực tế công trường dự án Regal Legend / Regal Victoria, hệ thống gửi email nhắc nhở tự động.
+                </div>
+              </div>
+
+              <div class="callout-box amber">
+                <div class="callout-title">
+                  <span class="callout-badge">3</span>
+                  Nút Tạo Giao Dịch & Bảng Tính Dòng Tiền
+                </div>
+                <div class="callout-desc">
+                  Xuất nhanh bảng tính tiến độ giải ngân ngân hàng hỗ trợ lãi suất 0% và lập phiếu yêu cầu giữ chỗ cho khách.
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding: 0.8vw 1vw;">
+              <div style="font-size: 0.76vw; font-weight: 700; color: #f59e0b; margin-bottom: 0.3vw;">
+                ⚡ Luồng Thao Tác Chuẩn Của Sales:
+              </div>
+              <div class="flow-steps">
+                <div class="step-item">
+                  <div class="step-num">1</div>
+                  <span>Tiếp nhận Lead từ hệ thống tiếp thị -> Gọi điện khảo sát nhu cầu.</span>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">2</div>
+                  <span>Đặt lịch hẹn tư vấn sa bàn & chọn căn phù hợp hướng view.</span>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">3</div>
+                  <span>Lập yêu cầu Booking chuyển Manager duyệt khóa căn giữ chỗ.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 9: CUSTOMER CARE (STRETCHED KPIS) ================= -->
+    <div class="slide" data-slide="9">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">PHÂN HỆ TRỌNG TÂM</div>
+          <div class="slide-title">Quản Lý & Nhật Ký Chăm Sóc Đa Kênh (Customer Care)</div>
+          <div class="slide-subtitle">Trực quan hóa 5 chỉ số KPI tràn đều 100% chiều ngang và nhật ký tương tác 360 độ</div>
+        </div>
+        <div class="slide-badge">360° Interaction History</div>
+      </div>
+      <div class="slide-body">
+        <div class="ui-showcase-layout">
+          <div class="screenshot-frame">
+            <img src="screen_customer_cares.png" alt="Giao diện Customer Care 5 thẻ KPI">
+            <div class="callout-pin" style="top: 18%; left: 50%;">1</div>
+            <div class="callout-pin" style="top: 55%; left: 30%;">2</div>
+            <div class="callout-pin" style="top: 75%; left: 80%;">3</div>
+          </div>
+          <div style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div class="callout-box emerald">
+                <div class="callout-title">
+                  <span class="callout-badge">1</span>
+                  5 Thẻ KPI Tràn Đều Chiều Ngang (100% Width)
+                </div>
+                <div class="callout-desc">
+                  Áp dụng CSS Grid hiện đại (<code>grid-template-columns: repeat(5, minmax(0, 1fr))</code>), cân đối hoàn hảo: Tổng số lượt, Đang gọi điện, Họp trực tiếp, Đã gửi email, Ghi chú nội bộ.
+                </div>
+              </div>
+
+              <div class="callout-box blue">
+                <div class="callout-title">
+                  <span class="callout-badge">2</span>
+                  Lịch Sử Tương Tác 360 Độ Đa Kênh
+                </div>
+                <div class="callout-desc">
+                  Mỗi lần gọi điện thoại, gặp mặt tại văn phòng, gửi email dự thảo hay ghi chú phản hồi của khách đều được lưu vết thời gian thực, phục vụ bàn giao công việc liền mạch.
+                </div>
+              </div>
+
+              <div class="callout-box amber">
+                <div class="callout-title">
+                  <span class="callout-badge">3</span>
+                  Phân Loại Mức Độ Gắn Kết & Cảm Xúc
+                </div>
+                <div class="callout-desc">
+                  Ghi nhận trạng thái: Khách rất hào hứng với shophouse ven hồ, Khách phân vân tiến độ đóng tiền,... giúp quản lý kịp thời hỗ trợ chính sách đặc biệt.
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding: 0.8vw 1vw;">
+              <div style="font-size: 0.72vw; color: #cbd5e1; line-height: 1.4;">
+                💡 <strong>Giá trị nổi bật:</strong> Nhân viên nghỉ việc hoặc luân chuyển dự án không lo thất thoát dữ liệu lịch sử trao đổi với khách hàng VIP của Đất Xanh Miền Trung.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 10: REAL ESTATE LIFECYCLE ================= -->
+    <div class="slide" data-slide="10">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">QUY TRÌNH KINH DOANH CHUẨN</div>
+          <div class="slide-title">Vòng Đời Giao Dịch Bất Động Sản Trong Hệ Thống</div>
+          <div class="slide-subtitle">Từ khách hàng tiềm năng đến ký hợp đồng mua bán và quyết toán hoa hồng</div>
+        </div>
+        <div class="slide-badge">End-to-End Pipeline</div>
+      </div>
+      <div class="slide-body">
+        <div class="arch-flow">
+          <div class="arch-box" style="border-top: 3px solid #38bdf8;">
+            <div class="highlight-icon icon-blue">1</div>
+            <div class="card-title">1. Tiếp Nhận Lead</div>
+            <div class="card-text">
+              • Thu thập từ Landing Page, Quảng cáo, Sự kiện.<br>
+              • Sales liên hệ trong vòng 15 phút đầu.<br>
+              • Phân loại khả năng tài chính & dự án mục tiêu.
+            </div>
+            <div style="margin-top: auto;"><span class="badge-pill pill-blue">Tiềm năng</span></div>
+          </div>
+
+          <div class="arrow-divider">➔</div>
+
+          <div class="arch-box" style="border-top: 3px solid #f59e0b;">
+            <div class="highlight-icon icon-amber">2</div>
+            <div class="card-title">2. Booking Giữ Chỗ</div>
+            <div class="card-text">
+              • Chọn mã căn shophouse/biệt thự mong muốn.<br>
+              • Đóng 50 - 100 triệu đồng cọc thiện chí.<br>
+              • Khóa mã căn tạm thời trên bảng hàng.
+            </div>
+            <div style="margin-top: auto;"><span class="badge-pill pill-amber">Ưu tiên 1</span></div>
+          </div>
+
+          <div class="arrow-divider">➔</div>
+
+          <div class="arch-box" style="border-top: 3px solid #10b981;">
+            <div class="highlight-icon icon-emerald">3</div>
+            <div class="card-title">3. Đặt Cọc Chính Thức</div>
+            <div class="card-text">
+              • Chuyển tiền thiện chí thành tiền cọc không hoàn lại.<br>
+              • Manager ký duyệt phiếu đặt cọc chính thức.<br>
+              • Căn chuyển sang trạng thái "ĐÃ CỌC".
+            </div>
+            <div style="margin-top: auto;"><span class="badge-pill pill-green">Đã đặt cọc</span></div>
+          </div>
+
+          <div class="arrow-divider">➔</div>
+
+          <div class="arch-box" style="border-top: 3px solid #a855f7;">
+            <div class="highlight-icon icon-purple">4</div>
+            <div class="card-title">4. Ký Kết HĐMB</div>
+            <div class="card-text">
+              • Ký Hợp Đồng Mua Bán với chủ đầu tư.<br>
+              • Lên lịch trình đóng tiền chia làm 7 - 10 đợt.<br>
+              • Tự động nhắc nợ khi đến hạn đóng tiền.
+            </div>
+            <div style="margin-top: auto;"><span class="badge-pill pill-blue">Hợp đồng pháp lý</span></div>
+          </div>
+
+          <div class="arrow-divider">➔</div>
+
+          <div class="arch-box" style="border-top: 3px solid #ef4444;">
+            <div class="highlight-icon icon-red">5</div>
+            <div class="card-title">5. Quyết Toán Hoa Hồng</div>
+            <div class="card-text">
+              • Hệ thống tự tính hoa hồng Sales (1.5% - 2.5%).<br>
+              • Trích thưởng quản lý cho Manager.<br>
+              • Bàn giao nhà & Sổ hồng sở hữu lâu dài.
+            </div>
+            <div style="margin-top: auto;"><span class="badge-pill pill-green">Bàn giao & Thưởng</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 11: CONSTRAINTS & SOLUTIONS ================= -->
+    <div class="slide" data-slide="11">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">TỐI ƯU HÓA HẠ TẦNG</div>
+          <div class="slide-title">Hạn Chế Hạ Tầng Cloud Free & Giải Pháp Kỹ Thuật</div>
+          <div class="slide-subtitle">Cách thức kiến trúc sư hệ thống vượt qua các rào cản tài nguyên hạn chế</div>
+        </div>
+        <div class="slide-badge">Engineering Trade-offs</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2" style="width: 100%;">
+          <div class="glass-card" style="border-left: 4px solid #ef4444;">
+            <div class="highlight-icon icon-red">⚠️</div>
+            <div class="card-title">Hạn Chế Của Hạ Tầng Cloud Free (Render / Vercel)</div>
+            <div class="card-text" style="font-size: 0.78vw; line-height: 1.6;">
+              <p>🔴 <strong>Không thể chạy Kafka / RabbitMQ phân tán:</strong> Cụm Kafka yêu cầu Zookeeper/KRaft và tối thiểu 2-4GB RAM, vượt ngưỡng 512MB RAM miễn phí của Render.</p>
+              <p style="margin-top: 0.6vw;">🔴 <strong>Chi phí duy trì cụm Redis Cloud:</strong> Các dịch vụ Redis Managed yêu cầu thẻ tín dụng và tính phí sau thời gian dùng thử.</p>
+              <p style="margin-top: 0.6vw;">🔴 <strong>Hiện tượng Cold-Start trên Render:</strong> Server tự động chuyển sang chế độ "ngủ đông" sau 15 phút không nhận request, gây độ trễ 45s ở lượt gọi đầu.</p>
+              <p style="margin-top: 0.6vw;">🔴 <strong>Render chặn cổng SMTP:</strong> Các cổng gửi mail 25, 465, 587 bị khóa ở tầng network nhằm chống spam bot.</p>
+            </div>
+          </div>
+
+          <div class="glass-card" style="border-left: 4px solid #10b981;">
+            <div class="highlight-icon icon-emerald">✅</div>
+            <div class="card-title">Giải Pháp Kỹ Thuật Thực Tế Đã Triển Khai</div>
+            <div class="card-text" style="font-size: 0.78vw; line-height: 1.6;">
+              <p>🟢 <strong>Sử dụng In-Memory Cache (Caffeine):</strong> Tận dụng bộ nhớ JVM siêu nhẹ, truy xuất tức thì &lt;1ms, không phát sinh chi phí hạ tầng bên ngoài.</p>
+              <p style="margin-top: 0.6vw;">🟢 <strong>Event-Driven Nội Bộ Spring:</strong> Dùng <code>ApplicationEventPublisher</code> & <code>@Async</code> xử lý bất đồng bộ, thay thế hoàn hảo cho Kafka trong quy mô hiện tại.</p>
+              <p style="margin-top: 0.6vw;">🟢 <strong>Tích Hợp Resend HTTP API:</strong> Gửi Email qua REST API (Port 443 HTTPS), an toàn tuyệt đối, không bao giờ bị chặn cổng như SMTP truyền thống.</p>
+              <p style="margin-top: 0.6vw;">🟢 <strong>Tự Động Ping Giữ Ấm Service:</strong> Cơ chế CronJob định kỳ 10 phút kích hoạt nhẹ API Gateway, giữ container luôn thức và sẵn sàng phục vụ.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 12: FUTURE ROADMAP ================= -->
+    <div class="slide" data-slide="12">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">ĐỊNH HƯỚNG TƯƠNG LAI</div>
+          <div class="slide-title">Kế Hoạch Mở Rộng: Trợ Lý Ảo AI Tư Vấn BĐS</div>
+          <div class="slide-subtitle">Tích hợp AI siêu nhẹ, chạy ổn định trên hạ tầng Render mà không quá tải RAM</div>
+        </div>
+        <div class="slide-badge">AI Integration Strategy</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3" style="width: 100%;">
+          <div class="glass-card">
+            <div class="highlight-icon icon-purple">🤖</div>
+            <div class="card-title">1. LLM API Client Tối Giản</div>
+            <div class="card-text">
+              • Tích hợp Google Gemini API qua HTTP REST Client.<br>
+              • Không nhúng mô hình AI nặng hàng GB vào Java JVM.<br>
+              • Tiết kiệm 95% RAM máy chủ Render, phản hồi dưới 1 giây.<br>
+              • Chi phí gọi API cực thấp, tối ưu ngân sách.
+            </div>
+            <span class="badge-pill pill-blue">Gemini 1.5 Flash</span>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-emerald">📚</div>
+            <div class="card-title">2. RAG Trên Supabase pgvector</div>
+            <div class="card-text">
+              • Nạp dữ liệu pháp lý, quy hoạch, bảng giá căn hộ vào Vector Database Supabase.<br>
+              • Khi khách hỏi: "Căn shophouse hướng biển nào đẹp nhất?", AI truy xuất chính xác tài liệu nội bộ để trả lời.<br>
+              • Ngăn chặn hiện tượng AI ảo tưởng (Hallucination).
+            </div>
+            <span class="badge-pill pill-green">Supabase pgvector</span>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-amber">📱</div>
+            <div class="card-title">3. Tự Động Soạn Thảo & Nhắc Việc</div>
+            <div class="card-text">
+              • Tự động tạo kịch bản gọi điện chăm sóc dựa trên lịch sử tương tác trước đó.<br>
+              • Bắn tin nhắn tóm tắt qua Telegram Bot khi có khách hàng mới đăng ký.<br>
+              • Dự đoán xác suất chốt hợp đồng của từng khách hàng.
+            </div>
+            <span class="badge-pill pill-amber">Automated Workflow</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 13: BUSINESS VALUE ================= -->
+    <div class="slide" data-slide="13">
+      <div class="slide-header">
+        <div>
+          <div class="slide-tag">HIỆU QUẢ THỰC TIỄN</div>
+          <div class="slide-title">Giá Trị Mang Lại Cho Doanh Nghiệp Bất Động Sản</div>
+          <div class="slide-subtitle">Tối ưu hóa nguồn lực kinh doanh và gia tăng tỷ lệ chuyển đổi khách hàng</div>
+        </div>
+        <div class="slide-badge">Business Impact</div>
+      </div>
+      <div class="slide-body">
+        <div class="grid-4" style="width: 100%;">
+          <div class="glass-card">
+            <div class="highlight-icon icon-emerald">⚡</div>
+            <div class="card-title">Tăng 45% Tốc Độ</div>
+            <div class="card-text">
+              Rút ngắn thời gian xử lý thủ tục đặt cọc và giữ chỗ từ vài giờ xuống chỉ còn 3 phút, tăng trải nghiệm cho khách hàng VIP.
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-blue">🔒</div>
+            <div class="card-title">100% Minh Bạch</div>
+            <div class="card-text">
+              Xóa bỏ hoàn toàn tình trạng bán chồng căn, tranh chấp hoa hồng giữa các sàn liên kết nhờ bảng hàng đồng bộ thời gian thực.
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-amber">🛡️</div>
+            <div class="card-title">Giảm 80% Rủi Ro</div>
+            <div class="card-text">
+              Lưu giữ trọn vẹn tài sản thông tin khách hàng. Nhân sự nghỉ việc vẫn bàn giao đầy đủ toàn bộ lịch sử tư vấn cho người kế nhiệm.
+            </div>
+          </div>
+
+          <div class="glass-card">
+            <div class="highlight-icon icon-purple">💰</div>
+            <div class="card-title">Tiết Kiệm 100%</div>
+            <div class="card-text">
+              Không mất chi phí mua gói SaaS đắt đỏ (Salesforce, HubSpot $150/user/tháng). Hệ thống làm chủ công nghệ hoàn toàn.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SLIDE 14: THANK YOU & QA ================= -->
+    <div class="slide cover-slide" data-slide="14">
+      <div class="cover-brand">
+        <span style="font-size: 0.9vw;">🎉</span>
+        <span class="cover-brand-text">KẾT THÚC BÁO CÁO • TRÂN TRỌNG CẢM ƠN</span>
+      </div>
+      <h1 class="cover-title" style="font-size: 2.5vw;">XIN CHÂN THÀNH CẢM ƠN HỘI ĐỒNG!</h1>
+      <p class="cover-subtitle">Sẵn sàng lắng nghe câu hỏi và tiến hành Demo trực tiếp trên hệ thống trực tuyến.</p>
+      
+      <div class="cover-meta-grid" style="width: 65%;">
+        <div class="meta-card">
+          <div class="meta-icon">👤</div>
+          <div>
+            <div class="meta-label">Người trình bày</div>
+            <div class="meta-val">Trần Anh Đài</div>
+          </div>
+        </div>
+        <div class="meta-card">
+          <div class="meta-icon">🌐</div>
+          <div>
+            <div class="meta-label">Website trải nghiệm trực tuyến</div>
+            <div class="meta-val link">estate.daidev.me</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5vw; display: flex; gap: 0.8vw; justify-content: center;">
+        <span class="badge-pill pill-green" style="font-size: 0.75vw; padding: 0.3vw 0.8vw;">Hỏi & Đáp (Q&A)</span>
+        <span class="badge-pill pill-blue" style="font-size: 0.75vw; padding: 0.3vw 0.8vw;">Live System Demonstration</span>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="controls-bar">
+      <button class="nav-btn" id="prevBtn" title="Slide trước (Mũi tên Trái)">❮</button>
+      <span class="page-indicator"><span id="currentSlideNum">1</span> / 14</span>
+      <button class="nav-btn" id="nextBtn" title="Slide sau (Mũi tên Phải / Phím cách)">❯</button>
+      <button class="nav-btn" id="fullscreenBtn" title="Toàn màn hình (Phím F)" style="font-size: 0.7vw;">⛶</button>
+    </div>
+
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentSlide = 1;
+
+    const currentSlideNumEl = document.getElementById('currentSlideNum');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    function showSlide(n) {
+      if (n < 1) n = 1;
+      if (n > totalSlides) n = totalSlides;
+      currentSlide = n;
+
+      slides.forEach((slide) => {
+        const slideIndex = parseInt(slide.getAttribute('data-slide'));
+        if (slideIndex === currentSlide) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      currentSlideNumEl.textContent = currentSlide;
+    }
+
+    prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+    nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        showSlide(currentSlide + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        showSlide(currentSlide - 1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => console.log(err));
+        } else {
+          document.exitFullscreen();
+        }
+      } else if (e.key === 'Home') {
+        showSlide(1);
+      } else if (e.key === 'End') {
+        showSlide(totalSlides);
+      }
+    });
+  </script>
+</body>
+</html>

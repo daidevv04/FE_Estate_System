@@ -1,5 +1,5 @@
 import { Button, Result } from 'antd'
-import { useNavigate } from 'react-router-dom'
+import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom'
 import { paths } from '@/routes/paths'
 
 export function ForbiddenPage() {
@@ -33,6 +33,12 @@ export function NotFoundPage() {
 
 export function ServerErrorPage() {
   const navigate = useNavigate()
+  const error = useRouteError()
+
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return <NotFoundPage />
+  }
+
   return (
     <Result
       status="500"

@@ -7,6 +7,8 @@ import { tokens as t } from '@/theme/tokens'
 import { apiErrorMessage, customerCode, demandLabel, statusLabel, useCustomer, useCustomerMutations, type Customer, type StaffUser } from '../api'
 import { CustomerCareTimeline } from './CustomerCareTimeline'
 import { SendCustomerEmailModal } from './SendCustomerEmailModal'
+import { QuickCallActionModal } from './QuickCallActionModal'
+import { CustomerMeetingModal } from './CustomerMeetingModal'
 import './CustomerDetailModal.css'
 
 interface Props { customerId?: string; staff: StaffUser[]; canWrite: boolean; onClose: () => void; onEdit: (customer: Customer) => void }
@@ -32,6 +34,8 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
   const user = useAuthStore((s) => s.user)
   const canSendEmail = user?.role === 'MANAGER' || user?.role === 'SALES'
   const [emailModalOpen, setEmailModalOpen] = useState(false)
+  const [callModalOpen, setCallModalOpen] = useState(false)
+  const [meetingModalOpen, setMeetingModalOpen] = useState(false)
   const detail = useCustomer(customerId)
   const { remove } = useCustomerMutations()
   const customer = detail.data
@@ -57,6 +61,22 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
             <Typography.Text>Dữ liệu được cập nhật tự động từ hệ thống CRM.</Typography.Text>
             <Space>
               <Button onClick={onClose}>Đóng</Button>
+              {customer.phone && (
+                <Button
+                  icon={<PhoneOutlined />}
+                  onClick={() => setCallModalOpen(true)}
+                  style={{ color: '#059669', borderColor: '#059669' }}
+                >
+                  Gọi điện
+                </Button>
+              )}
+              <Button
+                icon={<CalendarOutlined />}
+                onClick={() => setMeetingModalOpen(true)}
+                style={{ color: '#0284c7', borderColor: '#0284c7' }}
+              >
+                Hẹn gặp mặt
+              </Button>
               {canSendEmail && (
                 <Button
                   type={canWrite ? 'default' : 'primary'}
@@ -64,7 +84,7 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
                   onClick={() => setEmailModalOpen(true)}
                   style={!canWrite ? { background: '#059669', borderColor: '#059669', fontWeight: 600 } : undefined}
                 >
-                  Gửi email chăm sóc
+                  Gửi email
                 </Button>
               )}
               {canWrite && (
@@ -104,22 +124,50 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
                 <div>Ngày tạo: <strong>{date(customer.createdAt)}</strong></div>
                 <div>Cập nhật: <strong>{date(customer.updatedAt)}</strong></div>
               </div>
-              {canSendEmail && (
+              <Space size={8}>
+                {customer.phone && (
+                  <Button
+                    icon={<PhoneOutlined />}
+                    onClick={() => setCallModalOpen(true)}
+                    style={{
+                      borderColor: '#059669',
+                      color: '#059669',
+                      borderRadius: 8,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Gọi điện
+                  </Button>
+                )}
                 <Button
-                  type="primary"
-                  icon={<MailOutlined />}
-                  onClick={() => setEmailModalOpen(true)}
+                  icon={<CalendarOutlined />}
+                  onClick={() => setMeetingModalOpen(true)}
                   style={{
-                    background: '#059669',
-                    borderColor: '#059669',
+                    borderColor: '#0284c7',
+                    color: '#0284c7',
                     borderRadius: 8,
                     fontWeight: 600,
-                    boxShadow: '0 2px 6px rgba(5, 150, 105, 0.2)',
                   }}
                 >
-                  Gửi email chăm sóc
+                  Hẹn gặp mặt
                 </Button>
-              )}
+                {canSendEmail && (
+                  <Button
+                    type="primary"
+                    icon={<MailOutlined />}
+                    onClick={() => setEmailModalOpen(true)}
+                    style={{
+                      background: '#059669',
+                      borderColor: '#059669',
+                      borderRadius: 8,
+                      fontWeight: 600,
+                      boxShadow: '0 2px 6px rgba(5, 150, 105, 0.2)',
+                    }}
+                  >
+                    Gửi email
+                  </Button>
+                )}
+              </Space>
             </div>
           </div>
           <div className="customer-detail-modal__grid">
@@ -132,7 +180,23 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
               <div className="customer-kv-list">
                 <div className="customer-kv-item"><span className="customer-kv-label"><UserOutlined /> Họ và tên</span><span className="customer-kv-value">{customer.fullName}</span></div>
                 <div className="customer-kv-item"><span className="customer-kv-label">Mã khách hàng</span><span className="customer-kv-value">{customerCode(customer)}</span></div>
-                <div className="customer-kv-item"><span className="customer-kv-label"><PhoneOutlined /> Số điện thoại</span><span className="customer-kv-value">{customer.phone || 'Chưa cập nhật'}</span></div>
+                <div className="customer-kv-item">
+                  <span className="customer-kv-label"><PhoneOutlined /> Số điện thoại</span>
+                  <span className="customer-kv-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%' }}>
+                    <span>{customer.phone || 'Chưa cập nhật'}</span>
+                    {customer.phone && (
+                      <Button
+                        size="small"
+                        type="link"
+                        icon={<PhoneOutlined />}
+                        onClick={() => setCallModalOpen(true)}
+                        style={{ padding: '0 6px', height: 'auto', fontSize: 12, color: '#059669', fontWeight: 600 }}
+                      >
+                        Gọi điện
+                      </Button>
+                    )}
+                  </span>
+                </div>
                 <div className="customer-kv-item">
                   <span className="customer-kv-label"><MailOutlined /> Email</span>
                   <span className="customer-kv-value" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%' }}>
@@ -231,11 +295,26 @@ export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEd
       )}
 
       {customer && (
-        <SendCustomerEmailModal
-          open={emailModalOpen}
-          customer={customer}
-          onClose={() => setEmailModalOpen(false)}
-        />
+        <>
+          <SendCustomerEmailModal
+            open={emailModalOpen}
+            customer={customer}
+            onClose={() => setEmailModalOpen(false)}
+            onSuccess={() => void detail.refetch()}
+          />
+          <QuickCallActionModal
+            open={callModalOpen}
+            customer={customer}
+            onClose={() => setCallModalOpen(false)}
+            onSuccess={() => void detail.refetch()}
+          />
+          <CustomerMeetingModal
+            open={meetingModalOpen}
+            customer={customer}
+            onClose={() => setMeetingModalOpen(false)}
+            onSuccess={() => void detail.refetch()}
+          />
+        </>
       )}
     </Modal>
   )

@@ -206,7 +206,7 @@ export function useSendCustomerEmail(customerId?: string) {
     mutationFn: (body: SendCustomerEmailInput) =>
       api.post(`/customers/${customerId}/emails`, body).then((r) => r.data),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ['customer-cares', customerId] })
+      void qc.invalidateQueries({ queryKey: ['customer-cares'] })
       void qc.invalidateQueries({ queryKey: ['customers'] })
     },
   })

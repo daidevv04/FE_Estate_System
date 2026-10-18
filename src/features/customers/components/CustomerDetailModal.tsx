@@ -15,7 +15,17 @@ const AVATAR_COLORS = ['#16A34A', '#0D9488', '#7C3AED', '#0EA5E9', '#F59E0B', '#
 const colorOf = (seed: string) => AVATAR_COLORS[[...seed].reduce((sum, char) => sum + char.charCodeAt(0), 0) % AVATAR_COLORS.length]
 const initials = (name: string) => { const words = name.trim().split(/\s+/); return ((words[0]?.[0] ?? '') + (words.length > 1 ? words[words.length - 1][0] : '')).toUpperCase() }
 const date = (value: string) => dayjs(value).format('DD/MM/YYYY · HH:mm')
-const statusTone = (status: Customer['status']) => ({ NEW: { bg: t.colorInfoBg, fg: t.colorInfoText, dot: t.colorInfo }, POTENTIAL: { bg: t.colorWarningBg, fg: t.colorWarningText, dot: t.colorWarning }, CUSTOMER: { bg: t.colorSuccessBg, fg: t.colorSuccessText, dot: t.colorSuccess }, INACTIVE: { bg: t.colorSurfaceSunken, fg: t.colorTextMuted, dot: t.colorBorderStrong } })[status]
+const statusTone = (status: Customer['status']) =>
+  (({
+    NEW: { bg: t.colorInfoBg, fg: t.colorInfoText, dot: t.colorInfo },
+    POTENTIAL: { bg: t.colorWarningBg, fg: t.colorWarningText, dot: t.colorWarning },
+    CUSTOMER: { bg: t.colorSuccessBg, fg: t.colorSuccessText, dot: t.colorSuccess },
+    INACTIVE: { bg: t.colorSurfaceSunken, fg: t.colorTextMuted, dot: t.colorBorderStrong },
+  } as Record<string, { bg: string; fg: string; dot: string }>)[status] ?? {
+    bg: t.colorInfoBg,
+    fg: t.colorInfoText,
+    dot: t.colorInfo,
+  })
 
 export function CustomerDetailModal({ customerId, staff, canWrite, onClose, onEdit }: Props) {
   const { message, modal } = App.useApp()

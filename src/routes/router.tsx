@@ -49,6 +49,7 @@ export const router = createBrowserRouter([
         <AppShell />
       </ProtectedRoute>
     ),
+    errorElement: <ServerErrorPage />,
     children: [
       { path: '/', element: <Navigate to={paths.dashboard} replace /> },
       { path: paths.dashboard, element: <DashboardPage /> },

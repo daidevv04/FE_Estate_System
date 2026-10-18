@@ -35,13 +35,16 @@ interface Props {
   onUnlock?: (product: Product) => void
 }
 
-const TYPE_PILL: Record<ProductType, { icon: ReactNode; bg: string; fg: string }> = {
+const DEFAULT_TYPE_PILL = { icon: <HomeOutlined />, bg: '#F1F5F9', fg: '#334155' }
+const DEFAULT_STATUS_PILL = { bg: '#F1F5F9', fg: '#475569', dot: '#94A3B8' }
+
+const TYPE_PILL: Record<string, { icon: ReactNode; bg: string; fg: string }> = {
   APARTMENT: { icon: <HomeOutlined />, bg: '#EEF2FF', fg: '#4F46E5' },
   LAND: { icon: <LayoutOutlined />, bg: '#F1F5F9', fg: '#334155' },
   TOWNHOUSE: { icon: <ShopOutlined />, bg: '#EFF6FF', fg: '#1D4ED8' },
 }
 
-const STATUS_PILL: Record<ProductStatus, { bg: string; fg: string; dot: string }> = {
+const STATUS_PILL: Record<string, { bg: string; fg: string; dot: string }> = {
   AVAILABLE: { bg: '#DCFCE7', fg: '#15803D', dot: t.colorSuccess },
   RESERVED: { bg: '#FEF3C7', fg: '#B45309', dot: '#B45309' },
   SOLD: { bg: '#E0F2FE', fg: '#0369A1', dot: t.colorTeal },
@@ -113,7 +116,10 @@ export function ProductTable({ rows, loading, emptyText, selected, projectNames,
       ),
       dataIndex: 'type',
       width: 110,
-      render: (value: ProductType) => { const p = TYPE_PILL[value]; return <span className="product-type" style={{ background: p.bg, color: p.fg }}>{p.icon}{labelOf(PRODUCT_TYPE, value)}</span> },
+      render: (value: ProductType) => {
+        const p = (value && TYPE_PILL[value]) || DEFAULT_TYPE_PILL
+        return <span className="product-type" style={{ background: p.bg, color: p.fg }}>{p.icon}{labelOf(PRODUCT_TYPE, value)}</span>
+      },
     },
     {
       title: (
@@ -167,7 +173,7 @@ export function ProductTable({ rows, loading, emptyText, selected, projectNames,
       dataIndex: 'status',
       width: 130,
       render: (value: ProductStatus, row) => {
-        const p = STATUS_PILL[value];
+        const p = (value && STATUS_PILL[value]) || DEFAULT_STATUS_PILL
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <span className="stitch-pill stitch-pill--sm" style={{ background: p.bg, color: p.fg }}>

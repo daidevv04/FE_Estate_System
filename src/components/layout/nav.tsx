@@ -10,6 +10,7 @@ import {
   MailOutlined,
   ProjectOutlined,
   TeamOutlined,
+  TrophyOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import type { ReactNode } from 'react'
@@ -42,6 +43,7 @@ export function buildNav(role?: UserRole): NavGroup[] {
       { key: paths.appointments, icon: <CalendarOutlined />, label: 'Lịch hẹn' },
       { key: paths.leads, icon: <FunnelPlotOutlined />, label: 'Lead (pipeline)' },
       { key: paths.deals, icon: <FileTextOutlined />, label: 'Hợp đồng' },
+      { key: paths.commissions, icon: <TrophyOutlined />, label: 'Hoa hồng & Thưởng' },
     ] },
     { key: 'g-catalog', label: 'DANH MỤC', children: [
       { key: paths.projects, icon: <ProjectOutlined />, label: 'Dự án' },

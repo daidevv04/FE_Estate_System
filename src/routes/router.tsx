@@ -30,6 +30,7 @@ import { UserDetailPage } from '@/features/users/pages/UserDetailPage'
 import { UsersPage } from '@/features/users/pages/UsersPage'
 import { NotificationPage } from '@/features/notifications/pages/NotificationPage'
 import { SearchPage } from '@/features/search/pages/SearchPage'
+import { CommissionsPage } from '@/features/commissions/pages/CommissionsPage'
 
 import { paths } from './paths'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -77,6 +78,7 @@ export const router = createBrowserRouter([
       { path: paths.lead(), element: <LeadDetailPage /> },
       { path: paths.deals, element: <DealsPage /> },
       { path: paths.deal(), element: <DealDetailPage /> },
+      { path: paths.commissions, element: <CommissionsPage /> },
 
       {
         path: paths.reports.salesPerformance,

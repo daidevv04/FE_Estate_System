@@ -1,5 +1,5 @@
-import { LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SearchOutlined } from '@ant-design/icons'
-import { Avatar, Button, Dropdown, Input, Layout, Space, theme } from 'antd'
+import { LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, QuestionCircleOutlined, SearchOutlined } from '@ant-design/icons'
+import { Avatar, Button, Dropdown, Input, Layout, Modal, Space, Tag, Tooltip, Typography, theme } from 'antd'
 import type { InputRef } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -32,11 +32,25 @@ export function Header() {
     }
   }, [isSearchPage, queryFromUrl])
 
+  const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false)
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Bỏ qua nếu đang gõ trong form input/textarea (ngoại trừ Ctrl+K và Esc)
+      const target = e.target as HTMLElement
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
         searchRef.current?.focus()
+        searchRef.current?.select()
+      } else if (e.key === 'Escape') {
+        if (isInput) {
+          (target as HTMLInputElement).blur()
+        }
+      } else if (e.key === '?' && !isInput) {
+        e.preventDefault()
+        setShortcutsModalOpen(true)
       }
     }
     window.addEventListener('keydown', onKey)
@@ -97,6 +111,30 @@ export function Header() {
           value={keyword}
           onChange={(e) => handleKeywordChange(e.target.value)}
           prefix={<SearchOutlined style={{ color: token.colorTextPlaceholder, fontSize: 16 }} />}
+          suffix={
+            <Tooltip title="Nhấn Ctrl + K để tìm nhanh, Esc để đóng">
+              <kbd
+                style={{
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                  background: token.colorFillAlter,
+                  border: `1px solid ${token.colorBorderSecondary}`,
+                  borderRadius: 4,
+                  padding: '2px 6px',
+                  color: token.colorTextTertiary,
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  fontWeight: 600,
+                }}
+                onClick={() => {
+                  searchRef.current?.focus()
+                  searchRef.current?.select()
+                }}
+              >
+                Ctrl K
+              </kbd>
+            </Tooltip>
+          }
           placeholder="Tìm kiếm hệ thống... (Ctrl+K)"
           style={{ width: '100%', borderRadius: 24 }}
           onPressEnter={(e) => {
@@ -112,7 +150,41 @@ export function Header() {
         className="app-header-right"
         style={{ flex: '1 1 0', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}
       >
+        <Tooltip title="Phím tắt tiện lợi (Shift + ?)">
+          <Button
+            type="text"
+            className="btn-shortcuts-helper"
+            icon={<QuestionCircleOutlined style={{ fontSize: 16 }} />}
+            onClick={() => setShortcutsModalOpen(true)}
+            aria-label="Phím tắt tiện lợi"
+          />
+        </Tooltip>
+
         <HeaderNotificationBox />
+
+        <Modal
+          open={shortcutsModalOpen}
+          onCancel={() => setShortcutsModalOpen(false)}
+          footer={null}
+          title="⚡ Phím Tắt Tiện Lợi Cho Sales & Quản Lý"
+          centered
+          width={480}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: token.colorFillAlter, borderRadius: 8 }}>
+              <Typography.Text>Tìm kiếm nhanh toàn hệ thống</Typography.Text>
+              <Tag color="cyan" style={{ fontFamily: 'monospace', fontWeight: 600, padding: '2px 8px' }}>Ctrl + K</Tag>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: token.colorFillAlter, borderRadius: 8 }}>
+              <Typography.Text>Đóng cửa sổ popup / Thoát tìm kiếm</Typography.Text>
+              <Tag style={{ fontFamily: 'monospace', fontWeight: 600, padding: '2px 8px' }}>Esc</Tag>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: token.colorFillAlter, borderRadius: 8 }}>
+              <Typography.Text>Mở bảng hướng dẫn phím tắt</Typography.Text>
+              <Tag color="blue" style={{ fontFamily: 'monospace', fontWeight: 600, padding: '2px 8px' }}>Shift + ?</Tag>
+            </div>
+          </div>
+        </Modal>
 
         <Dropdown
           trigger={['hover']}

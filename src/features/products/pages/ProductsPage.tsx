@@ -1,4 +1,4 @@
-import { AppstoreOutlined, BarsOutlined, CloseOutlined, DownloadOutlined, EditOutlined, EyeOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, BarsOutlined, CloseOutlined, CompassOutlined, DownloadOutlined, EditOutlined, EyeOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
 import { App, Button, Card, Modal, Pagination, Segmented, Select, Space, Tooltip, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -19,6 +19,7 @@ import { ProductTable } from '../components/ProductTable'
 import { ProductDetailModal } from '../components/ProductDetailModal'
 import { ProductLockModal } from '../components/ProductLockModal'
 import { ProductMatrixView } from '../components/ProductMatrixView'
+import { ProductFloorplanSvgView } from '../components/ProductFloorplanSvgView'
 
 const INITIAL: FilterState = { page: 0, size: 10 }
 const PAGE_SIZE = [{ value: 10, label: '10' }, { value: 20, label: '20' }, { value: 50, label: '50' }]
@@ -29,7 +30,7 @@ export function ProductsPage() {
   const user = useAuthStore((s) => s.user)
   const canManage = user?.role === 'ADMIN' || user?.role === 'MANAGER'
   const isAdmin = user?.role === 'ADMIN'
-  const [viewMode, setViewMode] = useState<'TABLE' | 'MATRIX'>('TABLE')
+  const [viewMode, setViewMode] = useState<'TABLE' | 'MATRIX' | 'FLOORPLAN'>('TABLE')
   const [filters, setFilters] = useState<FilterState>(INITIAL)
   const [selected, setSelected] = useState<string[]>([])
   const [bulkStatus, setBulkStatus] = useState<ProductStatus | undefined>()
@@ -167,9 +168,10 @@ export function ProductsPage() {
             options={[
               { label: 'Dạng bảng', value: 'TABLE', icon: <BarsOutlined /> },
               { label: 'Sơ đồ Matrix', value: 'MATRIX', icon: <AppstoreOutlined /> },
+              { label: 'Mặt bằng phân lô SVG', value: 'FLOORPLAN', icon: <CompassOutlined /> },
             ]}
             value={viewMode}
-            onChange={(v) => setViewMode(v as 'TABLE' | 'MATRIX')}
+            onChange={(v) => setViewMode(v as 'TABLE' | 'MATRIX' | 'FLOORPLAN')}
           />
         </div>
 
@@ -244,8 +246,18 @@ export function ProductsPage() {
               <Pagination current={(filters.page ?? 0) + 1} pageSize={size} total={total} showSizeChanger={false} size="small" onChange={(p) => setFilters((f) => ({ ...f, page: p - 1 }))} />
             </div>
           </>
-        ) : (
+        ) : viewMode === 'MATRIX' ? (
           <ProductMatrixView
+            rows={rows}
+            loading={list.isLoading}
+            projectNames={projectNames}
+            onView={(product) => setDetailProductId(product.id)}
+            onLock={handleLock}
+            onUnlock={handleUnlock}
+            onConvertDeal={handleConvertDeal}
+          />
+        ) : (
+          <ProductFloorplanSvgView
             rows={rows}
             loading={list.isLoading}
             projectNames={projectNames}

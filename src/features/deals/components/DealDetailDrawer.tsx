@@ -9,6 +9,7 @@ import {
   type Deal, type DealPayment,
 } from '../api'
 import { DealPaymentScheduleSection } from './DealPaymentScheduleSection'
+import { DealCommissionSection } from '@/features/commissions/components/DealCommissionSection'
 import './DealDetailDrawer.css'
 
 interface Props {
@@ -129,6 +130,7 @@ export function DealDetailDrawer({
           </div>
 
           <DealPaymentScheduleSection deal={deal} onRecordPayment={onRecordPayment} />
+          <DealCommissionSection deal={deal} />
 
           <Card className="deal-detail-modal__payments"
             size="small"

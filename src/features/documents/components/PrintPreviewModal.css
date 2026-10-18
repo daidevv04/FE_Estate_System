@@ -1,0 +1,52 @@
+.print-preview-modal .ant-modal-content {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.print-preview-modal .ant-modal-header {
+  padding: 16px 24px;
+  margin-bottom: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.print-preview-modal .ant-modal-body {
+  padding: 0;
+}
+
+.print-preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.print-preview-content {
+  max-height: calc(85vh - 120px);
+  overflow-y: auto;
+  background: #cbd5e1;
+  padding: 24px 0;
+}
+
+@media print {
+  .ant-modal-root {
+    display: block !important;
+  }
+
+  .ant-modal-wrap,
+  .ant-modal-mask,
+  .print-preview-toolbar,
+  .ant-modal-header,
+  .ant-modal-close {
+    display: none !important;
+  }
+
+  .print-preview-content {
+    background: transparent !important;
+    padding: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

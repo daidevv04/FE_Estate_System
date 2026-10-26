@@ -15,7 +15,7 @@ import {
 import { Button, Checkbox, Form, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { api, API_BASE_URL } from '@/api/client'
+import { api, SERVICE_UNAVAILABLE_MESSAGE } from '@/api/client'
 import { BrandLogo } from '@/components/brand/BrandLogo'
 import { paths } from '@/routes/paths'
 import { useAuthStore, type TokenResponse } from '@/store/authStore'
@@ -158,13 +158,11 @@ export function LoginPage() {
         text:
           status === 429
             ? 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ít phút.'
-            : status === 502 || status === 503
-              ? 'Máy chủ đang khởi động lại (Render). Vui lòng chờ 1–2 phút rồi thử lại.'
-              : status === undefined
-                ? `Không kết nối được API ${API_BASE_URL}. Kiểm tra máy chủ đã lên chưa và CORS đã mở cho ${window.location.origin}.`
-                : status === 401 && (detail === 'Invalid credentials' || !detail)
-                  ? 'Tên đăng nhập hoặc mật khẩu không đúng'
-                  : (detail || 'Tên đăng nhập hoặc mật khẩu không đúng'),
+            : status === undefined || status >= 500
+              ? SERVICE_UNAVAILABLE_MESSAGE
+              : status === 401 && (detail === 'Invalid credentials' || !detail)
+                ? 'Tên đăng nhập hoặc mật khẩu không đúng'
+                : (detail || 'Tên đăng nhập hoặc mật khẩu không đúng'),
       })
     } finally {
       setLoading(false)
@@ -213,9 +211,11 @@ export function LoginPage() {
       setBanner({
         tone: 'error',
         text:
-          status === 401
-            ? 'Mã xác thực 2FA không chính xác hoặc đã hết hạn.'
-            : (detail || 'Xác thực hai lớp thất bại'),
+          status === undefined || status >= 500
+            ? SERVICE_UNAVAILABLE_MESSAGE
+            : status === 401
+              ? 'Mã xác thực 2FA không chính xác hoặc đã hết hạn.'
+              : (detail || 'Xác thực hai lớp thất bại'),
       })
     } finally {
       setLoading(false)

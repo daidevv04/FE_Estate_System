@@ -3,6 +3,7 @@ import { isPersistentSession, readRefreshToken, useAuthStore, type TokenResponse
 import { paths } from '@/routes/paths'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
+export const SERVICE_UNAVAILABLE_MESSAGE = 'Hệ thống tạm thời chưa sẵn sàng. Vui lòng thử lại sau ít phút.'
 
 export const api = axios.create({ baseURL: API_BASE_URL, timeout: 60_000 })
 
@@ -91,6 +92,13 @@ api.interceptors.response.use(
       }
     }
 
+    if (!error.response || error.response.status >= 500) {
+      // UI callers also read response.data; do not expose upstream hosts or proxy error bodies.
+      error.message = SERVICE_UNAVAILABLE_MESSAGE
+      if (error.response) {
+        error.response.data = { detail: SERVICE_UNAVAILABLE_MESSAGE, message: SERVICE_UNAVAILABLE_MESSAGE }
+      }
+    }
     return Promise.reject(error)
   },
 )

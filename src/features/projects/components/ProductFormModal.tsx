@@ -33,7 +33,7 @@ export function ProductFormModal({ open, projectId, projects, editing, submittin
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <Form.Item name="type" label="Loại sản phẩm" style={{ flex: 1 }} rules={[{ required: true }]}><Select id="productType" options={PRODUCT_TYPE} /></Form.Item>
-          <Form.Item name="status" label="Trạng thái" style={{ flex: 1 }}><Select id="productStatus" options={PRODUCT_STATUS} /></Form.Item>
+          <Form.Item name="status" label="Trạng thái" style={{ flex: 1 }} extra="Dùng thao tác giữ chỗ hoặc mở khóa để quản lý căn đang giữ chỗ."><Select id="productStatus" disabled={editing?.status === 'RESERVED'} options={PRODUCT_STATUS.filter((s) => s.value !== 'RESERVED' || editing?.status === 'RESERVED')} /></Form.Item>
           <Form.Item name="direction" label="Hướng" style={{ flex: 1 }}><Select id="productDirection" allowClear options={DIRECTION} /></Form.Item>
         </div>
         <div style={{ display: 'flex', gap: 12 }}>

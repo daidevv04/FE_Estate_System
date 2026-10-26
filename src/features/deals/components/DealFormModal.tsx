@@ -4,8 +4,8 @@ import dayjs from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import { DiscountCalculatorModal } from '@/features/policies/components/DiscountCalculatorModal'
 import {
-  APPROVAL_STATUS_OPTIONS, DEAL_STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, PAYMENT_STATUS_OPTIONS,
-  generateContractCode, type Deal, type DealInput, type DealStatus, type PaymentStatus, type UUID,
+  APPROVAL_STATUS_OPTIONS, DEAL_STATUS_OPTIONS, PAYMENT_METHOD_OPTIONS, paymentStatusLabel,
+  generateContractCode, type Deal, type DealInput, type DealStatus, type UUID,
 } from '../api'
 
 interface Ref {
@@ -20,7 +20,6 @@ interface FormValues {
   depositAmount?: number | null
   depositDate?: dayjs.Dayjs | null
   signedDate?: dayjs.Dayjs | null
-  paymentStatus?: PaymentStatus
   paymentMethod?: string | null
   approvalStatus?: string
   status?: DealStatus
@@ -65,7 +64,6 @@ export function DealFormModal({
         depositAmount: editing.depositAmount,
         depositDate: editing.depositDate ? dayjs(editing.depositDate) : null,
         signedDate: editing.signedDate ? dayjs(editing.signedDate) : null,
-        paymentStatus: editing.paymentStatus,
         paymentMethod: editing.paymentMethod ?? undefined,
         approvalStatus: editing.approvalStatus,
         status: editing.status,
@@ -79,7 +77,6 @@ export function DealFormModal({
         contractCode: generateContractCode(now),
         signedDate: now,
         status: 'IN_PROGRESS',
-        paymentStatus: 'UNPAID',
       })
     }
   }, [open, editing, form])
@@ -113,7 +110,6 @@ export function DealFormModal({
             depositAmount: v.depositAmount ?? null,
             depositDate: v.depositDate ? v.depositDate.format('YYYY-MM-DD') : null,
             signedDate: v.signedDate ? v.signedDate.format('YYYY-MM-DD') : null,
-            paymentStatus: v.paymentStatus,
             paymentMethod: (v.paymentMethod as DealInput['paymentMethod']) ?? null,
             status: v.status,
             fileUrl: v.fileUrl?.trim() || null,
@@ -131,7 +127,6 @@ export function DealFormModal({
         layout="vertical"
         initialValues={{
           status: 'IN_PROGRESS' as DealStatus,
-          paymentStatus: 'UNPAID' as PaymentStatus,
           scheduleTemplate: 'TEMPLATE_CONSTRUCTION_7',
         }}
         style={{ marginTop: 8 }}
@@ -257,12 +252,11 @@ export function DealFormModal({
             <Select id="status" options={DEAL_STATUS_OPTIONS} />
           </Form.Item>
           <Form.Item
-            name="paymentStatus"
             label="Trạng thái thanh toán"
             style={{ flex: 1 }}
             extra="Ghi nhận đợt thanh toán sẽ tự cập nhật trạng thái này"
           >
-            <Select id="paymentStatus" options={PAYMENT_STATUS_OPTIONS} />
+            <Input aria-label="Trạng thái thanh toán" readOnly value={paymentStatusLabel(editing?.paymentStatus ?? 'UNPAID')} />
           </Form.Item>
           <Form.Item name="paymentMethod" label="Phương thức thanh toán" style={{ flex: 1 }}>
             <Select id="paymentMethod" allowClear options={PAYMENT_METHOD_OPTIONS} placeholder="Chọn phương thức" />

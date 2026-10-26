@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import {
   Alert,
+  App,
   Button,
   Card,
   Dropdown,
@@ -25,6 +26,7 @@ import {
   type DealPaymentSchedule,
   useApplyScheduleTemplate,
   useDealPaymentSchedules,
+  apiErrorMessage,
 } from '../api'
 import './DealPaymentScheduleSection.css'
 
@@ -34,6 +36,7 @@ interface Props {
 }
 
 export function DealPaymentScheduleSection({ deal, onRecordPayment }: Props) {
+  const { modal } = App.useApp()
   const { data: schedules = [], isLoading } = useDealPaymentSchedules(deal.id)
   const applyTemplate = useApplyScheduleTemplate()
 
@@ -45,17 +48,28 @@ export function DealPaymentScheduleSection({ deal, onRecordPayment }: Props) {
     totalDue > 0 ? Math.min(100, Math.round((totalPaid / totalDue) * 100)) : 0
 
   const handleApplyTemplate = (templateCode: string, templateLabel: string) => {
-    applyTemplate.mutate(
+    const apply = () => applyTemplate.mutate(
       { dealId: deal.id, templateCode },
       {
         onSuccess: () => {
           message.success(`Đã áp dụng ${templateLabel} thành công!`)
         },
-        onError: (err: any) => {
-          message.error(err?.response?.data?.message || 'Không thể áp dụng mẫu tiến độ')
+        onError: (err: unknown) => {
+          message.error(apiErrorMessage(err))
         },
       },
     )
+    if (schedules.length === 0) {
+      apply()
+      return
+    }
+    modal.confirm({
+      title: 'Thay thế tiến độ thanh toán hiện tại?',
+      content: 'Các đợt thanh toán sẽ được tạo lại theo mẫu đã chọn. Các khoản thu đã ghi nhận vẫn được giữ nguyên.',
+      okText: 'Thay thế tiến độ',
+      cancelText: 'Giữ tiến độ hiện tại',
+      onOk: apply,
+    })
   }
 
   const templateMenuItems: MenuProps['items'] = [

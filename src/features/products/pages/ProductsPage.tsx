@@ -237,7 +237,7 @@ export function ProductsPage() {
         onCancel={() => setBulkStatus(undefined)}
         onOk={() => { if (bulkStatus) void applyBulk(bulkStatus); setBulkStatus(undefined) }}
       >
-        <Select style={{ width: '100%', marginTop: 12 }} value={bulkStatus} onChange={setBulkStatus} options={PRODUCT_STATUS} />
+        <Select aria-label="Trạng thái sản phẩm mới" style={{ width: '100%', marginTop: 12 }} value={bulkStatus} onChange={setBulkStatus} options={PRODUCT_STATUS.filter((s) => s.value !== 'RESERVED')} />
       </Modal>
 
       <ProductFormModal

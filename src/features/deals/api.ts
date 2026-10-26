@@ -87,7 +87,6 @@ export interface DealInput {
   depositAmount?: number | null
   depositDate?: string | null
   signedDate?: string | null
-  paymentStatus?: PaymentStatus
   paymentMethod?: PaymentMethod | null
   approvalStatus?: ApprovalStatus
   fileUrl?: string | null

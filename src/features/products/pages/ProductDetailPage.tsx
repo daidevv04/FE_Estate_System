@@ -102,11 +102,11 @@ export function ProductDetailPage() {
             <>
               <Dropdown
                 menu={{
-                  items: PRODUCT_STATUS.filter((s) => s.value !== item.status).map((s) => ({ key: s.value, label: s.label })),
+                  items: PRODUCT_STATUS.filter((s) => s.value !== item.status && s.value !== 'RESERVED').map((s) => ({ key: s.value, label: s.label })),
                   onClick: ({ key }) => setStatus(key as ProductStatus),
                 }}
               >
-                <Button icon={<SwapOutlined />} loading={mutations.updateProduct.isPending}>Đổi trạng thái</Button>
+                <Button icon={<SwapOutlined />} disabled={item.status === 'RESERVED'} loading={mutations.updateProduct.isPending}>Đổi trạng thái</Button>
               </Dropdown>
               <Button type="primary" icon={<EditOutlined />} onClick={() => setEditing(true)}>Chỉnh sửa</Button>
             </>

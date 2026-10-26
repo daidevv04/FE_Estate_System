@@ -693,10 +693,10 @@ export function CustomersPage() {
       />
 
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} xl={6}><KpiCard label="Tổng khách hàng" value={String(kpi.total)} sub={kpiSubText} tone="green" icon={<TeamOutlined />} /></Col>
-        <Col xs={24} sm={12} xl={6}><KpiCard label="Khách hàng mới" value={String(kpi.fresh)} sub="Trong 30 ngày qua" tone="blue" icon={<PlusOutlined />} /></Col>
-        <Col xs={24} sm={12} xl={6}><KpiCard label="Khách tiềm năng" value={String(kpi.potential)} sub="Trạng thái POTENTIAL" tone="teal" icon={<StarOutlined />} /></Col>
-        <Col xs={24} sm={12} xl={6}><KpiCard label="Chưa hoạt động" value={String(kpi.inactive)} sub="INACTIVE / Tạm ngưng" tone="amber" icon={<PauseCircleOutlined />} /></Col>
+        <Col xs={24} sm={12} xl={6}><KpiCard loading={isLoading} label="Tổng khách hàng" value={String(kpi.total)} sub={kpiSubText} tone="green" icon={<TeamOutlined />} /></Col>
+        <Col xs={24} sm={12} xl={6}><KpiCard loading={isLoading} label="Khách hàng mới" value={String(kpi.fresh)} sub="Trong 30 ngày qua" tone="blue" icon={<PlusOutlined />} /></Col>
+        <Col xs={24} sm={12} xl={6}><KpiCard loading={isLoading} label="Khách tiềm năng" value={String(kpi.potential)} sub="Khách hàng đang có nhu cầu" tone="teal" icon={<StarOutlined />} /></Col>
+        <Col xs={24} sm={12} xl={6}><KpiCard loading={isLoading} label="Chưa hoạt động" value={String(kpi.inactive)} sub="Tạm ngưng chăm sóc" tone="amber" icon={<PauseCircleOutlined />} /></Col>
       </Row>
 
       <Card className="stitch-card crm-filter-card" variant="borderless" styles={{ body: { padding: '12px 16px' } }}>

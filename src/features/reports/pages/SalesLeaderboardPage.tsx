@@ -1,7 +1,9 @@
-import { DownloadOutlined, ReloadOutlined, TrophyOutlined } from '@ant-design/icons'
-import { Button, Card, Segmented, Typography } from 'antd'
+import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Alert, Button, Card, Empty, Segmented, Skeleton } from 'antd'
 import dayjs from 'dayjs'
 import { useState } from 'react'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { paths } from '@/routes/paths'
 import { useSalesLeaderboard } from '../leaderboardApi'
 import { LeaderboardPodium } from '../components/LeaderboardPodium'
 import { KpiPacingCard } from '../components/KpiPacingCard'
@@ -23,7 +25,7 @@ export function SalesLeaderboardPage() {
   const items = summary?.items ?? []
 
   const handleExportCsv = () => {
-    if (items.length === 0) return
+    if (items.length === 0 || leaderboardQuery.isError) return
     const q = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
     const head = ['Hạng', 'Nhân viên kinh doanh', 'Danh hiệu', 'Số giao dịch', 'Doanh số (VND)', 'Hoa hồng (VND)']
     const lines = items.map((r) =>
@@ -41,34 +43,29 @@ export function SalesLeaderboardPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Top Header Card */}
+    <div className="crm-leaderboard">
+      <PageHeader
+        title="Bảng xếp hạng kinh doanh"
+        breadcrumb={[{ title: 'Tổng quan', href: paths.dashboard }, { title: 'Bảng xếp hạng' }]}
+        meta="Theo dõi doanh số, hoa hồng và tiến độ chỉ tiêu của đội ngũ kinh doanh."
+        actions={<Button icon={<DownloadOutlined />} onClick={handleExportCsv} disabled={!items.length || leaderboardQuery.isError}>Xuất CSV</Button>}
+      />
       <Card
         className="stitch-card"
         variant="borderless"
         styles={{ body: { padding: '16px 20px' } }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <Typography.Title level={4} style={{ margin: 0, color: '#0f172a' }}>
-              <TrophyOutlined style={{ color: '#059669', marginRight: 8 }} />
-              BẢNG XẾP HẠNG THI ĐUA SALES & KPI PACING
-            </Typography.Title>
-            <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-              Vinh danh các chiến binh chốt cọc xuất sắc và theo dõi tiến độ doanh số toàn sàn
-            </Typography.Text>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="crm-leaderboard__toolbar">
             <Segmented
               size="middle"
+              aria-label="Kỳ báo cáo"
               value={period}
               onChange={(v) => setPeriod(v as 'MONTH' | 'QUARTER' | 'YEAR' | 'ALL')}
               options={[
-                { label: 'Tháng Này', value: 'MONTH' },
-                { label: 'Quý Này', value: 'QUARTER' },
-                { label: 'Năm Nay', value: 'YEAR' },
-                { label: 'Toàn Bộ', value: 'ALL' },
+                { label: 'Tháng này', value: 'MONTH' },
+                { label: 'Quý này', value: 'QUARTER' },
+                { label: 'Năm nay', value: 'YEAR' },
+                { label: 'Tất cả', value: 'ALL' },
               ]}
             />
 
@@ -80,14 +77,21 @@ export function SalesLeaderboardPage() {
               Làm mới
             </Button>
 
-            <Button icon={<DownloadOutlined />} onClick={handleExportCsv} disabled={items.length === 0}>
-              Xuất CSV
-            </Button>
-          </div>
         </div>
       </Card>
 
-      {/* KPI Pacing Progress Bar */}
+      {leaderboardQuery.isError ? (
+        <Alert type="error" showIcon message="Không thể tải bảng xếp hạng" description="Dữ liệu chưa được cập nhật. Vui lòng thử lại."
+          action={<Button onClick={() => void leaderboardQuery.refetch()} loading={leaderboardQuery.isFetching}>Thử lại</Button>} />
+      ) : leaderboardQuery.isLoading ? (
+        <Card className="stitch-card" variant="borderless" aria-busy="true" aria-label="Đang tải bảng xếp hạng"><Skeleton active paragraph={{ rows: 6 }} /></Card>
+      ) : !items.length ? (
+        <Card className="stitch-card crm-data-state" variant="borderless">
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có doanh số được ghi nhận trong kỳ này">
+            <Button onClick={() => setPeriod('ALL')}>Xem tất cả thời gian</Button>
+          </Empty>
+        </Card>
+      ) : <div className="crm-leaderboard__content">
       <KpiPacingCard summary={summary} loading={leaderboardQuery.isLoading} />
 
       {/* Top 3 Podium */}
@@ -99,6 +103,7 @@ export function SalesLeaderboardPage() {
         loading={leaderboardQuery.isLoading}
         totalTeamRevenue={summary?.teamAchievedRevenue}
       />
+      </div>}
     </div>
   )
 }

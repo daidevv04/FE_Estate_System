@@ -130,7 +130,7 @@ export function PipelineSummaryPage() {
     </section>
 
     {summary.isError && <Alert type="warning" showIcon message="Không tải được lịch sử chuyển stage. Cột tỷ lệ chuyển tiếp hiển thị Chưa có event." action={<Button size="small" onClick={() => void summary.refetch()}>Thử lại</Button>} />}
-    <section className="pipeline-hero"><div><span>HIỆU SUẤT PIPELINE</span><h2>Lead hiện tại · Chuyển stage thật · Deal ký trong kỳ</h2><p>Chỉ số chuyển tiếp lấy từ event append-only của lead trong kỳ báo cáo.</p></div><div className="pipeline-hero__facts"><div><small>Lead đang mở</small><strong>{formatNumber(report.open)}</strong></div><div><small>Tỷ lệ chốt thắng</small><strong>{report.closed ? pct((report.won / report.closed) * 100) : '—'}</strong></div></div></section>
+    <section className="pipeline-hero"><div><span>HIỆU SUẤT PIPELINE</span><h2>Lead hiện tại · Chuyển stage thật · Deal ký trong kỳ</h2><p>Chỉ số chuyển tiếp phản ánh lịch sử thay đổi giai đoạn của lead trong kỳ báo cáo.</p></div><div className="pipeline-hero__facts"><div><small>Lead đang mở</small><strong>{formatNumber(report.open)}</strong></div><div><small>Tỷ lệ chốt thắng</small><strong>{report.closed ? pct((report.won / report.closed) * 100) : '—'}</strong></div></div></section>
 
     <section className="pipeline-kpis" aria-label="Chỉ số pipeline">{kpis.map((item) => <Card className={`pipeline-kpi pipeline-kpi--${item.tone}`} variant="borderless" key={item.label}><div className="pipeline-kpi__top"><span>{item.label}</span><i>{item.icon}</i></div><div className="pipeline-kpi__value">{item.value} {item.suffix && <small>{item.suffix}</small>}</div><div className="pipeline-kpi__note">{item.note}</div></Card>)}</section>
 

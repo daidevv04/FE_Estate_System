@@ -11,7 +11,11 @@ import { HeaderNotificationBox } from '@/components/notification/HeaderNotificat
 
 const { Header: AntHeader } = Layout
 
-export function Header() {
+export function Header({ isMobile = false, navigationOpen = false, onOpenNavigation }: {
+  isMobile?: boolean
+  navigationOpen?: boolean
+  onOpenNavigation?: () => void
+}) {
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = theme.useToken()
@@ -92,14 +96,13 @@ export function Header() {
         zIndex: 10,
       }}
     >
-      {/* 2 vùng flex-basis 0 ở hai đầu, rộng bằng nhau -> ô tìm kiếm luôn nằm chính giữa header.
-          (Không dùng spacer co giãn 1 phía hay margin:auto: cụm bên phải rộng hơn nút menu nên sẽ lệch.) */}
-      <div style={{ flex: '1 1 0', display: 'flex', alignItems: 'center' }}>
+      <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center' }}>
         <Button
           type="text"
-          aria-label={sidebarCollapsed ? 'Mở menu' : 'Thu gọn menu'}
-          icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={toggleSidebar}
+          aria-label={isMobile || sidebarCollapsed ? 'Mở menu' : 'Thu gọn menu'}
+          aria-expanded={isMobile ? navigationOpen : !sidebarCollapsed}
+          icon={isMobile || sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={isMobile ? onOpenNavigation : toggleSidebar}
         />
       </div>
 
@@ -107,6 +110,7 @@ export function Header() {
         <Input
           className="app-header-search__input"
           ref={searchRef}
+          aria-label="Tìm kiếm hệ thống"
           allowClear
           value={keyword}
           onChange={(e) => handleKeywordChange(e.target.value)}
@@ -148,7 +152,7 @@ export function Header() {
 
       <div
         className="app-header-right"
-        style={{ flex: '1 1 0', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}
+        style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}
       >
         <Tooltip title="Phím tắt tiện lợi (Shift + ?)">
           <Button
@@ -187,7 +191,7 @@ export function Header() {
         </Modal>
 
         <Dropdown
-          trigger={['hover']}
+          trigger={['click']}
           menu={{
             items: [
               { key: 'profile', label: 'Hồ sơ cá nhân', onClick: () => navigate(paths.profile) },
@@ -196,7 +200,8 @@ export function Header() {
             ],
           }}
         >
-          <Space className="app-header-profile" size={10} style={{ cursor: 'pointer', padding: '4px 8px', borderRadius: token.borderRadius }}>
+          <Button type="text" className="app-header-profile" aria-label={`Tài khoản ${user?.fullName ?? user?.username ?? ''}`} style={{ height: 'auto', padding: '4px 8px' }}>
+          <Space size={10}>
             <Avatar style={{ background: token.colorPrimary }}>
               {(user?.fullName ?? user?.username ?? '?').charAt(0).toUpperCase()}
             </Avatar>
@@ -221,6 +226,7 @@ export function Header() {
               </div>
             </div>
           </Space>
+          </Button>
         </Dropdown>
       </div>
     </AntHeader>

@@ -6,6 +6,8 @@ import {
   MobileOutlined,
   RightOutlined,
 } from '@ant-design/icons'
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 
 export interface SessionDevice {
   id?: string
@@ -44,6 +46,13 @@ export function ProfileSecurityPanel({
   onVerifyEmail,
   onToggle2fa,
 }: ProfileSecurityPanelProps) {
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash !== '#security') return
+    const panel = document.getElementById('security')
+    panel?.focus({ preventScroll: true })
+    panel?.scrollIntoView({ block: 'start' })
+  }, [hash])
   const sessionsList = sessions && sessions.length > 0 ? sessions : session ? [session] : []
   const hasOtherSessions = sessionsList.some((s) => !s.isCurrent)
   const emailStatus = !hasEmail
@@ -53,7 +62,7 @@ export function ProfileSecurityPanel({
     : 'Chờ xác minh'
   const emailClass = emailVerified ? 'is-green' : 'is-muted'
   return (
-    <div className="profile-panel-card">
+    <div className="profile-panel-card" id="security" role="region" aria-label="Bảo mật tài khoản" tabIndex={-1}>
       <div className="profile-panel-card__header">
         <div className="profile-panel-card__header-left">
           <div className="profile-panel-icon is-blue">

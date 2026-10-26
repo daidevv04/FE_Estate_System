@@ -112,7 +112,7 @@ export function LeaderboardTable({ items, loading = false, totalTeamRevenue = 0 
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <TrophyOutlined style={{ color: '#059669' }} />
-          <span>BẢNG XẾP HẠNG DOANH SỐ CHI TIẾT</span>
+          <span>Chi tiết doanh số</span>
         </div>
       }
       styles={{ body: { padding: '12px 16px' } }}
@@ -124,6 +124,7 @@ export function LeaderboardTable({ items, loading = false, totalTeamRevenue = 0 
         loading={loading}
         size="middle"
         pagination={false}
+        scroll={{ x: 960 }}
         locale={{ emptyText: 'Chưa có dữ liệu chốt cọc trong kỳ' }}
       />
     </Card>

@@ -5,10 +5,10 @@ export const tokens = {
   colorTeal: '#006A61', colorTealBg: '#86F2E4',
   colorAccent: '#F59E0B', colorAccentBg: '#FEF3C7',
 
-  colorCanvas: '#F9F9FF', colorSurface: '#FFFFFF', colorSurfaceAlt: '#F0F3FF',
-  colorSurfaceSunken: '#F8FAFC', colorSurfaceContainer: '#E7EEFF',
-  colorBorder: '#E4E7F0', colorBorderStrong: '#BDCABA', colorOutline: '#6E7B6C',
-  colorText: '#111C2D', colorTextSub: '#3E4A3D', colorTextMuted: '#64748B',
+  colorCanvas: '#F5F8F6', colorSurface: '#FFFFFF', colorSurfaceAlt: '#EFF6F1',
+  colorSurfaceSunken: '#F6F9F7', colorSurfaceContainer: '#E8F2EC',
+  colorBorder: '#DFE8E2', colorBorderStrong: '#BDCABA', colorOutline: '#6E7B6C',
+  colorText: '#173325', colorTextSub: '#425449', colorTextMuted: '#65766A',
 
   colorSuccess: '#16A34A', colorSuccessBg: '#DCFCE7', colorSuccessText: '#15803D',
   colorWarning: '#F59E0B', colorWarningBg: '#FEF3C7', colorWarningText: '#B45309',

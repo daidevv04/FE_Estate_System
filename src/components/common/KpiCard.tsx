@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Card, Typography } from 'antd'
+import { Card, Skeleton, Typography } from 'antd'
 import { tokens } from '@/theme/tokens'
 import type { StatusTone } from './StatusPill'
 
@@ -12,11 +12,11 @@ export interface KpiCardProps {
   loading?: boolean
 }
 
-export function KpiCard({ label, value, sub, icon, tone = 'green' }: KpiCardProps) {
+export function KpiCard({ label, value, sub, icon, tone = 'green', loading = false }: KpiCardProps) {
   const c = tokens.tones[tone] ?? tokens.tones.gray
 
   return (
-    <Card className="stitch-card" variant="borderless" style={{ height: '100%' }} styles={{ body: { padding: 20 } }}>
+    <Card className="stitch-card crm-kpi" variant="borderless" aria-busy={loading} style={{ height: '100%' }} styles={{ body: { padding: 20 } }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <Typography.Text className="stitch-label" style={{ color: tokens.colorTextMuted }}>
           {label}
@@ -48,9 +48,9 @@ export function KpiCard({ label, value, sub, icon, tone = 'green' }: KpiCardProp
             fontVariantNumeric: 'tabular-nums',
           }}
         >
-          {value}
+          {loading ? <Skeleton.Input active size="small" className="crm-kpi__skeleton" /> : value}
         </div>
-        {sub && (
+        {!loading && sub && (
           <Typography.Text type="secondary" style={{ fontSize: 12, marginTop: 4, display: 'block' }}>
             {sub}
           </Typography.Text>

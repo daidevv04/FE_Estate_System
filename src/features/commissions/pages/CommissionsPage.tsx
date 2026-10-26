@@ -7,9 +7,11 @@ import {
   ThunderboltOutlined,
   TrophyOutlined,
   UserOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons'
 import {
   Button,
+  Alert,
   Card,
   Form,
   Input,
@@ -26,6 +28,9 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useAuthStore } from '@/store/authStore'
+import { PageHeader } from '@/components/layout/PageHeader'
+import { KpiCard } from '@/components/common/KpiCard'
+import { paths } from '@/routes/paths'
 import { formatDate, formatDateTime, formatMoney } from '@/lib/format'
 import { useDeals } from '@/features/deals/api'
 import { useProjects } from '@/features/projects/api'
@@ -78,7 +83,8 @@ export function CommissionsPage() {
     }
   }, [projects, selectedProjectId])
 
-  const activeData = (isAdmin || activeTab === 'all') && canManage ? allQuery.data : myQuery.data
+  const activeQuery = (isAdmin || activeTab === 'all') && canManage ? allQuery : myQuery
+  const activeData = activeQuery.data
   const summary = activeData?.summary ?? {
     totalExpected: 0,
     totalPaid: 0,
@@ -342,72 +348,25 @@ export function CommissionsPage() {
 
   return (
     <div className="commissions-page">
-      {/* Header */}
-      <div className="commissions-header">
-        <div>
-          <Typography.Title level={3} className="commissions-header__title">
-            <TrophyOutlined style={{ color: '#059669', marginRight: 10 }} />
-            Quản Lý Hoa Hồng & Thưởng Doanh Số Sales
-          </Typography.Title>
-          <Typography.Text type="secondary">
-            Theo dõi bảng kê hoa hồng căn hộ, tự động giải ngân theo mốc tiền thực thu của khách hàng.
-          </Typography.Text>
-        </div>
-      </div>
+      <PageHeader title="Hoa hồng và thưởng doanh số"
+        breadcrumb={[{ title: 'Tổng quan', href: paths.dashboard }, { title: 'Hoa hồng và thưởng' }]}
+        meta="Theo dõi hoa hồng và các đợt chi trả theo tiến độ thanh toán của khách hàng."
+        actions={<Button icon={<ReloadOutlined />} onClick={() => void activeQuery.refetch()} loading={activeQuery.isFetching}>Làm mới</Button>}
+      />
+      {activeQuery.isError && <Alert type="error" showIcon message="Không thể tải dữ liệu hoa hồng"
+        description="Vui lòng thử lại để cập nhật số liệu."
+        action={<Button onClick={() => void activeQuery.refetch()} loading={activeQuery.isFetching}>Thử lại</Button>} />}
 
       {/* 4 KPI Cards */}
       <div className="commissions-kpis">
-        <Card className="commission-kpi-card" size="small">
-          <div className="commission-kpi-info">
-            <span className="commission-kpi-label">Tổng hoa hồng kỳ vọng</span>
-            <span className="commission-kpi-val" style={{ color: '#059669' }}>
-              {formatMoney(summary.totalExpected)}
-            </span>
-          </div>
-          <div className="commission-kpi-icon commission-kpi-icon--green">
-            <TrophyOutlined />
-          </div>
-        </Card>
-
-        <Card className="commission-kpi-card" size="small">
-          <div className="commission-kpi-info">
-            <span className="commission-kpi-label">Đã thực nhận</span>
-            <span className="commission-kpi-val" style={{ color: '#0d9488' }}>
-              {formatMoney(summary.totalPaid)}
-            </span>
-          </div>
-          <div className="commission-kpi-icon commission-kpi-icon--teal">
-            <CheckCircleOutlined />
-          </div>
-        </Card>
-
-        <Card className="commission-kpi-card" size="small">
-          <div className="commission-kpi-info">
-            <span className="commission-kpi-label">Đủ điều kiện nhận (Chờ chi)</span>
-            <span className="commission-kpi-val" style={{ color: '#d97706' }}>
-              {formatMoney(summary.totalEligible)}
-            </span>
-          </div>
-          <div className="commission-kpi-icon commission-kpi-icon--amber">
-            <ThunderboltOutlined />
-          </div>
-        </Card>
-
-        <Card className="commission-kpi-card" size="small">
-          <div className="commission-kpi-info">
-            <span className="commission-kpi-label">Chờ tiến độ khách nộp</span>
-            <span className="commission-kpi-val" style={{ color: '#64748b' }}>
-              {formatMoney(summary.totalPending)}
-            </span>
-          </div>
-          <div className="commission-kpi-icon commission-kpi-icon--gray">
-            <ClockCircleOutlined />
-          </div>
-        </Card>
+        <KpiCard label="Hoa hồng kỳ vọng" icon={<TrophyOutlined />} tone="green" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalExpected)} />
+        <KpiCard label="Đã thực nhận" icon={<CheckCircleOutlined />} tone="teal" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalPaid)} />
+        <KpiCard label="Đủ điều kiện, chờ chi" icon={<ThunderboltOutlined />} tone="amber" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalEligible)} />
+        <KpiCard label="Chờ khách thanh toán" icon={<ClockCircleOutlined />} tone="gray" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalPending)} />
       </div>
 
       {/* Tabs */}
-      <Card className="commissions-content-card" size="small">
+      <Card className="commissions-content-card stitch-card" variant="borderless" size="small">
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -426,9 +385,11 @@ export function CommissionsPage() {
                       <Table<DealCommission>
                         rowKey="id"
                         columns={salesColumns}
+                        locale={{ emptyText: 'Chưa có hoa hồng được ghi nhận' }}
                         dataSource={commissions}
                         loading={myQuery.isLoading}
                         pagination={{ pageSize: 10 }}
+                        scroll={{ x: 900 }}
                         expandable={{
                           expandedRowRender,
                           defaultExpandAllRows: true,
@@ -452,9 +413,11 @@ export function CommissionsPage() {
                       <Table
                         rowKey="id"
                         columns={managerColumns}
+                        locale={{ emptyText: 'Chưa có đợt hoa hồng cần xử lý' }}
                         dataSource={flatMilestones}
                         loading={allQuery.isLoading}
                         pagination={{ pageSize: 10 }}
+                        scroll={{ x: 1000 }}
                       />
                     ),
                   },

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "verify:ui": "node scripts/verify-ui-consistency.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

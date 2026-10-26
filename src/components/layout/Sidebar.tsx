@@ -6,11 +6,16 @@ import { buildNav, flatNav } from '@/components/layout/nav'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
 
-export function Sidebar() {
+export function Sidebar({ collapsed: forcedCollapsed, onNavigate }: { collapsed?: boolean; onNavigate?: () => void } = {}) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const role = useAuthStore((s) => s.user?.role)
-  const collapsed = useUiStore((s) => s.sidebarCollapsed)
+  const storedCollapsed = useUiStore((s) => s.sidebarCollapsed)
+  const collapsed = forcedCollapsed ?? storedCollapsed
+  const goTo = (path: string) => {
+    navigate(path)
+    onNavigate?.()
+  }
 
   const items = useMemo<MenuProps['items']>(
     () =>
@@ -40,7 +45,7 @@ export function Sidebar() {
                 className={`sidebar-icon-nav__item${active ? ' is-active' : ''}`}
                 aria-label={item.label}
                 aria-current={active ? 'page' : undefined}
-                onClick={() => navigate(item.key)}
+                onClick={() => goTo(item.key)}
               >
                 {item.icon}
               </button>
@@ -52,12 +57,14 @@ export function Sidebar() {
   }
 
   return (
+    <nav aria-label="Điều hướng chính">
     <Menu
       mode="inline"
       items={items}
       selectedKeys={selectedKey}
-      onClick={({ key }) => navigate(key)}
+      onClick={({ key }) => goTo(key)}
       className="app-sidebar-menu"
     />
+    </nav>
   )
 }

@@ -533,6 +533,7 @@ export function DealsPage() {
           <KpiCard
             tone="green"
             label="Tổng giá trị hợp đồng"
+            loading={deals.isLoading}
             value={formatMoneyShort(kpi.total)}
             sub={`${rows.length} hợp đồng trong phạm vi lọc`}
             icon={<FilePdfOutlined />}
@@ -542,6 +543,7 @@ export function DealsPage() {
           <KpiCard
             tone="teal"
             label="Đã thu thực tế"
+            loading={deals.isLoading || payments.isLoading}
             value={formatMoneyShort(kpi.collected)}
             sub={`Từ ${(payments.data ? Object.values(payments.data).reduce((n, list) => n + list.length, 0) : 0)} đợt thanh toán đã ghi`}
             icon={<WalletOutlined />}
@@ -551,6 +553,7 @@ export function DealsPage() {
           <KpiCard
             tone={kpi.debt > 0 ? 'red' : 'green'}
             label="Công nợ còn lại"
+            loading={deals.isLoading || payments.isLoading}
             value={formatMoneyShort(kpi.debt)}
             sub="Giá trị hợp đồng − các đợt đã thu (không gồm tiền cọc)"
             icon={<WalletOutlined />}
@@ -560,8 +563,9 @@ export function DealsPage() {
           <KpiCard
             tone="amber"
             label="Hợp đồng chờ duyệt"
+            loading={deals.isLoading}
             value={String(kpi.pending)}
-            sub="approvalStatus = PENDING"
+            sub="Chờ quản lý phê duyệt"
             icon={<CheckCircleOutlined />}
           />
         </Col>

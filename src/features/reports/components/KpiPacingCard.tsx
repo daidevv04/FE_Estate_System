@@ -9,12 +9,13 @@ interface Props {
 }
 
 export function KpiPacingCard({ summary, loading = false }: Props) {
-  const target = summary?.teamTargetRevenue ?? 30_000_000_000
+  const target = summary?.teamTargetRevenue ?? 0
   const achieved = summary?.teamAchievedRevenue ?? 0
   const pacingRate = summary?.teamPacingRate ?? 0
   const dealsCount = summary?.totalDealsCount ?? 0
 
   const getStatusTag = () => {
+    if (target <= 0) return <Tag>Chưa có chỉ tiêu</Tag>
     if (pacingRate >= 100) {
       return <Tag color="green" icon={<CheckCircleOutlined />}>VƯỢT CHỈ TIÊU</Tag>
     }
@@ -32,16 +33,16 @@ export function KpiPacingCard({ summary, loading = false }: Props) {
       styles={{ body: { padding: '20px 24px' } }}
       loading={loading}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+      <div className="crm-pacing-header">
         <div>
           <Space>
             <FlagOutlined style={{ color: '#059669', fontSize: 18 }} />
             <Typography.Text strong style={{ fontSize: 16, color: '#0f172a' }}>
-              TIẾN ĐỘ DOANH SỐ TOÀN SÀN (KPI PACING)
+              Tiến độ doanh số toàn sàn
             </Typography.Text>
           </Space>
           <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-            Chỉ tiêu thi đua và nhịp độ chốt cọc toàn bộ đội ngũ kinh doanh nội bộ
+            Doanh số đã ghi nhận so với chỉ tiêu trong kỳ
           </div>
         </div>
         <div>{getStatusTag()}</div>
@@ -49,13 +50,13 @@ export function KpiPacingCard({ summary, loading = false }: Props) {
 
       <Row gutter={[24, 16]} align="middle">
         <Col xs={24} md={14}>
-          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+          <div className="crm-pacing-totals">
             <span style={{ fontSize: 13, color: '#475569' }}>
-              Thực đạt: <strong className="stitch-num" style={{ color: '#047857' }}>{formatMoney(achieved)}</strong> /{' '}
-              {formatMoney(target)}
+              Thực đạt: <strong className="stitch-num crm-money" style={{ color: '#047857' }}>{formatMoney(achieved)}</strong> /{' '}
+              <span className="crm-money">{formatMoney(target)}</span>
             </span>
             <span className="stitch-num" style={{ fontSize: 14, fontWeight: 800, color: '#059669' }}>
-              {pacingRate}%
+              {target > 0 ? `${pacingRate}%` : '—'}
             </span>
           </div>
           <Progress
@@ -75,6 +76,7 @@ export function KpiPacingCard({ summary, loading = false }: Props) {
 
         <Col xs={24} md={10}>
           <div
+            className="crm-pacing-stats"
             style={{
               display: 'flex',
               gap: 16,
@@ -91,7 +93,7 @@ export function KpiPacingCard({ summary, loading = false }: Props) {
               </div>
             </div>
 
-            <div style={{ width: 1, background: '#e2e8f0' }} />
+            <div className="crm-pacing-stats__divider" style={{ width: 1, background: '#e2e8f0' }} />
 
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: '#64748b' }}>CÒN THIẾU CHỈ TIÊU</div>

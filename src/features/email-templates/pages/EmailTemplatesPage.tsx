@@ -194,7 +194,7 @@ export function EmailTemplatesPage() {
 
         <div className="products-pager">
           <Typography.Text style={{ fontSize: 13, color: t.colorTextSub }}>
-            Đang xem {from} - {from + rows.length - 1} của {total} mẫu email
+            Đang xem {from} - {rows.length === 0 ? 0 : from + rows.length - 1} của {total} mẫu email
           </Typography.Text>
           <Space size={8}>
             <Typography.Text style={{ fontSize: 13, color: t.colorTextMuted }}>Xem</Typography.Text>

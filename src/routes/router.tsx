@@ -1,6 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
-import { PlaceholderPage } from '@/components/common/PlaceholderPage'
 import { AppointmentsPage } from '@/features/appointments/pages/AppointmentsPage'
 import { AppointmentDetailPage } from '@/features/appointments/pages/AppointmentDetailPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
@@ -36,11 +35,9 @@ import { CommissionsPage } from '@/features/commissions/pages/CommissionsPage'
 import { paths } from './paths'
 import { ProtectedRoute } from './ProtectedRoute'
 
-const ph = (title: string, spec: string) => <PlaceholderPage title={title} spec={spec} />
-
 export const router = createBrowserRouter([
   { path: paths.login, element: <LoginPage /> },
-  { path: paths.login2fa, element: ph('Xác thực 2 lớp', '9.2') },
+  { path: paths.login2fa, element: <LoginPage /> },
   { path: paths.forgotPassword, element: <ForgotPasswordPage /> },
 
   {
@@ -116,7 +113,7 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={['ADMIN', 'MANAGER']}><UserDetailPage /></ProtectedRoute>,
       },
       { path: paths.profile, element: <ProfilePage /> },
-      { path: paths.security, element: ph('Bảo mật 2FA', '9.6') },
+      { path: paths.security, element: <Navigate to={`${paths.profile}#security`} replace /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

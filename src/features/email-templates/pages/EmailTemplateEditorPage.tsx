@@ -30,7 +30,7 @@ export function EmailTemplateEditorPage() {
   const [dirty, setDirty] = useState(false)
   const body = Form.useWatch('body', form) ?? ''
   const subjectLive = Form.useWatch('subject', form) ?? ''
-  const previewBody = useDeferredValue(body)
+  const previewBody = useDeferredValue(body.replaceAll('{{customer_name}}', 'Nguyễn Văn An'))
 
   useEffect(() => {
     if (!template) return
@@ -179,7 +179,7 @@ export function EmailTemplateEditorPage() {
                 name="body"
                 label="Nội dung email (HTML)"
                 rules={[{ required: true, message: 'Nhập nội dung HTML cho email' }]}
-                extra="Dùng biến dạng {{customer_name}} để chèn tên khách hàng. Nội dung hiển thị đúng như gửi thật."
+                extra="Dùng {{customer_name}} trong tiêu đề hoặc nội dung để tự chèn tên khách hàng khi gửi."
               >
                 <Input.TextArea rows={14} className="etp-code" showCount maxLength={BODY_MAX} />
               </Form.Item>
@@ -197,11 +197,11 @@ export function EmailTemplateEditorPage() {
             <div className="etp-meta">
               <p className="etp-meta__line">
                 <span className="etp-meta__k">Đến:</span>
-                <code className="etp-meta__ph">{'{{customer_name}}'}</code>
+                <code className="etp-meta__ph">khach@example.com</code>
               </p>
               <p className="etp-meta__line">
                 <span className="etp-meta__k">Chủ đề:</span>
-                <Typography.Text ellipsis style={{ maxWidth: 220 }}>{subjectLive || '—'}</Typography.Text>
+                <Typography.Text ellipsis style={{ maxWidth: 220 }}>{subjectLive.replaceAll('{{customer_name}}', 'Nguyễn Văn An') || '—'}</Typography.Text>
               </p>
             </div>
             <div className="etp-canvas">

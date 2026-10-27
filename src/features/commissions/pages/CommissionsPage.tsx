@@ -92,6 +92,7 @@ export function CommissionsPage() {
     totalPending: 0,
   }
   const commissions = activeData?.commissions ?? []
+  const legacyCount = commissions.filter((commission) => commission.status === 'APPROVED' && !commission.milestones?.length).length
 
   const dealMap = useMemo(() => {
     const map = new Map<string, (typeof deals)[0]>()
@@ -209,6 +210,7 @@ export function CommissionsPage() {
       dataIndex: 'status',
       align: 'center',
       render: (status) => {
+        if (status === 'APPROVED') return <Tag color="orange">Đã duyệt (dữ liệu cũ)</Tag>
         if (status === 'FULLY_PAID') return <Tag color="green">Đã chi đủ 100%</Tag>
         if (status === 'PARTIALLY_PAID') return <Tag color="cyan">Đã chi 1 phần</Tag>
         return <Tag color="default">Chờ giải ngân</Tag>
@@ -356,13 +358,16 @@ export function CommissionsPage() {
       {activeQuery.isError && <Alert type="error" showIcon message="Không thể tải dữ liệu hoa hồng"
         description="Vui lòng thử lại để cập nhật số liệu."
         action={<Button onClick={() => void activeQuery.refetch()} loading={activeQuery.isFetching}>Thử lại</Button>} />}
+      {!activeQuery.isError && legacyCount > 0 && <Alert type="warning" showIcon
+        message={`Có ${legacyCount} khoản hoa hồng cũ chưa có lịch giải ngân`}
+        description="Giữ nguyên trạng thái và số tiền đã ghi nhận. Hai chỉ số theo đợt tạm để trống; cần đối soát trước khi tạo lịch và duyệt chi." />}
 
       {/* 4 KPI Cards */}
       <div className="commissions-kpis">
         <KpiCard label="Hoa hồng kỳ vọng" icon={<TrophyOutlined />} tone="green" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalExpected)} />
         <KpiCard label="Đã thực nhận" icon={<CheckCircleOutlined />} tone="teal" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalPaid)} />
-        <KpiCard label="Đủ điều kiện, chờ chi" icon={<ThunderboltOutlined />} tone="amber" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalEligible)} />
-        <KpiCard label="Chờ khách thanh toán" icon={<ClockCircleOutlined />} tone="gray" loading={activeQuery.isLoading} value={activeQuery.isError ? '—' : formatMoney(summary.totalPending)} />
+        <KpiCard label="Đủ điều kiện, chờ chi" icon={<ThunderboltOutlined />} tone="amber" loading={activeQuery.isLoading} value={activeQuery.isError || legacyCount > 0 ? '—' : formatMoney(summary.totalEligible)} />
+        <KpiCard label="Chờ khách thanh toán" icon={<ClockCircleOutlined />} tone="gray" loading={activeQuery.isLoading} value={activeQuery.isError || legacyCount > 0 ? '—' : formatMoney(summary.totalPending)} />
       </div>
 
       {/* Tabs */}

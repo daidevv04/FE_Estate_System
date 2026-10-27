@@ -197,8 +197,8 @@ export function DealCommissionSection({ deal }: Props) {
             <TrophyOutlined style={{ color: '#059669', fontSize: 16 }} />
             <span style={{ fontWeight: 700 }}>Hoa hồng & Thưởng Doanh Số Sales</span>
           </Space>
-          <Tag color={commission.status === 'FULLY_PAID' ? 'green' : 'blue'}>
-            {commission.status === 'FULLY_PAID' ? 'Đã chi đủ 100%' : commission.status === 'PARTIALLY_PAID' ? 'Đã chi 1 phần' : 'Chờ giải ngân'}
+          <Tag color={commission.status === 'APPROVED' ? 'orange' : commission.status === 'FULLY_PAID' ? 'green' : 'blue'}>
+            {commission.status === 'APPROVED' ? 'Đã duyệt (dữ liệu cũ)' : commission.status === 'FULLY_PAID' ? 'Đã chi đủ 100%' : commission.status === 'PARTIALLY_PAID' ? 'Đã chi 1 phần' : 'Chờ giải ngân'}
           </Tag>
         </div>
       }
@@ -233,6 +233,7 @@ export function DealCommissionSection({ deal }: Props) {
         size="small"
         columns={columns}
         dataSource={commission.milestones || []}
+        locale={commission.status === 'APPROVED' ? { emptyText: 'Khoản hoa hồng cũ chưa có lịch giải ngân; cần đối soát trước khi duyệt chi.' } : undefined}
         pagination={false}
       />
 

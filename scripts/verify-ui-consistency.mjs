@@ -10,6 +10,12 @@ const browser = await chromium.launch({ headless: true })
 const results = []
 const emptyPage = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10, first: true, last: true }
 const user = { id: 'ui-fixture-user', username: 'ui-review', fullName: 'Nguyễn Minh Anh', role: 'ADMIN' }
+const legacyCommission = {
+  id: 'legacy-commission', dealId: 'legacy-deal', salesId: user.id,
+  contractValue: 3500000000, commissionRate: 2.5, commissionAmount: 87500000,
+  bonusAmount: 0, totalExpected: 87500000, totalPaid: 0, status: 'APPROVED',
+  createdAt: '2026-10-01T09:00:00', milestones: [],
+}
 const leaderboard = {
   period: 'MONTH', year: 2026, month: 10, teamTargetRevenue: 30000000000,
   teamAchievedRevenue: 18750000000, teamPacingRate: 62.5, totalDealsCount: 8,
@@ -38,8 +44,18 @@ async function openPage({ role = 'ADMIN', width = 1440, mode = 'ready' } = {}) {
       if (endpoint === '/reports/leaderboard' && currentMode === 'error') return route.fulfill({ status: 500, json: { message: 'Không thể tải bảng xếp hạng' } })
       let body = emptyPage
       if (endpoint === '/users/me' || endpoint === '/users/ui-fixture-user') body = { ...user, role, email: 'ui@example.invalid', status: 'ACTIVE', createdAt: '2026-10-01T09:00:00' }
-      else if (endpoint === '/users' || endpoint.includes('my-managed-user-ids') || endpoint.endsWith('/payments') || endpoint.endsWith('/sessions')) body = []
-      else if (endpoint.startsWith('/commissions')) body = { commissions: [], summary: { totalExpected: 0, totalPaid: 0, totalEligible: 0, totalPending: 0 } }
+      else if (endpoint === '/users' || endpoint.includes('my-managed-user-ids') || endpoint.endsWith('/payments') || endpoint.endsWith('/schedules') || endpoint.endsWith('/sessions')) body = []
+      else if (currentMode === 'legacy' && endpoint === '/deals/legacy-deal') body = {
+        id: legacyCommission.dealId, salesId: user.id, contractCode: 'HD-LEGACY',
+        contractValue: legacyCommission.contractValue, depositAmount: 0,
+        status: 'ACTIVE', paymentStatus: 'UNPAID', approvalStatus: 'APPROVED',
+        createdAt: legacyCommission.createdAt, updatedAt: legacyCommission.createdAt,
+      }
+      else if (currentMode === 'legacy' && endpoint === '/deals/legacy-deal/commission') body = legacyCommission
+      else if (endpoint.startsWith('/commissions')) body = {
+        commissions: currentMode === 'legacy' ? [legacyCommission] : [],
+        summary: { totalExpected: currentMode === 'legacy' ? legacyCommission.totalExpected : 0, totalPaid: 0, totalEligible: 0, totalPending: 0 },
+      }
       else if (endpoint === '/reports/leaderboard') body = currentMode === 'empty' ? { ...leaderboard, teamAchievedRevenue: 0, teamPacingRate: 0, totalDealsCount: 0, items: [] } : leaderboard
       else if (endpoint.includes('summary')) body = { totalOutstanding: 0, overdueAmount: 0, overdueDealsCount: 0, buckets: [], stages: [], items: [] }
       return route.fulfill({ json: body })
@@ -135,6 +151,29 @@ try {
       }
       assert.deepEqual(errors, [])
       results.push({ check: 'leaderboard-state', mode, passed: true })
+      await context.close()
+    }
+
+    for (const role of ['ADMIN', 'SALES']) {
+      const { page, context, errors } = await openPage({ role, mode: 'legacy' })
+      await visit(page, '/commissions')
+      await page.getByRole('alert').filter({ hasText: 'Có 1 khoản hoa hồng cũ chưa có lịch giải ngân' }).waitFor()
+      assert.equal(await page.getByText('Không thể tải dữ liệu hoa hồng', { exact: true }).count(), 0)
+      for (const label of ['Đủ điều kiện, chờ chi', 'Chờ khách thanh toán']) {
+        assert.equal(await page.locator('.crm-kpi').filter({ hasText: label }).getByText('—', { exact: true }).count(), 1)
+      }
+      assert.equal(await page.getByRole('button', { name: /^(Duyệt chi|Chi trả tiền)$/ }).count(), 0)
+      if (role === 'SALES') await page.getByText('Đã duyệt (dữ liệu cũ)', { exact: true }).waitFor()
+      await page.screenshot({ path: `${output}/legacy-commissions-${role.toLowerCase()}.png`, fullPage: true })
+      assert.deepEqual(errors, [])
+      results.push({ check: 'legacy-commissions-preserve-state', role, passed: true })
+      await visit(page, '/deals/legacy-deal')
+      await page.getByText('Đã duyệt (dữ liệu cũ)', { exact: true }).waitFor()
+      await page.getByText('Khoản hoa hồng cũ chưa có lịch giải ngân; cần đối soát trước khi duyệt chi.', { exact: true }).waitFor()
+      assert.equal(await page.getByRole('button', { name: /^(Duyệt chi|Chi trả)$/ }).count(), 0)
+      assert.deepEqual(errors, [])
+      await page.screenshot({ path: `${output}/legacy-deal-commission-${role.toLowerCase()}.png`, fullPage: true })
+      results.push({ check: 'legacy-deal-commission-preserve-state', role, passed: true })
       await context.close()
     }
 

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/api/client'
 import type { UUID } from '@/types/api'
 
-export type CommissionStatus = 'PENDING' | 'PARTIALLY_PAID' | 'FULLY_PAID' | 'CANCELLED'
+export type CommissionStatus = 'PENDING' | 'PARTIALLY_PAID' | 'FULLY_PAID' | 'CANCELLED' | 'APPROVED'
 export type CommissionMilestoneStatus = 'PENDING_MILESTONE' | 'ELIGIBLE' | 'APPROVED' | 'PAID'
 
 export interface DealCommissionMilestone {
